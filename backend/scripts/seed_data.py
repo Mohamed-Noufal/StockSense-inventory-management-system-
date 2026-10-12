@@ -95,6 +95,7 @@ def seed():
 
         # 5. Users
         user_data = [
+            ("John Doe", "john.doe@stocksense.oilfield", "STOREKEEPER"),
             ("Ahmed Fawzy", "ahmed.fawzy@example.com", "STOREKEEPER"),
             ("Sara Mansour", "sara.mansour@example.com", "PROCUREMENT_OFFICER"),
             ("Khaled Hassan", "khaled.hassan@example.com", "MANAGER"),

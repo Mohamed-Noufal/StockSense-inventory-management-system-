@@ -2,7 +2,7 @@ import {
   HealthResponse, ReadyResponse, InventoryItem, InventoryLocation,
   StockBalance, StockMovement, MovementCreatePayload, TransferCreatePayload,
   IntegrityCheckResponse, Supplier, PurchaseOrder, POCreatePayload, POReceivePayload,
-  AIRun, AIRecommendation, AIRunTriggerPayload
+  AIRun, AIRecommendation, AIRunTriggerPayload, User
 } from '../types';
 
 const API_BASE = '/api/v1';
@@ -39,6 +39,8 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 export const api = {
   getHealth: () => request<HealthResponse>('/health'),
   getReadiness: () => request<ReadyResponse>('/ready'),
+  getUsers: () => request<User[]>('/users'),
+  getCurrentUser: () => request<User>('/users/me'),
   getItems: () => request<InventoryItem[]>('/inventory/items'),
   getLocations: () => request<InventoryLocation[]>('/inventory/locations'),
   getBalances: (itemId?: number, locationId?: number) => {

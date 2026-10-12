@@ -52,6 +52,19 @@ def test_complete_golden_workflow(client: TestClient):
     })
     assert issue_resp.status_code == 201
 
+    # Ensure item 6 total on hand drops below reorder point (ROP ~ 5)
+    for b in client.get("/api/v1/inventory/balances?item_id=6").json():
+        qty_to_issue = b["quantity_on_hand"] if b["location_id"] != 1 else max(0, b["quantity_on_hand"] - 1)
+        if qty_to_issue > 0:
+            client.post("/api/v1/inventory/movements", json={
+                "movement_type": "ISSUE",
+                "item_id": 6,
+                "location_id": b["location_id"],
+                "quantity": qty_to_issue,
+                "idempotency_key": str(uuid.uuid4()),
+                "reason": "Expedite drill overhaul consumption triggering ROP"
+            })
+
     # 4. Trigger AI replenishment run
     run_resp = client.post("/api/v1/ai/runs", json={
         "service_level": 0.95,

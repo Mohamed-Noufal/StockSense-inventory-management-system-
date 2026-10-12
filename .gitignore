@@ -46,6 +46,7 @@ data/*.db
 data/*.db-wal
 data/*.db-shm
 data/*.sqlite*
+backend/data/
 !data/.gitkeep
 
 # Environment variables

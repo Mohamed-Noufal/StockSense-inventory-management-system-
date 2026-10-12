@@ -18,6 +18,16 @@ export interface ReadyResponse {
   default_warehouse: string | null;
 }
 
+export interface User {
+  id: number;
+  full_name: string;
+  email: string;
+  role: 'STOREKEEPER' | 'PROCUREMENT_OFFICER' | 'MANAGER' | 'ADMIN';
+  is_active: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface InventoryItem {
   id: number;
   sku: string;

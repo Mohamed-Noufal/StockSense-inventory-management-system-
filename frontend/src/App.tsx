@@ -4,7 +4,7 @@ import { api } from './api/client';
 import {
   HealthResponse, ReadyResponse, InventoryItem, InventoryLocation,
   StockMovement, IntegrityCheckResponse, Milestone, PurchaseOrder,
-  Supplier, POCreatePayload, POReceivePayload, AIRun, AIRecommendation,
+  Supplier, POCreatePayload, POReceivePayload, AIRun, AIRecommendation, User
 } from './types';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
@@ -13,6 +13,7 @@ import { LedgerView } from './components/LedgerView';
 import { OverviewView } from './components/OverviewView';
 import { ProcurementView } from './components/ProcurementView';
 import { AIInsightsView } from './components/AIInsightsView';
+import { UsersView } from './components/UsersView';
 import { SprintView } from './components/SprintView';
 import { DiagnosticsView } from './components/DiagnosticsView';
 import { MovementModal } from './components/MovementModal';
@@ -21,7 +22,7 @@ import { POReceiveModal } from './components/POReceiveModal';
 import { RecommendationModal } from './components/RecommendationModal';
 
 const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'inventory' | 'ledger' | 'procurement' | 'ai' | 'sprint' | 'diagnostics'>('inventory');
+  const [activeTab, setActiveTab] = useState<'overview' | 'inventory' | 'ledger' | 'procurement' | 'ai' | 'sprint' | 'diagnostics' | 'users'>('overview');
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [readiness, setReadiness] = useState<ReadyResponse | null>(null);
   const [items, setItems] = useState<InventoryItem[]>([]);
@@ -31,11 +32,30 @@ const App: React.FC = () => {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [recommendations, setRecommendations] = useState<AIRecommendation[]>([]);
   const [aiRuns, setAiRuns] = useState<AIRun[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [integrity, setIntegrity] = useState<IntegrityCheckResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [runningAi, setRunningAi] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
+    return localStorage.getItem('stocksense_sidebar_collapsed') === 'true';
+  });
+
+  const handleToggleCollapse = () => {
+    setIsCollapsed((prev) => {
+      localStorage.setItem('stocksense_sidebar_collapsed', String(!prev));
+      return !prev;
+    });
+  };
+
+  const handleSelectUser = (user: User) => {
+    setCurrentUser(user);
+    localStorage.setItem('stocksense_current_user_id', String(user.id));
+    setSuccessMsg(`Active identity switched to ${user.full_name} (${user.role}) for audit logging`);
+  };
 
   // Modals
   const [showModal, setShowModal] = useState<boolean>(false);
@@ -54,7 +74,7 @@ const App: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const [hData, rData, itmData, locData, ledgData, integData, poData, supData, recData, runData] = await Promise.all([
+      const [hData, rData, itmData, locData, ledgData, integData, poData, supData, recData, runData, usersData] = await Promise.all([
         api.getHealth().catch(() => null),
         api.getReadiness().catch(() => null),
         api.getItems().catch(() => []),
@@ -65,6 +85,7 @@ const App: React.FC = () => {
         api.getSuppliers().catch(() => []),
         api.getAIRecommendations().catch(() => []),
         api.getAIRuns().catch(() => []),
+        api.getUsers().catch(() => []),
       ]);
       setHealth(hData);
       setReadiness(rData);
@@ -76,6 +97,13 @@ const App: React.FC = () => {
       setSuppliers(supData);
       setRecommendations(recData);
       setAiRuns(runData);
+      setUsers(usersData);
+
+      if (usersData && usersData.length > 0) {
+        const savedUserId = localStorage.getItem('stocksense_current_user_id');
+        const matched = savedUserId ? usersData.find((u: User) => String(u.id) === savedUserId) : null;
+        setCurrentUser((prev) => prev || matched || usersData[0]);
+      }
 
       if (itmData.length > 0 && selectedItemId === 0) setSelectedItemId(itmData[0].id);
       if (locData.length > 0 && selectedLocId === 0) {
@@ -97,12 +125,14 @@ const App: React.FC = () => {
     e.preventDefault();
     setError(null);
     setSuccessMsg(null);
+    const actorLabel = currentUser ? `${currentUser.full_name} (${currentUser.role})` : 'Storekeeper (STOREKEEPER)';
     try {
       if (modalType === 'TRANSFER') {
         const res = await api.transferStock({
           item_id: selectedItemId, from_location_id: selectedLocId,
           to_location_id: targetLocId, quantity: txQty,
           reason: txReason || 'Field site transfer',
+          actor_label: actorLabel,
         });
         setSuccessMsg(`Transfer of ${res.quantity} units executed! Group: ${res.transfer_group_id.slice(0, 8)}`);
       } else {
@@ -110,8 +140,9 @@ const App: React.FC = () => {
           item_id: selectedItemId, location_id: selectedLocId,
           movement_type: modalType, quantity: txQty,
           reason: txReason || `Manual ${modalType.toLowerCase()}`,
+          actor_label: actorLabel,
         });
-        setSuccessMsg(`Movement #${res.id} (${res.movement_type} ${res.quantity} units) recorded!`);
+        setSuccessMsg(`Movement #${res.id} (${res.movement_type} ${res.quantity} units) recorded by ${currentUser?.full_name || 'Storekeeper'}!`);
       }
       setShowModal(false);
       setTxQty(5);
@@ -143,8 +174,12 @@ const App: React.FC = () => {
   const handleReceivePOLine = async (poId: number, payload: POReceivePayload) => {
     setError(null);
     try {
-      const po = await api.receivePOLine(poId, payload);
-      setSuccessMsg(`Received ${payload.quantity_received} units on ${po.po_number}! Status: ${po.status}`);
+      const actorLabel = currentUser ? `${currentUser.full_name} (${currentUser.role})` : 'Storekeeper (STOREKEEPER)';
+      const po = await api.receivePOLine(poId, {
+        ...payload,
+        actor_label: payload.actor_label || actorLabel,
+      });
+      setSuccessMsg(`Received ${payload.quantity_received} units on ${po.po_number} by ${currentUser?.full_name || 'Storekeeper'}! Status: ${po.status}`);
       fetchData();
     } catch (err: any) {
       setError(err.message || 'Receipt rejected');
@@ -254,7 +289,10 @@ const App: React.FC = () => {
         ledgerCount={ledger.length}
         poCount={orders.length}
         aiCount={recommendations.filter((r) => r.status === 'OPEN').length}
+        usersCount={users.length}
         health={health}
+        isCollapsed={isCollapsed}
+        onToggleCollapse={handleToggleCollapse}
       />
 
       <main className="main-content">
@@ -265,6 +303,12 @@ const App: React.FC = () => {
           onRefresh={fetchData}
           onRunAudit={handleRunIntegrityCheck}
           onOpenModal={() => { setModalType('RECEIPT'); setShowModal(true); }}
+          isCollapsed={isCollapsed}
+          onToggleCollapse={handleToggleCollapse}
+          users={users}
+          currentUser={currentUser}
+          onSelectUser={handleSelectUser}
+          onNavigateTab={(tab) => setActiveTab(tab)}
         />
 
         {error && (
@@ -305,7 +349,28 @@ const App: React.FC = () => {
               runningAi={runningAi}
             />
           )}
-          {activeTab === 'overview' && <OverviewView itemsCount={items.length} movementsCount={ledger.length} locationsCount={locations.length} />}
+          {activeTab === 'users' && (
+            <UsersView
+              users={users}
+              currentUser={currentUser}
+              onSelectUser={handleSelectUser}
+              ledger={ledger}
+              onNavigateTab={(tab) => setActiveTab(tab)}
+            />
+          )}
+          {activeTab === 'overview' && (
+            <OverviewView
+              items={items}
+              locations={locations}
+              ledger={ledger}
+              orders={orders}
+              recommendations={recommendations}
+              currentUser={currentUser}
+              onNavigateTab={(tab) => setActiveTab(tab as any)}
+              onOpenMovementModal={() => { setModalType('RECEIPT'); setShowModal(true); }}
+              onInspectRec={(rec) => setInspectingRec(rec)}
+            />
+          )}
           {activeTab === 'sprint' && <SprintView milestones={milestones} />}
           {activeTab === 'diagnostics' && <DiagnosticsView readiness={readiness} />}
         </div>
