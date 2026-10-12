@@ -135,6 +135,43 @@ Read [`docs/03-sprint-plan.md`](./03-sprint-plan.md) to understand current progr
 - **Sprint 1 (Foundation & Setup):** ✅ COMPLETED & MET.
 - **Sprint 2 (Core Inventory & Ledger):** 🚀 NEXT ACTIVE MILESTONE.
 
+### Step 5: The Standard 7-Step Task Execution Lifecycle (SOP)
+
+Every feature or task must strictly follow this 7-step engineering loop:
+
+```mermaid
+flowchart LR
+    A["1. Find Task<br/>(docs/03-sprint-plan.md)"] --> B["2. Check Skills<br/>(.agents/skills/)"]
+    B --> C["3. Backend Code<br/>(Schemas -> Service -> API)"]
+    C --> D["4. Test Invariants<br/>(pytest unit & DB tests)"]
+    D --> E["5. Connect Frontend<br/>(Types -> API -> UI)"]
+    E --> F["6. Full System Test<br/>(scripts/verify_system.sh)"]
+    F --> G["7. Commit & Checkoff<br/>(git commit + update docs)"]
+```
+
+1. **Find the Task**:
+   - Locate the next unchecked item `[ ]` in [`docs/03-sprint-plan.md`](./03-sprint-plan.md).
+   - Review architectural contracts in [`docs/02-technical-architecture.md`](./02-technical-architecture.md) and UI expectations in [`docs/04-frontend-plan.md`](./04-frontend-plan.md).
+2. **Consult Relevant Skills**:
+   - Check `.agents/skills/` (e.g., `stocksense` for ledger & oilfield invariants, `backend-scalable` for micro-files, `ui-ux-pro-max` for design system).
+3. **Implement Backend Code**:
+   - Write/update Pydantic schemas in `backend/app/schemas/` or `backend/ai/schemas.py`.
+   - Implement business logic in `backend/app/services/` or `backend/ai/`. Keep files <100 lines.
+   - Expose REST endpoints in `backend/app/api/v1/endpoints/` and mount them in `backend/app/api/v1/api.py`.
+4. **Test Backend & Database**:
+   - Write unit and integration tests in `backend/tests/test_*.py`.
+   - Verify transaction rollback on errors, non-negative checks, and error response codes.
+   - Run `.venv/bin/pytest backend/tests/` to confirm 100% pass rate.
+5. **Connect Database & Frontend**:
+   - Define matching TypeScript interfaces in `frontend/src/types/index.ts`.
+   - Add typed API methods in `frontend/src/api/client.ts`.
+   - Update React dashboard/page in `frontend/src/App.tsx` using established dark slate tokens from `index.css`.
+6. **Full System Verification**:
+   - Run `./scripts/verify_system.sh` to validate virtualenv, database WAL mode, all 17 tables, test suite, backend API, and frontend server in one pass.
+7. **Commit & Check-off**:
+   - Stage and commit with conventional commit format: `git add <files> && git commit -m "feat(scope): description"`.
+   - Check off the task `[x]` in [`docs/03-sprint-plan.md`](./03-sprint-plan.md) and record any architectural notes.
+
 ---
 
 ## 4. Where and How to Work (Architectural Boundaries)
