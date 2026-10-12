@@ -181,20 +181,21 @@ stocksense/
 │   │   ├── main.py             # FastAPI entrypoint, middleware, lifespan
 │   │   ├── core/               # Configuration, SQLite engine, WAL pragma
 │   │   ├── models/             # Master data & stock ledger models (12 tables)
-│   │   ├── schemas/            # Pydantic v2 schemas and validation (health, inventory)
-│   │   ├── api/v1/             # Modular REST API endpoints (/health, /inventory, /ai)
+│   │   ├── schemas/            # Pydantic v2 schemas and validation (health, inventory, purchase_orders)
+│   │   ├── api/v1/             # Modular REST API endpoints (/health, /inventory, /po, /ai)
 │   │   └── services/           # Authoritative domain services
-│   │       ├── inventory_service.py # Movements, over-issue rejection, paired transfers
-│   │       └── integrity_service.py # Ledger-sum vs running-balance reconciliation
-│   ├── tests/                  # Backend pytest suite (14 passed)
+│   │       ├── inventory_service.py   # Movements, over-issue rejection, paired transfers
+│   │       ├── integrity_service.py   # Ledger-sum vs running-balance reconciliation
+│   │       └── procurement_service.py # PO state machine, goods receiving, over-receipt check
+│   ├── tests/                  # Backend pytest suite (21 passed)
 │   ├── scripts/                # Database initialization & synthetic generation (init_db, seed_data)
 │   └── requirements.txt        # Pinned Python dependencies
 ├── frontend/
 │   ├── src/
 │   │   ├── api/                # Central typed REST API client (client.ts)
-│   │   ├── components/         # Modular UI views (Sidebar, Header, InventoryView, LedgerView, MovementModal, etc.)
+│   │   ├── components/         # Modular UI views (Sidebar, Header, InventoryView, LedgerView, ProcurementView, POCreateModal, POReceiveModal, MovementModal, etc.)
 │   │   ├── types/              # TypeScript domain types & API models (index.ts)
-│   │   ├── App.tsx             # Concise layout coordinator (<220 lines)
+│   │   ├── App.tsx             # Concise layout coordinator (<240 lines)
 │   │   ├── index.css           # Industrial dark slate design tokens & styles
 │   │   └── main.tsx            # React application entrypoint
 │   ├── package.json
