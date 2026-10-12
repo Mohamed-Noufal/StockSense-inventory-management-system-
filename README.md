@@ -76,8 +76,10 @@ All specifications, architectural RFCs, sprint roadmaps, and autonomous agent gu
 | 📑 **[`docs/INDEX.md`](./docs/INDEX.md)** | **Master Index & AI Agent Playbook** | Complete architectural index, senior directory critique, developer onboarding guide, skills manual, and enterprise production roadmap. |
 | 🎯 **[`docs/01-problem-statement.md`](./docs/01-problem-statement.md)** | **Problem Statement & Operating Context** | Oilfield spare parts & consumables domain, pain points (P1–P6), persona journeys, and the Golden Demo scenario. |
 | 🏗️ **[`docs/02-technical-architecture.md`](./docs/02-technical-architecture.md)** | **Technical Architecture & Data Model** | System architecture diagrams, 17-table data dictionary, append-only ledger mechanics, and non-negative constraints. |
+| 📊 **[`docs/02b-system-design-and-data-flows.md`](./docs/02b-system-design-and-data-flows.md)** | **System Design Charts & Data Flow Diagrams** | Visual diagrams: layered system topology, core stock movement transactions, double-entry transfers, AI advisory replenishment pipeline, and PO lifecycle. |
 | 🗓️ **[`docs/03-sprint-plan.md`](./docs/03-sprint-plan.md)** | **Sprint Plan & Delivery Roadmap** | Milestone tracking (Sprint 1 to Sprint 6), P0/P1/P2 scope management, exit criteria, and interview preparation. |
 | 🎨 **[`docs/04-frontend-plan.md`](./docs/04-frontend-plan.md)** | **Frontend UX & Page Routing Guide** | InvenTree/ERPNext inspired interaction patterns, 6 screens, design system tokens, and API interaction states. |
+| 🤖 **[`docs/05-ai-engine-and-activity-log.md`](./docs/05-ai-engine-and-activity-log.md)** | **AI Engine Specification & Activity Log** | Dynamic living registry: demand classification formulas, Croston/SBA algorithms, policy math, live execution history log, and recommendation audit trail. |
 | 📖 **[`docs/stocksense-technical-plan.md`](./docs/stocksense-technical-plan.md)** | **Master Technical Plan (Single Source of Truth)** | Comprehensive architectural reference covering domain models, intermittent forecasting math, Monte Carlo policy, and ADRs. |
 
 ---
@@ -159,8 +161,10 @@ stocksense/
 │   ├── README.md               # Docs Hub Overview
 │   ├── 01-problem-statement.md
 │   ├── 02-technical-architecture.md
+│   ├── 02b-system-design-and-data-flows.md
 │   ├── 03-sprint-plan.md
 │   ├── 04-frontend-plan.md
+│   ├── 05-ai-engine-and-activity-log.md
 │   └── stocksense-technical-plan.md
 ├── backend/
 │   ├── ai/                     # Dedicated AI & Advisory Engine (Self-contained)
