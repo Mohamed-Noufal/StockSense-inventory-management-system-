@@ -3,6 +3,9 @@ from backend.ai.forecasting import forecast_demand, croston_forecast, sba_foreca
 from backend.ai.policy import calculate_inventory_policy
 from backend.ai.agent import ReplenishmentAgent
 from backend.ai.evaluator import evaluate_forecast
+from backend.ai.models import AIRun, Forecast, BacktestResult, ItemPolicy, Recommendation
+from backend.ai.service import AIService
+from backend.ai.router import router as ai_router
 
 __all__ = [
     "classify_demand",
@@ -13,4 +16,11 @@ __all__ = [
     "calculate_inventory_policy",
     "ReplenishmentAgent",
     "evaluate_forecast",
+    "AIRun",
+    "Forecast",
+    "BacktestResult",
+    "ItemPolicy",
+    "Recommendation",
+    "AIService",
+    "ai_router",
 ]

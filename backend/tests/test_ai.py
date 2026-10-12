@@ -69,3 +69,22 @@ def test_evaluate_forecast():
     assert "mae" in metrics
     assert "rmse" in metrics
     assert "bias" in metrics
+
+def test_ai_run_and_recommendations_endpoint(client):
+    # Trigger an AI run
+    res = client.post("/api/v1/ai/runs", json={
+        "data_cutoff": "2026-10-12",
+        "random_seed": 42,
+        "service_level": 0.95,
+        "default_method": "sba"
+    })
+    assert res.status_code == 200
+    data = res.json()
+    assert data["status"] == "SUCCEEDED"
+    assert data["model_version"] == "0.1.0"
+    
+    # Check recommendations query
+    rec_res = client.get("/api/v1/ai/recommendations")
+    assert rec_res.status_code == 200
+    assert isinstance(rec_res.json(), list)
+

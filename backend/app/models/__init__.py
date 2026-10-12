@@ -9,12 +9,16 @@ from backend.app.models.users import User
 from backend.app.models.stock_movements import StockMovement
 from backend.app.models.stock_balances import StockBalance
 from backend.app.models.purchase_orders import PurchaseOrder, PurchaseOrderLine
-from backend.app.models.ai_runs import AIRun
-from backend.app.models.forecasts import Forecast
-from backend.app.models.backtest_results import BacktestResult
-from backend.app.models.item_policies import ItemPolicy
-from backend.app.models.recommendations import Recommendation
 from backend.app.models.alerts import Alert
+
+# Import AI models from unified backend.ai package
+from backend.ai.models import (
+    AIRun,
+    Forecast,
+    BacktestResult,
+    ItemPolicy,
+    Recommendation,
+)
 
 __all__ = [
     "Base",
@@ -29,10 +33,10 @@ __all__ = [
     "StockBalance",
     "PurchaseOrder",
     "PurchaseOrderLine",
+    "Alert",
     "AIRun",
     "Forecast",
     "BacktestResult",
     "ItemPolicy",
     "Recommendation",
-    "Alert",
 ]
