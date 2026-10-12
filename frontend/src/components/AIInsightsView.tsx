@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Play } from 'lucide-react';
 import { AIRecommendation, AIRun } from '../types';
 import { AIMetricsCards } from './AIMetricsCards';
 import { AIRowItem } from './AIRowItem';
@@ -22,52 +22,64 @@ export const AIInsightsView: React.FC<AIInsightsViewProps> = ({
   const filtered = recommendations.filter((r) => statusFilter === 'ALL' || r.status === statusFilter);
 
   return (
-    <div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       <AIMetricsCards recommendations={recommendations} runs={runs} />
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+      <div className="card" style={{ padding: '0.85rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
           {['ALL', 'OPEN', 'APPROVED', 'DISMISSED'].map((st) => (
             <button
               key={st}
               className={`btn ${statusFilter === st ? 'btn-primary' : 'btn-secondary'}`}
-              style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem' }}
+              style={{ padding: '0.25rem 0.6rem', fontSize: '0.72rem' }}
               onClick={() => setStatusFilter(st)}
             >
               {st}
             </button>
           ))}
         </div>
+
         <button
           className="btn btn-primary"
           onClick={onTriggerRun}
           disabled={runningAi}
-          style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'linear-gradient(135deg, #0284c7 0%, #2563eb 100%)' }}
         >
-          <RefreshCw className={runningAi ? 'animate-spin' : ''} style={{ width: 16, height: 16 }} />
-          <span>{runningAi ? 'Analyzing Intermittent Ledger...' : 'Run Replenishment Analysis'}</span>
+          {runningAi ? (
+            <RefreshCw className="animate-spin" style={{ width: 14, height: 14 }} />
+          ) : (
+            <Play style={{ width: 14, height: 14, fill: '#000000' }} />
+          )}
+          <span>{runningAi ? 'Calculating Intermittent Policies...' : 'Execute AI Replenishment Run'}</span>
         </button>
       </div>
 
-      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-        <table className="table">
+      <div className="table-container">
+        <table className="data-table">
           <thead>
             <tr>
               <th>Urgency</th>
               <th>Pattern</th>
-              <th>Part / Spare Item</th>
+              <th>Spare Item</th>
               <th>Destination</th>
               <th>Position vs ROP</th>
-              <th>Suggested Qty</th>
-              <th>Status</th>
+              <th style={{ textAlign: 'right' }}>Suggested Qty</th>
+              <th>Review Status</th>
               <th style={{ textAlign: 'right' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
             {loading && recommendations.length === 0 ? (
-              <tr><td colSpan={8} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Loading AI recommendations...</td></tr>
+              <tr>
+                <td colSpan={8} style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-muted)' }}>
+                  Loading replenishment recommendations...
+                </td>
+              </tr>
             ) : filtered.length === 0 ? (
-              <tr><td colSpan={8} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>No recommendations match this filter. Click 'Run Replenishment Analysis' to evaluate current stock positions.</td></tr>
+              <tr>
+                <td colSpan={8} style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-muted)' }}>
+                  No recommendations match this filter. Click 'Execute AI Replenishment Run' to evaluate ledger positions.
+                </td>
+              </tr>
             ) : (
               filtered.map((r) => (
                 <AIRowItem

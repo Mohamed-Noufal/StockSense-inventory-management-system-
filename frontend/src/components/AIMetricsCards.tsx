@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, Brain, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Sparkles, AlertTriangle, CheckCircle, Cpu } from 'lucide-react';
 import { AIRecommendation, AIRun } from '../types';
 
 interface AIMetricsCardsProps {
@@ -17,34 +17,34 @@ export const AIMetricsCards: React.FC<AIMetricsCardsProps> = ({ recommendations,
       <div className="metric-card">
         <div className="metric-header">
           <span className="metric-title">Open AI Proposals</span>
-          <Sparkles className="metric-icon" style={{ color: 'var(--brand-primary)' }} />
+          <Sparkles className="metric-icon" style={{ color: '#38bdf8' }} />
         </div>
         <div className="metric-value">{openCount}</div>
-        <div className="metric-sub">Awaiting procurement review</div>
+        <div className="metric-sub">Advisory replenishment queue</div>
       </div>
       <div className="metric-card">
         <div className="metric-header">
-          <span className="metric-title">Stockout Alert SKUs</span>
+          <span className="metric-title">Stockout Alerts</span>
           <AlertTriangle className="metric-icon" style={{ color: '#ef4444' }} />
         </div>
         <div className="metric-value">{criticalCount}</div>
-        <div className="metric-sub">Zero stock / high stockout risk</div>
+        <div className="metric-sub">Critical spare items under buffer target</div>
       </div>
       <div className="metric-card">
         <div className="metric-header">
-          <span className="metric-title">Approved into POs</span>
+          <span className="metric-title">Converted to Orders</span>
           <CheckCircle className="metric-icon" style={{ color: '#34d399' }} />
         </div>
         <div className="metric-value">{approvedCount}</div>
-        <div className="metric-sub">Converted directly to draft orders</div>
+        <div className="metric-sub">Approved into draft purchase orders</div>
       </div>
       <div className="metric-card">
         <div className="metric-header">
           <span className="metric-title">Forecasting Engine</span>
-          <Brain className="metric-icon" style={{ color: '#a855f7' }} />
+          <Cpu className="metric-icon" style={{ color: '#a855f7' }} />
         </div>
-        <div className="metric-value" style={{ fontSize: '1.25rem' }}>Syntetos-Boylan</div>
-        <div className="metric-sub">{runs.length} runs executed with cutoff safety</div>
+        <div className="metric-value" style={{ fontSize: '1.25rem', paddingTop: '0.25rem' }}>Syntetos-Boylan</div>
+        <div className="metric-sub">{runs.length} audit runs with chronological cutoff</div>
       </div>
     </div>
   );

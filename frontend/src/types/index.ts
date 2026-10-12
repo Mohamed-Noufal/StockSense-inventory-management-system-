@@ -142,6 +142,7 @@ export interface PurchaseOrder {
   order_date?: string;
   expected_date?: string;
   notes?: string;
+  source_recommendation_id?: number | null;
   lines: PurchaseOrderLine[];
   total_lines: number;
   total_amount_minor: number;

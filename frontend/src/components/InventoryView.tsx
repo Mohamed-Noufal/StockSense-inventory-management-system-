@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Filter } from 'lucide-react';
+import { Search, SlidersHorizontal, ArrowUpRight, ArrowLeftRight } from 'lucide-react';
 import { InventoryItem } from '../types';
 
 interface InventoryViewProps {
@@ -20,28 +20,28 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ items, onAction })
   });
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-      <div className="glass-card" style={{ padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1, minWidth: '240px' }}>
-          <Search style={{ width: 16, height: 16, color: 'var(--text-muted)' }} />
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <div className="card" style={{ padding: '0.85rem 1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flex: 1, minWidth: '240px' }}>
+          <Search style={{ width: 15, height: 15, color: 'var(--text-muted)' }} />
           <input
             type="text"
-            placeholder="Search SKU or item name..."
+            placeholder="Filter by SKU or part name..."
             className="form-input"
-            style={{ padding: '0.45rem 0.75rem', fontSize: '0.825rem' }}
+            style={{ padding: '0.4rem 0.65rem', fontSize: '0.8rem', background: 'transparent', border: 'none' }}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <Filter style={{ width: 14, height: 14, color: 'var(--text-muted)' }} />
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>CRITICALITY:</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <SlidersHorizontal style={{ width: 13, height: 13, color: 'var(--text-muted)' }} />
+          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600 }}>PRIORITY:</span>
           {(['ALL', 'CRITICAL', 'STANDARD', 'LOW'] as const).map((crit) => (
             <button
               key={crit}
               className={`btn ${critFilter === crit ? 'btn-primary' : 'btn-secondary'}`}
-              style={{ padding: '0.3rem 0.65rem', fontSize: '0.725rem' }}
+              style={{ padding: '0.25rem 0.6rem', fontSize: '0.72rem' }}
               onClick={() => setCritFilter(crit)}
             >
               {crit}
@@ -54,54 +54,68 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ items, onAction })
         <table className="data-table">
           <thead>
             <tr>
-              <th>SKU</th>
+              <th>Part SKU</th>
               <th>Item Description</th>
               <th>Criticality</th>
-              <th>On-Hand Balance</th>
-              <th>Unit of Measure</th>
-              <th>Unit Cost</th>
-              <th>Actions</th>
+              <th style={{ textAlign: 'right' }}>On-Hand Stock</th>
+              <th>UOM</th>
+              <th style={{ textAlign: 'right' }}>Unit Cost</th>
+              <th style={{ textAlign: 'right' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {filteredItems.map((item) => (
-              <tr key={item.id}>
-                <td className="sku-cell">{item.sku}</td>
-                <td style={{ fontWeight: 600 }}>{item.name}</td>
-                <td>
-                  <span className={`badge badge-${item.criticality.toLowerCase()}`}>
-                    {item.criticality}
-                  </span>
-                </td>
-                <td style={{ fontWeight: 700, fontSize: '0.95rem' }}>
-                  <span style={{ color: item.total_on_hand > 0 ? '#34d399' : '#f87171' }}>
-                    {item.total_on_hand.toLocaleString()}
-                  </span>
-                </td>
-                <td style={{ color: 'var(--text-muted)' }}>{item.uom}</td>
-                <td style={{ fontFamily: 'var(--font-mono)' }}>
-                  ${(item.unit_cost_minor / 100).toFixed(2)}
-                </td>
-                <td>
-                  <div style={{ display: 'flex', gap: '0.4rem' }}>
-                    <button
-                      className="btn btn-secondary"
-                      style={{ padding: '0.25rem 0.5rem', fontSize: '0.7rem' }}
-                      onClick={() => onAction(item.id, 'ISSUE')}
-                    >
-                      Issue
-                    </button>
-                    <button
-                      className="btn btn-secondary"
-                      style={{ padding: '0.25rem 0.5rem', fontSize: '0.7rem' }}
-                      onClick={() => onAction(item.id, 'TRANSFER')}
-                    >
-                      Transfer
-                    </button>
-                  </div>
+            {filteredItems.length === 0 ? (
+              <tr>
+                <td colSpan={7} style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-muted)' }}>
+                  No inventory items match your current filter.
                 </td>
               </tr>
-            ))}
+            ) : (
+              filteredItems.map((item) => (
+                <tr key={item.id}>
+                  <td>
+                    <span className="sku-cell">{item.sku}</span>
+                  </td>
+                  <td>
+                    <div style={{ fontWeight: 600, color: '#f4f4f5' }}>{item.name}</div>
+                  </td>
+                  <td>
+                    <span className={`badge badge-${item.criticality.toLowerCase()}`}>
+                      {item.criticality}
+                    </span>
+                  </td>
+                  <td style={{ textAlign: 'right', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
+                    <span style={{ color: item.total_on_hand > 0 ? '#34d399' : '#f87171' }}>
+                      {item.total_on_hand.toLocaleString()}
+                    </span>
+                  </td>
+                  <td style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>{item.uom}</td>
+                  <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: '0.78rem' }}>
+                    ${(item.unit_cost_minor / 100).toFixed(2)}
+                  </td>
+                  <td style={{ textAlign: 'right' }}>
+                    <div style={{ display: 'inline-flex', gap: '0.35rem' }}>
+                      <button
+                        className="btn btn-secondary"
+                        style={{ padding: '0.25rem 0.5rem', fontSize: '0.72rem' }}
+                        onClick={() => onAction(item.id, 'ISSUE')}
+                      >
+                        <ArrowUpRight style={{ width: 12, height: 12 }} />
+                        <span>Issue</span>
+                      </button>
+                      <button
+                        className="btn btn-secondary"
+                        style={{ padding: '0.25rem 0.5rem', fontSize: '0.72rem' }}
+                        onClick={() => onAction(item.id, 'TRANSFER')}
+                      >
+                        <ArrowLeftRight style={{ width: 12, height: 12 }} />
+                        <span>Transfer</span>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

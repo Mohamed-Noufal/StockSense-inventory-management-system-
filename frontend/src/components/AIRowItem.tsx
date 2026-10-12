@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle, Ban, ArrowUpRight } from 'lucide-react';
+import { CheckCircle, Ban, ArrowUpRight, Check } from 'lucide-react';
 import { AIRecommendation } from '../types';
 
 interface AIRowItemProps {
@@ -20,7 +20,7 @@ export const AIRowItem: React.FC<AIRowItemProps> = ({
       case 'HIGH':
         return <span className="badge badge-warning">High Priority</span>;
       default:
-        return <span className="badge badge-info">Normal</span>;
+        return <span className="badge badge-info">Routine Buffer</span>;
     }
   };
 
@@ -36,9 +36,9 @@ export const AIRowItem: React.FC<AIRowItemProps> = ({
       <span
         className="badge"
         style={{
-          background: 'rgba(255,255,255,0.05)',
-          color: colors[p] || '#cbd5e1',
-          border: `1px solid ${colors[p] || '#475569'}`,
+          background: 'rgba(255, 255, 255, 0.03)',
+          color: colors[p] || '#a1a1aa',
+          border: `1px solid ${colors[p] ? colors[p] + '40' : 'rgba(255,255,255,0.1)'}`,
         }}
       >
         {p.toUpperCase()}
@@ -51,25 +51,28 @@ export const AIRowItem: React.FC<AIRowItemProps> = ({
       <td>{getUrgencyBadge(r.urgency)}</td>
       <td>{getPatternBadge(r.demand_pattern)}</td>
       <td>
-        <div style={{ fontWeight: 600, color: 'var(--brand-primary)' }}>{r.item_sku}</div>
-        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{r.item_name}</div>
-      </td>
-      <td>{r.location_code || 'Central'}</td>
-      <td>
-        <div style={{ fontSize: '0.82rem' }}>
-          Position: <strong>{r.inventory_position}</strong> <span style={{ color: 'var(--text-muted)' }}>(ROP: {r.reorder_point})</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <span className="sku-cell">{r.item_sku}</span>
+          <span style={{ fontSize: '0.8rem', color: '#f4f4f5', fontWeight: 500 }}>{r.item_name}</span>
         </div>
       </td>
-      <td style={{ fontWeight: 700, color: '#34d399', fontSize: '0.95rem' }}>
-        +{r.suggested_qty} units
+      <td style={{ color: 'var(--text-secondary)' }}>{r.location_code || 'Central Yard'}</td>
+      <td>
+        <div style={{ fontSize: '0.8rem', fontVariantNumeric: 'tabular-nums' }}>
+          Pos: <strong style={{ color: '#ffffff' }}>{r.inventory_position}</strong>{' '}
+          <span style={{ color: 'var(--text-muted)' }}>(ROP: {r.reorder_point})</span>
+        </div>
+      </td>
+      <td style={{ textAlign: 'right', fontWeight: 700, color: '#34d399', fontSize: '0.9rem', fontVariantNumeric: 'tabular-nums' }}>
+        +{r.suggested_qty}
       </td>
       <td>
         {r.status === 'APPROVED' ? (
-          <span className="badge badge-success" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
-            <CheckCircle style={{ width: 12, height: 12 }} /> {r.created_po_number || 'PO Drafted'}
+          <span className="badge badge-success">
+            <CheckCircle style={{ width: 12, height: 12 }} /> {r.created_po_number || 'PO Converted'}
           </span>
         ) : r.status === 'DISMISSED' ? (
-          <span className="badge badge-critical" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
+          <span className="badge badge-critical">
             <Ban style={{ width: 12, height: 12 }} /> Dismissed
           </span>
         ) : (
@@ -77,10 +80,10 @@ export const AIRowItem: React.FC<AIRowItemProps> = ({
         )}
       </td>
       <td style={{ textAlign: 'right' }}>
-        <div style={{ display: 'inline-flex', gap: '0.4rem', justifyContent: 'flex-end' }}>
+        <div style={{ display: 'inline-flex', gap: '0.35rem' }}>
           <button
             className="btn btn-secondary"
-            style={{ padding: '0.25rem 0.55rem', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '0.2rem' }}
+            style={{ padding: '0.25rem 0.5rem', fontSize: '0.72rem' }}
             onClick={() => onInspect(r)}
           >
             Inspect <ArrowUpRight style={{ width: 12, height: 12 }} />
@@ -91,7 +94,7 @@ export const AIRowItem: React.FC<AIRowItemProps> = ({
               style={{ padding: '0.25rem 0.55rem', fontSize: '0.72rem' }}
               onClick={() => onQuickApprove(r.id)}
             >
-              Approve & PO
+              <Check style={{ width: 12, height: 12 }} /> Approve PO
             </button>
           )}
         </div>
