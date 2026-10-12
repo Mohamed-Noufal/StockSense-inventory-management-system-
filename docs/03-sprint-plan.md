@@ -67,21 +67,23 @@ Do not represent P1/P2 features as implemented if they have only been designed.
 
 This is a deadline-aware plan from Monday evening to Thursday's interview. Adjust the working blocks to actual availability, but preserve the order and exit criteria.
 
-### Monday evening, 12 October — Foundation and one API-to-React path
+### Monday evening, 12 October — Foundation and one API-to-React path (COMPLETED)
 
 **Objective:** remove integration uncertainty before building the features.
 
-- [ ] Create the public-repository skeleton and `.gitignore`.
-- [ ] Create Python environment and pin tested backend dependencies.
-- [ ] Create the FastAPI app with `/health` and `/ready`.
-- [ ] Initialize SQLite and one simple ORM model.
-- [ ] Scaffold Vite + React + TypeScript.
-- [ ] Create a central frontend API client.
-- [ ] Make the React page call a real backend endpoint and display the response.
-- [ ] Decide the API URL strategy: direct localhost + explicit CORS, or a `/api` proxy. Test it in the browser.
-- [ ] Add README setup notes immediately, keeping them synchronized with reality.
+- [x] Create the public-repository skeleton and `.gitignore`.
+- [x] Create Python environment and pin tested backend dependencies.
+- [x] Create the FastAPI app with `/health` and `/ready`.
+- [x] Initialize SQLite and canonical 17 ORM models with WAL mode & foreign keys.
+- [x] Scaffold Vite + React + TypeScript.
+- [x] Create a central frontend API client.
+- [x] Make the React page call a real backend endpoint and display the response.
+- [x] Decide the API URL strategy: direct localhost + explicit CORS + Vite proxy `/api/v1`.
+- [x] Add README setup notes immediately, keeping them synchronized with reality.
+- [x] Install GitHub agent skills: `ui-ux-pro-max`, `database-architect`, `architecture-patterns`, `async-python-patterns`, `api-design-principles`.
+- [x] Consolidate AI and advisory logic under clean, modular `backend/ai/` package.
 
-**Exit criteria:** clean local start of both processes, React displays live API data, and no CORS/URL confusion remains.
+**Exit criteria:** clean local start of both processes, React displays live API data, 9/9 backend tests pass, clean Git history. (MET)
 
 ### Tuesday morning, 13 October — Inventory correctness
 
