@@ -1,7 +1,8 @@
 import {
   HealthResponse, ReadyResponse, InventoryItem, InventoryLocation,
   StockBalance, StockMovement, MovementCreatePayload, TransferCreatePayload,
-  IntegrityCheckResponse, Supplier, PurchaseOrder, POCreatePayload, POReceivePayload
+  IntegrityCheckResponse, Supplier, PurchaseOrder, POCreatePayload, POReceivePayload,
+  AIRun, AIRecommendation, AIRunTriggerPayload
 } from '../types';
 
 const API_BASE = '/api/v1';
@@ -84,6 +85,23 @@ export const api = {
   cancelPurchaseOrder: (id: number) =>
     request<PurchaseOrder>(`/po/${id}/cancel`, {
       method: 'POST',
+    }),
+  triggerAIRun: (payload: AIRunTriggerPayload = {}) =>
+    request<AIRun>('/ai/runs', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  getAIRuns: () => request<AIRun[]>('/ai/runs'),
+  getAIRecommendations: (status?: string) =>
+    request<AIRecommendation[]>(`/ai/recommendations${status && status !== 'ALL' ? `?status=${status}` : ''}`),
+  approveRecommendation: (id: number) =>
+    request<PurchaseOrder>(`/ai/recommendations/${id}/approve`, {
+      method: 'POST',
+    }),
+  dismissRecommendation: (id: number, decisionNote: string) =>
+    request<AIRecommendation>(`/ai/recommendations/${id}/dismiss`, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'DISMISS', decision_note: decisionNote }),
     }),
 };
 

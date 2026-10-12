@@ -4,7 +4,7 @@ import { api } from './api/client';
 import {
   HealthResponse, ReadyResponse, InventoryItem, InventoryLocation,
   StockMovement, IntegrityCheckResponse, Milestone, PurchaseOrder,
-  Supplier, POCreatePayload, POReceivePayload,
+  Supplier, POCreatePayload, POReceivePayload, AIRun, AIRecommendation,
 } from './types';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
@@ -12,14 +12,16 @@ import { InventoryView } from './components/InventoryView';
 import { LedgerView } from './components/LedgerView';
 import { OverviewView } from './components/OverviewView';
 import { ProcurementView } from './components/ProcurementView';
+import { AIInsightsView } from './components/AIInsightsView';
 import { SprintView } from './components/SprintView';
 import { DiagnosticsView } from './components/DiagnosticsView';
 import { MovementModal } from './components/MovementModal';
 import { POCreateModal } from './components/POCreateModal';
 import { POReceiveModal } from './components/POReceiveModal';
+import { RecommendationModal } from './components/RecommendationModal';
 
 const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'inventory' | 'ledger' | 'procurement' | 'sprint' | 'diagnostics'>('inventory');
+  const [activeTab, setActiveTab] = useState<'overview' | 'inventory' | 'ledger' | 'procurement' | 'ai' | 'sprint' | 'diagnostics'>('inventory');
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [readiness, setReadiness] = useState<ReadyResponse | null>(null);
   const [items, setItems] = useState<InventoryItem[]>([]);
@@ -27,12 +29,15 @@ const App: React.FC = () => {
   const [ledger, setLedger] = useState<StockMovement[]>([]);
   const [orders, setOrders] = useState<PurchaseOrder[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [recommendations, setRecommendations] = useState<AIRecommendation[]>([]);
+  const [aiRuns, setAiRuns] = useState<AIRun[]>([]);
   const [integrity, setIntegrity] = useState<IntegrityCheckResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [runningAi, setRunningAi] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  // Modal State
+  // Modals
   const [showModal, setShowModal] = useState<boolean>(false);
   const [modalType, setModalType] = useState<'RECEIPT' | 'ISSUE' | 'TRANSFER'>('RECEIPT');
   const [selectedItemId, setSelectedItemId] = useState<number>(0);
@@ -41,15 +46,15 @@ const App: React.FC = () => {
   const [txQty, setTxQty] = useState<number>(5);
   const [txReason, setTxReason] = useState<string>('');
 
-  // PO Modals
   const [showPOCreateModal, setShowPOCreateModal] = useState<boolean>(false);
   const [receivingPO, setReceivingPO] = useState<PurchaseOrder | null>(null);
+  const [inspectingRec, setInspectingRec] = useState<AIRecommendation | null>(null);
 
   const fetchData = async () => {
     setLoading(true);
     setError(null);
     try {
-      const [hData, rData, itmData, locData, ledgData, integData, poData, supData] = await Promise.all([
+      const [hData, rData, itmData, locData, ledgData, integData, poData, supData, recData, runData] = await Promise.all([
         api.getHealth().catch(() => null),
         api.getReadiness().catch(() => null),
         api.getItems().catch(() => []),
@@ -58,6 +63,8 @@ const App: React.FC = () => {
         api.getIntegrityCheck().catch(() => null),
         api.getPurchaseOrders().catch(() => []),
         api.getSuppliers().catch(() => []),
+        api.getAIRecommendations().catch(() => []),
+        api.getAIRuns().catch(() => []),
       ]);
       setHealth(hData);
       setReadiness(rData);
@@ -67,6 +74,9 @@ const App: React.FC = () => {
       setIntegrity(integData);
       setOrders(poData);
       setSuppliers(supData);
+      setRecommendations(recData);
+      setAiRuns(runData);
+
       if (itmData.length > 0 && selectedItemId === 0) setSelectedItemId(itmData[0].id);
       if (locData.length > 0 && selectedLocId === 0) {
         setSelectedLocId(locData[0].id);
@@ -153,6 +163,43 @@ const App: React.FC = () => {
     }
   };
 
+  const handleTriggerAIRun = async () => {
+    setRunningAi(true);
+    setError(null);
+    try {
+      const run = await api.triggerAIRun({ service_level: 0.95, default_method: 'sba' });
+      setSuccessMsg(`AI Run #${run.id} completed! Identified ${run.recommendations_count} replenishment proposals.`);
+      await fetchData();
+    } catch (err: any) {
+      setError(err.message || 'AI run failed');
+    } finally {
+      setRunningAi(false);
+    }
+  };
+
+  const handleApproveRecommendation = async (recId: number) => {
+    setError(null);
+    try {
+      const po = await api.approveRecommendation(recId);
+      setSuccessMsg(`Recommendation #${recId} APPROVED! Draft Purchase Order ${po.po_number} created.`);
+      await fetchData();
+      setActiveTab('procurement');
+    } catch (err: any) {
+      setError(err.message || 'Failed to approve recommendation');
+    }
+  };
+
+  const handleDismissRecommendation = async (recId: number, reason: string) => {
+    setError(null);
+    try {
+      await api.dismissRecommendation(recId, reason);
+      setSuccessMsg(`Recommendation #${recId} dismissed.`);
+      await fetchData();
+    } catch (err: any) {
+      setError(err.message || 'Failed to dismiss recommendation');
+    }
+  };
+
   const handleRunIntegrityCheck = async () => {
     try {
       const res = await api.getIntegrityCheck();
@@ -192,9 +239,9 @@ const App: React.FC = () => {
       id: 'sprint-4',
       title: 'AI Intermittent Demand & Replenishment Integration',
       sprint: 'Sprint 4',
-      status: 'queued',
+      status: 'completed',
       description: 'Connecting intermittent demand models (Croston/SBA) and safety stock policies directly to live inventory for replenishment proposals.',
-      deliverables: ['AI recommendation trigger', 'Approval-to-PO conversion', 'Out-of-sample backtest dashboard'],
+      deliverables: ['Zero-leakage demand extractor', 'Croston / SBA statistical models', 'Risk-based order-up-to policies', 'Human-in-the-loop recommendation approval', 'Atomic Draft PO generation', 'React AI Insights screen'],
     },
   ];
 
@@ -206,6 +253,7 @@ const App: React.FC = () => {
         itemsCount={items.length}
         ledgerCount={ledger.length}
         poCount={orders.length}
+        aiCount={recommendations.filter((r) => r.status === 'OPEN').length}
         health={health}
       />
 
@@ -244,6 +292,17 @@ const App: React.FC = () => {
               onApprove={handleApprovePO}
               onCancel={handleCancelPO}
               loading={loading}
+            />
+          )}
+          {activeTab === 'ai' && (
+            <AIInsightsView
+              recommendations={recommendations}
+              runs={aiRuns}
+              onTriggerRun={handleTriggerAIRun}
+              onInspectRec={(rec) => setInspectingRec(rec)}
+              onQuickApprove={handleApproveRecommendation}
+              loading={loading}
+              runningAi={runningAi}
             />
           )}
           {activeTab === 'overview' && <OverviewView itemsCount={items.length} movementsCount={ledger.length} locationsCount={locations.length} />}
@@ -288,6 +347,15 @@ const App: React.FC = () => {
           po={receivingPO}
           onClose={() => setReceivingPO(null)}
           onSubmit={handleReceivePOLine}
+        />
+      )}
+
+      {inspectingRec && (
+        <RecommendationModal
+          rec={inspectingRec}
+          onClose={() => setInspectingRec(null)}
+          onApprove={handleApproveRecommendation}
+          onDismiss={handleDismissRecommendation}
         />
       )}
     </div>

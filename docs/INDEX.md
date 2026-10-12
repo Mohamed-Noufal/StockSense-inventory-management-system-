@@ -317,9 +317,12 @@ As of Tuesday, 13 October 2026:
 - [x] **Over-Receipt Prohibition:** Validation rejects any receiving attempt where $Q_{received} > Q_{ordered} - Q_{already\_received}$ with HTTP 400.
 - [x] **Reconciliation Audit Endpoint:** Automated `/integrity-check` reconciling ledger transaction sums against running balances with `0 mismatches`.
 - [x] **Deterministic Synthetic Seed Dataset:** 3 categories, 3 locations, 4 suppliers, 3 projects, 3 users, 15 oilfield spare parts with supplier terms, 52 weeks of intermittent demand history, and active sample POs.
-- [x] **Modular React 18 + TS + Vite Frontend:** Decomposed into clean subcomponents (`Sidebar`, `Header`, `InventoryView`, `LedgerView`, `ProcurementView`, `MovementModal`, `POCreateModal`, `POReceiveModal`, `SprintView`, `DiagnosticsView`) with live transaction modals.
-- [x] **Complete AI Core:** Croston, Syntetos-Boylan Approximation (SBA), ADI/$CV^2$ demand classifier, Safety Stock / ROP / Order-Up-To calculations, ReplenishmentAgent advisory service, and out-of-sample backtest evaluator.
-- [x] **Passing Test Harness:** 21/21 unit and integration tests passing in 0.37s.
+- [x] **Complete AI Replenishment Pipeline (Sprint 4 Complete):** Time-safe weekly demand extraction (`demand_extractor.py`), Syntetos-Boylan (SBA) / Croston forecasting, ADI/$CV^2$ demand quadrant classification, and risk-based Order-Up-To policy generation.
+- [x] **Human-in-the-Loop Recommendation Conversion:** Direct single-click approval of AI recommendations (`POST /api/v1/ai/recommendations/{id}/approve`) creating linked `DRAFT` Purchase Orders (`source_recommendation_id`) with operator audit trail.
+- [x] **Full Mathematical Explainability:** Every recommendation persists structured formula inputs ($Q_{on\_hand}$, $Q_{on\_order}$, $ROP$, $SS$, target $OUT$, $MOQ$) and human-readable natural language justification.
+- [x] **Modular React 18 + TS + Vite Frontend:** Decomposed into clean subcomponents (`Sidebar`, `Header`, `InventoryView`, `LedgerView`, `ProcurementView`, `AIInsightsView`, `MovementModal`, `POCreateModal`, `POReceiveModal`, `RecommendationModal`, `SprintView`, `DiagnosticsView`) with live transaction modals.
+- [x] **Passing Test Harness:** 26/26 unit and integration tests passing in 0.87s.
+- [x] **Unified Single-Command Runner:** `./run.sh` / `scripts/run_app.sh` with intelligent port conflict detection and clean `Ctrl+C` shutdown trap.
 - [x] **Lean, Concise Files:** All files partitioned into micro-modules (<140 lines); zero bloated files.
 - [x] **Organized Documentation Suite:** All specifications, architecture charts, data flows, and sprint schedules organized cleanly in `docs/`.
 

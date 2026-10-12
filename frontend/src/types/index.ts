@@ -170,3 +170,50 @@ export interface POReceivePayload {
   actor_label?: string;
 }
 
+export interface AIRun {
+  id: number;
+  run_type: string;
+  status: string;
+  started_at: string;
+  finished_at: string | null;
+  data_cutoff: string;
+  random_seed: number;
+  model_version: string;
+  recommendations_count: number;
+  error?: string | null;
+}
+
+export interface AIRecommendation {
+  id: number;
+  run_id: number;
+  item_id: number;
+  supplier_id: number;
+  destination_location_id: number;
+  status: 'OPEN' | 'APPROVED' | 'DISMISSED' | 'EXPIRED';
+  urgency: 'CRITICAL' | 'HIGH' | 'NORMAL';
+  on_hand: number;
+  on_order: number;
+  inventory_position: number;
+  reorder_point: number;
+  suggested_qty: number;
+  explanation_json: string;
+  summary_text: string;
+  created_at: string;
+  item_sku?: string;
+  item_name?: string;
+  supplier_name?: string;
+  location_code?: string;
+  demand_pattern?: string;
+  forecast_method?: string;
+  created_po_id?: number;
+  created_po_number?: string;
+}
+
+export interface AIRunTriggerPayload {
+  data_cutoff?: string;
+  random_seed?: number;
+  service_level?: number;
+  default_method?: string;
+}
+
+

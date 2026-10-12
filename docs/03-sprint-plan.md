@@ -113,24 +113,24 @@ This is a deadline-aware plan from Monday evening to Thursday's interview. Adjus
 
 **Exit criteria:** seed can be repeated, stock integrity passes, a PO can be approved and received, and the resulting ledger/balance state is visible in the UI. (MET - 21/21 pytest tests passing, 0 mismatches integrity check, clean React SPA integration)
 
-### Tuesday evening — Minimum useful AI and public-repo delivery
+### Tuesday evening — Minimum useful AI and public-repo delivery (COMPLETED)
 
 **Objective:** create a defensible AI result rather than an unfinished list of model names.
 
-- [ ] Build weekly demand series with zeros only after item introduction.
-- [ ] Implement a naive or moving-average baseline.
-- [ ] Implement at least one intermittent-demand method (prefer a tested Croston-family method such as SBA or TSB if feasible).
-- [ ] Implement a chronological backtest and at least one interpretable error metric.
-- [ ] Ensure training inputs exclude future data and synthetic ground truth.
-- [ ] Implement the selected periodic-review order-up-to policy with explicit target/rounding rules.
-- [ ] Add an explanation for each recommendation.
-- [ ] Implement approve recommendation → create PO atomically.
-- [ ] Create the React AI Insights screen.
-- [ ] Add tests for forecast time cutoffs, metric edge cases, and recommendation arithmetic.
-- [ ] Finish the README's quick start, architecture, model, data, test, and limitations sections.
-- [ ] Push the public repository and verify it from a clean clone; aim to send the link Tuesday night.
+- [x] Build weekly demand series with zeros only after item introduction (`backend/ai/demand_extractor.py`).
+- [x] Implement a naive or moving-average baseline (`backend/ai/forecasting.py`).
+- [x] Implement at least one intermittent-demand method (Croston & Syntetos-Boylan Approximation SBA).
+- [x] Implement a chronological backtest and at least one interpretable error metric (`backend/ai/evaluator.py`).
+- [x] Ensure training inputs exclude future data and synthetic ground truth (zero-leakage temporal extractor).
+- [x] Implement the selected periodic-review order-up-to policy with explicit target/rounding rules (`backend/ai/policy.py`).
+- [x] Add an explanation for each recommendation (`explanation_json` and `summary_text`).
+- [x] Implement approve recommendation → create PO atomically (`POST /api/v1/ai/recommendations/{id}/approve`).
+- [x] Create the React AI Insights screen (`AIInsightsView.tsx`, `RecommendationModal.tsx`).
+- [x] Add tests for forecast time cutoffs, metric edge cases, and recommendation arithmetic (`backend/tests/test_ai_integration.py` - 26/26 tests passing).
+- [x] Finish the README's quick start, architecture, model, data, test, and limitations sections.
+- [x] Push the public repository and verify it from a clean clone; aim to send the link Tuesday night.
 
-**Exit criteria:** user can see an AI recommendation, understand its calculation, approve it, and complete receiving. Results are not presented as guaranteed business accuracy.
+**Exit criteria:** user can see an AI recommendation, understand its calculation, approve it, and complete receiving. Results are not presented as guaranteed business accuracy. (MET - 26/26 pytest tests passing, live replenishment pipeline connected to React UI)
 
 ### Wednesday, 14 October — Verification, bug fixes, demo rehearsal
 
@@ -175,11 +175,11 @@ This is a deadline-aware plan from Monday evening to Thursday's interview. Adjus
 
 **Done when:** PO state transitions are validated; over-receipts fail atomically; seed is repeatable; integrity check passes after the generated history. (MET)
 
-### Sprint D — Explainable AI slice
+### Sprint D — Explainable AI slice (COMPLETED)
 
 **Tasks:** weekly series, baseline/intermittent forecasts, time split, selected policy, recommendation explanation, model metrics.
 
-**Done when:** every output has a cutoff and method; the final evaluation period was not used to select the method; the policy's target and quantity can be recalculated by hand on a small example; edge cases are handled.
+**Done when:** every output has a cutoff and method; the final evaluation period was not used to select the method; the policy's target and quantity can be recalculated by hand on a small example; edge cases are handled. (MET)
 
 ### Sprint E — React workflow and hardening
 

@@ -39,7 +39,8 @@ def _format_po(po: PurchaseOrder, db: Session) -> POResponse:
         supplier_name=supplier.name if supplier else None,
         status=po.status, created_at=po.created_at,
         order_date=po.order_date, expected_date=po.expected_date,
-        notes=po.notes, lines=line_responses,
+        notes=po.notes, source_recommendation_id=po.source_recommendation_id,
+        lines=line_responses,
         total_lines=len(line_responses), total_amount_minor=total_amount
     )
 

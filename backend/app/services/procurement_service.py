@@ -29,6 +29,7 @@ def create_po(db: Session, po_in: POCreate, user_id: Optional[int] = None) -> Pu
         supplier_id=po_in.supplier_id,
         status="DRAFT",
         expected_date=po_in.expected_date,
+        source_recommendation_id=po_in.source_recommendation_id,
         created_by_user_id=user_id,
         notes=po_in.notes,
     )

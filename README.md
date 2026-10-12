@@ -180,6 +180,7 @@ stocksense/
 │   └── stocksense-technical-plan.md
 ├── backend/
 │   ├── ai/                     # Dedicated AI & Advisory Engine (Self-contained)
+│   │   ├── demand_extractor.py # Time-safe weekly demand extractor (zero future leakage)
 │   │   ├── agent.py            # ReplenishmentAgent advisory service
 │   │   ├── classification.py   # Demand pattern classification (ADI & CV²)
 │   │   ├── forecasting.py      # Croston, SBA, MA8, SES algorithms
@@ -199,15 +200,15 @@ stocksense/
 │   │       ├── inventory_service.py   # Movements, over-issue rejection, paired transfers
 │   │       ├── integrity_service.py   # Ledger-sum vs running-balance reconciliation
 │   │       └── procurement_service.py # PO state machine, goods receiving, over-receipt check
-│   ├── tests/                  # Backend pytest suite (21 passed)
+│   ├── tests/                  # Backend pytest suite (26 passed)
 │   ├── scripts/                # Database initialization & synthetic generation (init_db, seed_data)
 │   └── requirements.txt        # Pinned Python dependencies
 ├── frontend/
 │   ├── src/
 │   │   ├── api/                # Central typed REST API client (client.ts)
-│   │   ├── components/         # Modular UI views (Sidebar, Header, InventoryView, LedgerView, ProcurementView, POCreateModal, POReceiveModal, MovementModal, etc.)
+│   │   ├── components/         # Modular UI views (Sidebar, Header, InventoryView, LedgerView, ProcurementView, AIInsightsView, RecommendationModal, MovementModal, etc.)
 │   │   ├── types/              # TypeScript domain types & API models (index.ts)
-│   │   ├── App.tsx             # Concise layout coordinator (<240 lines)
+│   │   ├── App.tsx             # Concise layout coordinator (<260 lines)
 │   │   ├── index.css           # Industrial dark slate design tokens & styles
 │   │   └── main.tsx            # React application entrypoint
 │   ├── package.json

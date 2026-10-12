@@ -1,6 +1,6 @@
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timezone
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 class AIRunTriggerRequest(BaseModel):
     data_cutoff: Optional[str] = Field(None, description="ISO-8601 data cutoff date YYYY-MM-DD")
@@ -31,6 +31,15 @@ class RecommendationResponse(BaseModel):
     explanation_json: str
     summary_text: str
     created_at: str
+    item_sku: Optional[str] = None
+    item_name: Optional[str] = None
+    supplier_name: Optional[str] = None
+    location_code: Optional[str] = None
+    demand_pattern: Optional[str] = None
+    forecast_method: Optional[str] = None
+    created_po_id: Optional[int] = None
+    created_po_number: Optional[str] = None
+    model_config = ConfigDict(from_attributes=True)
 
 class RecommendationDecisionRequest(BaseModel):
     action: str = Field(..., description="Action: 'APPROVE' or 'DISMISS'")

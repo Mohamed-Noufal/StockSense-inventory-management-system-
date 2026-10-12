@@ -21,6 +21,7 @@ class POCreate(BaseModel):
     po_number: Optional[str] = None
     expected_date: Optional[str] = None
     notes: Optional[str] = None
+    source_recommendation_id: Optional[int] = None
     lines: List[POLineCreate] = Field(min_length=1, description="At least one line is required")
 
 class POReceivePayload(BaseModel):
@@ -55,6 +56,7 @@ class POResponse(BaseModel):
     order_date: Optional[str] = None
     expected_date: Optional[str] = None
     notes: Optional[str] = None
+    source_recommendation_id: Optional[int] = None
     lines: List[POLineResponse] = []
     total_lines: int = 0
     total_amount_minor: int = 0

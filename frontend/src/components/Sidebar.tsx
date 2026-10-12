@@ -1,18 +1,19 @@
 import React from 'react';
-import { Boxes, History, ShoppingCart, Activity, FileText, Server } from 'lucide-react';
+import { Boxes, History, ShoppingCart, Brain, Activity, FileText, Server } from 'lucide-react';
 import { HealthResponse } from '../types';
 
 interface SidebarProps {
-  activeTab: 'overview' | 'inventory' | 'ledger' | 'procurement' | 'sprint' | 'diagnostics';
-  setActiveTab: (tab: 'overview' | 'inventory' | 'ledger' | 'procurement' | 'sprint' | 'diagnostics') => void;
+  activeTab: 'overview' | 'inventory' | 'ledger' | 'procurement' | 'ai' | 'sprint' | 'diagnostics';
+  setActiveTab: (tab: 'overview' | 'inventory' | 'ledger' | 'procurement' | 'ai' | 'sprint' | 'diagnostics') => void;
   itemsCount: number;
   ledgerCount: number;
   poCount: number;
+  aiCount: number;
   health: HealthResponse | null;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
-  activeTab, setActiveTab, itemsCount, ledgerCount, poCount, health,
+  activeTab, setActiveTab, itemsCount, ledgerCount, poCount, aiCount, health,
 }) => {
   return (
     <aside className="sidebar">
@@ -53,6 +54,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <ShoppingCart className="nav-icon" />
           <span>Purchase Orders</span>
           {poCount > 0 && <span className="nav-badge">{poCount}</span>}
+        </button>
+
+        <button
+          className={`nav-item ${activeTab === 'ai' ? 'active' : ''}`}
+          onClick={() => setActiveTab('ai')}
+        >
+          <Brain className="nav-icon" />
+          <span>AI Insights</span>
+          {aiCount > 0 && <span className="nav-badge" style={{ background: '#a855f7' }}>{aiCount}</span>}
         </button>
 
         <button
