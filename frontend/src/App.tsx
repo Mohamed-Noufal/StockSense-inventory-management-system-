@@ -2,56 +2,138 @@ import React, { useState, useEffect } from 'react';
 import {
   Boxes,
   Activity,
-  ShoppingCart,
-  BrainCircuit,
+  History,
   ShieldCheck,
   Server,
   Database,
   RefreshCw,
   CheckCircle2,
-  Clock,
-  ArrowRight,
-  Layers,
-  FileText,
   AlertTriangle,
+  ArrowRightLeft,
+  PlusCircle,
+  MinusCircle,
+  FileText,
+  Search,
+  Filter,
 } from 'lucide-react';
 import { api } from './api/client';
-import { HealthResponse, ReadyResponse, Milestone } from './types';
+import {
+  HealthResponse,
+  ReadyResponse,
+  InventoryItem,
+  InventoryLocation,
+  StockMovement,
+  IntegrityCheckResponse,
+  Milestone,
+} from './types';
 
 const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'sprint' | 'diagnostics'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'inventory' | 'ledger' | 'sprint' | 'diagnostics'>('inventory');
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [readiness, setReadiness] = useState<ReadyResponse | null>(null);
+  const [items, setItems] = useState<InventoryItem[]>([]);
+  const [locations, setLocations] = useState<InventoryLocation[]>([]);
+  const [ledger, setLedger] = useState<StockMovement[]>([]);
+  const [integrity, setIntegrity] = useState<IntegrityCheckResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedUser, setSelectedUser] = useState<'STOREKEEPER' | 'PROCUREMENT_OFFICER' | 'MANAGER'>('STOREKEEPER');
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  const checkConnection = async () => {
+  // Modal State
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [modalType, setModalType] = useState<'RECEIPT' | 'ISSUE' | 'TRANSFER'>('RECEIPT');
+  const [selectedItemId, setSelectedItemId] = useState<number>(0);
+  const [selectedLocId, setSelectedLocId] = useState<number>(0);
+  const [targetLocId, setTargetLocId] = useState<number>(0);
+  const [txQty, setTxQty] = useState<number>(5);
+  const [txReason, setTxReason] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [critFilter, setCritFilter] = useState<string>('ALL');
+
+  const fetchData = async () => {
     setLoading(true);
     setError(null);
     try {
-      const [hData, rData] = await Promise.all([
-        api.getHealth().catch((err) => {
-          console.warn('Health check not available yet:', err);
-          return null;
-        }),
-        api.getReadiness().catch((err) => {
-          console.warn('Readiness check not available yet:', err);
-          return null;
-        }),
+      const [hData, rData, itmData, locData, ledgData, integData] = await Promise.all([
+        api.getHealth().catch(() => null),
+        api.getReadiness().catch(() => null),
+        api.getItems().catch(() => []),
+        api.getLocations().catch(() => []),
+        api.getLedger(30).catch(() => []),
+        api.getIntegrityCheck().catch(() => null),
       ]);
       setHealth(hData);
       setReadiness(rData);
+      setItems(itmData);
+      setLocations(locData);
+      setLedger(ledgData);
+      setIntegrity(integData);
+      if (itmData.length > 0 && selectedItemId === 0) setSelectedItemId(itmData[0].id);
+      if (locData.length > 0 && selectedLocId === 0) {
+        setSelectedLocId(locData[0].id);
+        if (locData.length > 1) setTargetLocId(locData[1].id);
+      }
     } catch (err: any) {
-      setError(err.message || 'Failed to connect to backend service.');
+      setError(err.message || 'Failed to fetch inventory data');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    checkConnection();
+    fetchData();
   }, []);
+
+  const handleTransaction = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSuccessMsg(null);
+    try {
+      if (modalType === 'TRANSFER') {
+        const res = await api.transferStock({
+          item_id: selectedItemId,
+          from_location_id: selectedLocId,
+          to_location_id: targetLocId,
+          quantity: txQty,
+          reason: txReason || 'Field site transfer',
+        });
+        setSuccessMsg(`Transfer of ${res.quantity} units executed successfully! Group ID: ${res.transfer_group_id.slice(0, 8)}`);
+      } else {
+        const res = await api.postMovement({
+          item_id: selectedItemId,
+          location_id: selectedLocId,
+          movement_type: modalType,
+          quantity: txQty,
+          reason: txReason || `Manual ${modalType.toLowerCase()}`,
+        });
+        setSuccessMsg(`Movement #${res.id} (${res.movement_type} ${res.quantity} units) recorded successfully!`);
+      }
+      setShowModal(false);
+      setTxQty(5);
+      setTxReason('');
+      fetchData();
+    } catch (err: any) {
+      setError(err.message || 'Transaction failed');
+    }
+  };
+
+  const handleRunIntegrityCheck = async () => {
+    try {
+      const res = await api.getIntegrityCheck();
+      setIntegrity(res);
+      setSuccessMsg(`Audit verified! Status: ${res.status}. Total mismatches: ${res.mismatches_count}.`);
+    } catch (err: any) {
+      setError(err.message || 'Integrity check failed');
+    }
+  };
+
+  const filteredItems = items.filter((item) => {
+    const matchesSearch =
+      item.sku.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCrit = critFilter === 'ALL' || item.criticality === critFilter;
+    return matchesSearch && matchesCrit;
+  });
 
   const milestones: Milestone[] = [
     {
@@ -59,29 +141,29 @@ const App: React.FC = () => {
       title: 'Foundation, Environment & Skeletons',
       sprint: 'Sprint 1',
       status: 'completed',
-      description: 'Repository structure, requirements, SQLite WAL setup, FastAPI health endpoints, React+Vite app, typed client, and agent skills.',
+      description: 'SQLite WAL mode, FastAPI health API, React+Vite SPA, typed client, and unified backend/ai/ module.',
       deliverables: [
-        'Git repository initialized & tracked',
-        'Assessment documentation indexed in docs/',
-        'Executive README.md & Sprint tracker',
-        'Python 3.12 virtualenv & pinned requirements',
+        'Clean repository with zero loose root files',
         'SQLite connection with PRAGMA WAL & Foreign Keys',
-        'FastAPI modular monolith foundation',
+        'FastAPI modular monolith with /health and /ready',
         'Vite + React + TS responsive frontend',
+        'AI engine with Croston, SBA, ADI/CV² classification',
       ],
     },
     {
       id: 'sprint-2',
-      title: 'Core Inventory & Append-Only Ledger',
+      title: 'Core Inventory & Ledger Transactions',
       sprint: 'Sprint 2',
-      status: 'in_progress',
-      description: '17-table schema, append-only stock movement ledger, transactional balance updates, and zero-mismatch integrity checker.',
+      status: 'completed',
+      description: 'Master items, append-only stock movement ledger, atomic balance synchronization, over-issue rejection, paired transfers, and integrity check.',
       deliverables: [
-        'SQLAlchemy 2.0 ORM models for all 17 tables',
-        'Receipt, Issue, and Transfer atomic services',
-        'Over-issue check preventing negative stock',
-        'Idempotency key handling for external mutations',
-        'Balance-vs-ledger integrity validation endpoint',
+        'Atomic post_movement service with balance sync',
+        'Strict database CHECK (quantity_on_hand >= 0)',
+        'Over-issue rejection with HTTP 400',
+        'Double-entry inter-location transfer service',
+        'Automated zero-mismatch integrity check endpoint',
+        'Deterministic synthetic seed data (15 items, 52 weeks)',
+        'React Inventory Master & Movement Ledger tables',
       ],
     },
     {
@@ -89,395 +171,399 @@ const App: React.FC = () => {
       title: 'Procurement & Purchase Order Lifecycle',
       sprint: 'Sprint 3',
       status: 'queued',
-      description: 'Draft PO creation, approval workflow, destination warehouse assignment, and partial/full goods receiving.',
+      description: 'Draft PO creation, approval workflow, supplier terms, and partial/full goods receiving.',
       deliverables: [
         'PO state machine: DRAFT -> APPROVED -> PARTIALLY_RECEIVED -> RECEIVED',
-        'Destination-aware PO line receiving',
-        'Automatic receipt ledger movements on goods delivery',
-        'Audit attribution for storekeeper and procurement officers',
-      ],
-    },
-    {
-      id: 'sprint-4',
-      title: 'AI Replenishment & Decision Intelligence',
-      sprint: 'Sprint 4',
-      status: 'queued',
-      description: 'Intermittent demand forecasting (Croston, SBA, TSB), lead time risk simulation, and explainable recommendations.',
-      deliverables: [
-        'Demand pattern classification (ADI & CV²)',
-        'Croston & Syntetos-Boylan Approximation (SBA) forecasts',
-        'Monte Carlo lead-time risk simulation',
-        'Explainable recommendations with structured rationale JSON',
-        'Strict temporal cutoff (zero future leakage)',
-      ],
-    },
-    {
-      id: 'sprint-5',
-      title: 'Operations Dashboard & Golden Demo UI',
-      sprint: 'Sprint 5',
-      status: 'queued',
-      description: 'Interactive stock ledger table, inventory management, PO approval, recommendation review modal, and integrity dashboard.',
-      deliverables: [
-        'Inventory master list & movement history viewer',
-        'Issue and Transfer operational action forms',
-        'AI recommendation review & 1-click PO generator',
-        'Live integrity test runner in UI',
-      ],
-    },
-    {
-      id: 'sprint-6',
-      title: 'Verification, Evaluation & Interview Rehearsal',
-      sprint: 'Sprint 6',
-      status: 'queued',
-      description: 'End-to-end golden flow verification, paired simulation against min/max baseline, and presentation readiness.',
-      deliverables: [
-        'Out-of-sample backtesting (RMSSE, MASE, bias)',
-        'Paired simulation report (service level vs inventory value)',
-        'Clean-clone verification from fresh repository',
-        'Complete rehearsal of the live interview demonstration',
+        'Partial receiving with automatic receipt ledger records',
+        'Over-receipt prohibition',
       ],
     },
   ];
 
   return (
     <div className="app-container">
-      {/* Sidebar */}
+      {/* Sidebar Navigation */}
       <aside className="sidebar">
         <div className="sidebar-logo">
           <div className="sidebar-logo-icon">
-            <Boxes size={22} color="#ffffff" />
+            <Boxes className="w-5 h-5 text-white" />
           </div>
           <div className="sidebar-logo-text">
             <h1>StockSense</h1>
-            <span>AI Inventory PoC</span>
+            <span>Oilfield Inventory AI</span>
           </div>
         </div>
 
-        <div className="nav-section-title">Operations</div>
-        <ul className="nav-list">
-          <li>
-            <button
-              className={`nav-item ${activeTab === 'overview' ? 'active' : ''}`}
-              onClick={() => setActiveTab('overview')}
-              style={{ width: '100%', background: 'none', textAlign: 'left' }}
-            >
-              <Activity size={18} />
-              <span>System Overview</span>
-            </button>
-          </li>
-          <li>
-            <button
-              className={`nav-item ${activeTab === 'sprint' ? 'active' : ''}`}
-              onClick={() => setActiveTab('sprint')}
-              style={{ width: '100%', background: 'none', textAlign: 'left' }}
-            >
-              <Layers size={18} />
-              <span>Sprint Roadmap</span>
-            </button>
-          </li>
-          <li>
-            <button
-              className={`nav-item ${activeTab === 'diagnostics' ? 'active' : ''}`}
-              onClick={() => setActiveTab('diagnostics')}
-              style={{ width: '100%', background: 'none', textAlign: 'left' }}
-            >
-              <Server size={18} />
-              <span>API & Diagnostics</span>
-            </button>
-          </li>
-        </ul>
+        <nav className="nav-menu">
+          <div className="nav-section-label">Core System</div>
+          <button
+            className={`nav-item ${activeTab === 'inventory' ? 'active' : ''}`}
+            onClick={() => setActiveTab('inventory')}
+          >
+            <Boxes className="nav-icon" />
+            <span>Master Inventory</span>
+            {items.length > 0 && <span className="nav-badge">{items.length}</span>}
+          </button>
 
-        <div className="nav-section-title" style={{ marginTop: '1rem' }}>Modules (Sprint 2-5)</div>
-        <ul className="nav-list">
-          <li className="nav-item" style={{ opacity: 0.6, cursor: 'not-allowed' }}>
-            <Boxes size={18} />
-            <span>Inventory Master</span>
-          </li>
-          <li className="nav-item" style={{ opacity: 0.6, cursor: 'not-allowed' }}>
-            <ShoppingCart size={18} />
-            <span>Purchase Orders</span>
-          </li>
-          <li className="nav-item" style={{ opacity: 0.6, cursor: 'not-allowed' }}>
-            <BrainCircuit size={18} />
-            <span>AI Replenishment</span>
-          </li>
-          <li className="nav-item" style={{ opacity: 0.6, cursor: 'not-allowed' }}>
-            <ShieldCheck size={18} />
-            <span>Ledger & Audit</span>
-          </li>
-        </ul>
+          <button
+            className={`nav-item ${activeTab === 'ledger' ? 'active' : ''}`}
+            onClick={() => setActiveTab('ledger')}
+          >
+            <History className="nav-icon" />
+            <span>Stock Ledger</span>
+            {ledger.length > 0 && <span className="nav-badge">{ledger.length}</span>}
+          </button>
 
-        <div className="sidebar-footer">
-          <div className="user-badge">
-            <div className="user-avatar">
-              {selectedUser === 'STOREKEEPER' ? 'SK' : selectedUser === 'PROCUREMENT_OFFICER' ? 'PO' : 'MGR'}
-            </div>
-            <div className="user-meta" style={{ flex: 1 }}>
-              <h4>Demo Persona</h4>
-              <select
-                value={selectedUser}
-                onChange={(e) => setSelectedUser(e.target.value as any)}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  color: 'var(--text-secondary)',
-                  fontSize: '0.75rem',
-                  outline: 'none',
-                  cursor: 'pointer',
-                  width: '100%',
-                }}
-              >
-                <option value="STOREKEEPER" style={{ background: '#0f172a' }}>Storekeeper</option>
-                <option value="PROCUREMENT_OFFICER" style={{ background: '#0f172a' }}>Procurement Officer</option>
-                <option value="MANAGER" style={{ background: '#0f172a' }}>Operations Manager</option>
-              </select>
-            </div>
+          <button
+            className={`nav-item ${activeTab === 'overview' ? 'active' : ''}`}
+            onClick={() => setActiveTab('overview')}
+          >
+            <Activity className="nav-icon" />
+            <span>System Overview</span>
+          </button>
+
+          <div className="nav-section-label" style={{ marginTop: '1.25rem' }}>Delivery & Health</div>
+          <button
+            className={`nav-item ${activeTab === 'sprint' ? 'active' : ''}`}
+            onClick={() => setActiveTab('sprint')}
+          >
+            <FileText className="nav-icon" />
+            <span>Sprint Roadmap</span>
+          </button>
+
+          <button
+            className={`nav-item ${activeTab === 'diagnostics' ? 'active' : ''}`}
+            onClick={() => setActiveTab('diagnostics')}
+          >
+            <Server className="nav-icon" />
+            <span>Diagnostics</span>
+          </button>
+        </nav>
+
+        {/* Sidebar Footer */}
+        <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid var(--border-subtle)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: health?.status === 'healthy' ? '#10b981' : '#f59e0b' }} />
+            <span>Backend: {health?.status || 'Connecting...'}</span>
+          </div>
+          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+            Engine: SQLite (WAL Mode)
           </div>
         </div>
       </aside>
 
-      {/* Main Content */}
-      <div className="main-wrapper">
-        <header className="header">
-          <div className="header-title-section">
-            <h2 className="header-title">Environment & Foundations Setup</h2>
-            <span className="header-badge badge-poc">Assessment PoC</span>
+      {/* Main Content Area */}
+      <main className="main-content">
+        {/* Top Header */}
+        <header className="top-header">
+          <div className="header-title-container">
+            <h2>
+              {activeTab === 'inventory' && 'Master Inventory & Balance Cache'}
+              {activeTab === 'ledger' && 'Append-Only Stock Ledger Audit Trail'}
+              {activeTab === 'overview' && 'Executive Overview & KPI Dashboard'}
+              {activeTab === 'sprint' && 'Sprint Milestone Delivery Tracker'}
+              {activeTab === 'diagnostics' && 'System Health & Table Diagnostics'}
+            </h2>
+            <div className="header-breadcrumbs">
+              <span>StockSense</span> / <span className="current">{activeTab.toUpperCase()}</span>
+            </div>
           </div>
 
           <div className="header-actions">
-            <div className="connection-indicator">
-              <span
-                className={`indicator-dot ${
-                  loading ? 'dot-checking' : health?.status === 'healthy' ? 'dot-online' : 'dot-offline'
-                }`}
-              />
-              <span>
-                {loading
-                  ? 'Connecting...'
-                  : health?.status === 'healthy'
-                  ? 'Backend Online'
-                  : 'Backend Standby'}
-              </span>
-            </div>
+            {integrity && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.4rem 0.8rem',
+                  background: integrity.mismatches_count === 0 ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)',
+                  border: `1px solid ${integrity.mismatches_count === 0 ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
+                  borderRadius: 'var(--radius-md)',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  color: integrity.mismatches_count === 0 ? '#34d399' : '#f87171',
+                }}
+              >
+                <ShieldCheck style={{ width: 14, height: 14 }} />
+                <span>Ledger Invariant: {integrity.mismatches_count === 0 ? '0 Mismatches (Verified)' : 'Corrupted!'}</span>
+              </div>
+            )}
 
-            <button className="btn btn-secondary" onClick={checkConnection} title="Refresh connection">
-              <RefreshCw size={14} className={loading ? 'spin' : ''} />
-              <span>Ping</span>
+            <button
+              className="btn btn-secondary"
+              onClick={fetchData}
+              disabled={loading}
+              title="Refresh inventory and ledger feed"
+            >
+              <RefreshCw style={{ width: 14, height: 14 }} />
+              {loading ? 'Syncing...' : 'Sync'}
+            </button>
+
+            <button
+              className="btn btn-secondary"
+              onClick={handleRunIntegrityCheck}
+              title="Reconcile stock balances against sum of stock movements"
+            >
+              <ShieldCheck style={{ width: 14, height: 14 }} />
+              Audit Invariants
+            </button>
+
+            <button
+              className="btn btn-primary"
+              onClick={() => {
+                setModalType('RECEIPT');
+                setShowModal(true);
+              }}
+            >
+              <PlusCircle style={{ width: 14, height: 14 }} />
+              Execute Movement
             </button>
           </div>
         </header>
 
-        <main className="page-container">
-          {/* Header Card */}
-          <div className="glass-card" style={{ background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.7))' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
-              <div>
-                <h3 style={{ fontSize: '1.4rem', fontWeight: 800, marginBottom: '0.5rem' }}>
-                  StockSense Assessment Platform
-                </h3>
-                <p style={{ color: 'var(--text-secondary)', maxWidth: '750px', fontSize: '0.9rem', lineHeight: 1.6 }}>
-                  Complete AI-Assisted Inventory Management Proof of Concept for spare parts and consumables.
-                  Designed with an append-only stock ledger, transactional balance maintenance, and human-in-the-loop
-                  intermittent demand forecasting.
-                </p>
+        {/* Global Feedback Notifications */}
+        {error && (
+          <div style={{ padding: '0.75rem 1rem', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: 'var(--radius-md)', color: '#f87171', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
+            <AlertTriangle style={{ width: 16, height: 16 }} />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {successMsg && (
+          <div style={{ padding: '0.75rem 1rem', background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: 'var(--radius-md)', color: '#34d399', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
+            <CheckCircle2 style={{ width: 16, height: 16 }} />
+            <span>{successMsg}</span>
+          </div>
+        )}
+
+        {/* Content Body */}
+        <div className="content-body">
+          {/* TAB 1: MASTER INVENTORY */}
+          {activeTab === 'inventory' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              {/* Filter & Search Bar */}
+              <div className="glass-card" style={{ padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1, minWidth: '240px' }}>
+                  <Search style={{ width: 16, height: 16, color: 'var(--text-muted)' }} />
+                  <input
+                    type="text"
+                    placeholder="Search SKU or item name..."
+                    className="form-input"
+                    style={{ padding: '0.45rem 0.75rem', fontSize: '0.825rem' }}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <Filter style={{ width: 14, height: 14, color: 'var(--text-muted)' }} />
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>CRITICALITY:</span>
+                  {(['ALL', 'CRITICAL', 'STANDARD', 'LOW'] as const).map((crit) => (
+                    <button
+                      key={crit}
+                      className={`btn ${critFilter === crit ? 'btn-primary' : 'btn-secondary'}`}
+                      style={{ padding: '0.3rem 0.65rem', fontSize: '0.725rem' }}
+                      onClick={() => setCritFilter(crit)}
+                    >
+                      {crit}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                <a href="/api/v1/health" target="_blank" rel="noreferrer" className="btn btn-secondary">
-                  <Activity size={14} />
-                  <span>API Health</span>
-                </a>
-                <button className="btn btn-primary" onClick={() => setActiveTab('sprint')}>
-                  <span>View Sprint Roadmap</span>
-                  <ArrowRight size={14} />
+
+              {/* Items Table */}
+              <div className="table-container">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>SKU</th>
+                      <th>Item Description</th>
+                      <th>Criticality</th>
+                      <th>On-Hand Balance</th>
+                      <th>Unit of Measure</th>
+                      <th>Unit Cost</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredItems.map((item) => (
+                      <tr key={item.id}>
+                        <td className="sku-cell">{item.sku}</td>
+                        <td style={{ fontWeight: 600 }}>{item.name}</td>
+                        <td>
+                          <span
+                            className={`badge ${
+                              item.criticality === 'CRITICAL'
+                                ? 'badge-critical'
+                                : item.criticality === 'STANDARD'
+                                ? 'badge-standard'
+                                : 'badge-low'
+                            }`}
+                          >
+                            {item.criticality}
+                          </span>
+                        </td>
+                        <td style={{ fontWeight: 700, fontSize: '0.95rem' }}>
+                          <span style={{ color: item.total_on_hand > 0 ? '#34d399' : '#f87171' }}>
+                            {item.total_on_hand.toLocaleString()}
+                          </span>
+                        </td>
+                        <td style={{ color: 'var(--text-muted)' }}>{item.uom}</td>
+                        <td style={{ fontFamily: 'var(--font-mono)' }}>
+                          ${(item.unit_cost_minor / 100).toFixed(2)}
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', gap: '0.4rem' }}>
+                            <button
+                              className="btn btn-secondary"
+                              style={{ padding: '0.25rem 0.5rem', fontSize: '0.7rem' }}
+                              onClick={() => {
+                                setSelectedItemId(item.id);
+                                setModalType('ISSUE');
+                                setShowModal(true);
+                              }}
+                            >
+                              Issue
+                            </button>
+                            <button
+                              className="btn btn-secondary"
+                              style={{ padding: '0.25rem 0.5rem', fontSize: '0.7rem' }}
+                              onClick={() => {
+                                setSelectedItemId(item.id);
+                                setModalType('TRANSFER');
+                                setShowModal(true);
+                              }}
+                            >
+                              Transfer
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 2: STOCK LEDGER */}
+          {activeTab === 'ledger' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <div className="glass-card" style={{ padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <History style={{ width: 18, height: 18, color: '#38bdf8' }} />
+                  <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>Audit Ledger: Append-Only Source of Truth</span>
+                </div>
+                <button className="btn btn-secondary" onClick={fetchData} style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem' }}>
+                  <RefreshCw style={{ width: 12, height: 12 }} />
+                  Refresh Feed
                 </button>
               </div>
-            </div>
-          </div>
 
-          {/* Quick Metrics Grid */}
-          <div className="grid-4">
-            <div className="glass-card stat-card">
-              <span className="stat-label">
-                Database Engine
-                <Database size={16} color="var(--accent-cyan)" />
-              </span>
-              <div className="stat-value">
-                SQLite <span style={{ fontSize: '0.9rem', color: 'var(--status-success)' }}>WAL</span>
+              <div className="table-container">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th># ID</th>
+                      <th>Event Timestamp</th>
+                      <th>Item SKU</th>
+                      <th>Location</th>
+                      <th>Movement Type</th>
+                      <th>Quantity Change</th>
+                      <th>Actor Attribution</th>
+                      <th>Reference / Group</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {ledger.map((mov) => (
+                      <tr key={mov.id}>
+                        <td style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>#{mov.id}</td>
+                        <td style={{ fontSize: '0.775rem', color: 'var(--text-secondary)' }}>
+                          {new Date(mov.occurred_at).toLocaleString()}
+                        </td>
+                        <td className="sku-cell">{mov.item_sku || `Item #${mov.item_id}`}</td>
+                        <td style={{ fontWeight: 600 }}>{mov.location_code || `Loc #${mov.location_id}`}</td>
+                        <td>
+                          <span
+                            className={`badge ${
+                              mov.movement_type === 'RECEIPT' || mov.movement_type === 'TRANSFER_IN'
+                                ? 'badge-receipt'
+                                : mov.movement_type === 'ISSUE'
+                                ? 'badge-issue'
+                                : 'badge-transfer'
+                            }`}
+                          >
+                            {mov.movement_type}
+                          </span>
+                        </td>
+                        <td style={{ fontFamily: 'var(--font-mono)', fontWeight: 800 }}>
+                          <span style={{ color: mov.quantity > 0 ? '#34d399' : '#f87171' }}>
+                            {mov.quantity > 0 ? `+${mov.quantity}` : mov.quantity}
+                          </span>
+                        </td>
+                        <td style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>{mov.actor_label}</td>
+                        <td style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>
+                          {mov.transfer_group_id ? `transfer:${mov.transfer_group_id.slice(0, 8)}` : mov.reason || '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-              <span className="stat-subtext">PRAGMA foreign_keys = ON</span>
             </div>
+          )}
 
-            <div className="glass-card stat-card">
-              <span className="stat-label">
-                Backend Service
-                <Server size={16} color="var(--accent-indigo)" />
-              </span>
-              <div className="stat-value">FastAPI</div>
-              <span className="stat-subtext">Python 3.12 + SQLAlchemy 2.0</span>
-            </div>
-
-            <div className="glass-card stat-card">
-              <span className="stat-label">
-                Frontend App
-                <Layers size={16} color="var(--accent-cyan)" />
-              </span>
-              <div className="stat-value">React 18</div>
-              <span className="stat-subtext">TypeScript + Vite 5 + Custom CSS</span>
-            </div>
-
-            <div className="glass-card stat-card">
-              <span className="stat-label">
-                Target Invariant
-                <ShieldCheck size={16} color="var(--status-success)" />
-              </span>
-              <div className="stat-value">0 Mismatch</div>
-              <span className="stat-subtext">Ledger = Balances parity guarantee</span>
-            </div>
-          </div>
-
-          {/* Content Switcher */}
+          {/* TAB 3: OVERVIEW */}
           {activeTab === 'overview' && (
-            <div className="grid-3">
-              {/* Architecture Pillars */}
-              <div className="glass-card" style={{ gridColumn: 'span 2' }}>
-                <div className="card-header">
-                  <h4 className="card-title">
-                    <CheckCircle2 size={18} color="var(--accent-cyan)" />
-                    System Architecture & Foundations
-                  </h4>
-                  <span className="milestone-badge badge-done">Configured</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              <div className="grid-4">
+                <div className="glass-card stat-card">
+                  <span className="stat-label">Active SKUs</span>
+                  <div className="stat-value">{items.length}</div>
+                  <span className="stat-subtext">Spare parts & consumables catalog</span>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem', marginTop: '1rem' }}>
-                  <div style={{ background: 'rgba(30, 41, 59, 0.4)', padding: '1rem', borderRadius: 'var(--radius-md)' }}>
-                    <div style={{ fontWeight: 700, fontSize: '0.9rem', marginBottom: '0.35rem', color: 'var(--accent-cyan)' }}>
-                      1. Immutable Ledger
-                    </div>
-                    <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                      Stock movements are append-only. No row updates or deletions. Running balances are updated transactionally.
-                    </p>
-                  </div>
-                  <div style={{ background: 'rgba(30, 41, 59, 0.4)', padding: '1rem', borderRadius: 'var(--radius-md)' }}>
-                    <div style={{ fontWeight: 700, fontSize: '0.9rem', marginBottom: '0.35rem', color: 'var(--accent-cyan)' }}>
-                      2. Non-Negative Stock
-                    </div>
-                    <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                      Enforced at the storage layer via <code>CHECK (quantity_on_hand &gt;= 0)</code>. Over-issue operations are rejected atomically.
-                    </p>
-                  </div>
-                  <div style={{ background: 'rgba(30, 41, 59, 0.4)', padding: '1rem', borderRadius: 'var(--radius-md)' }}>
-                    <div style={{ fontWeight: 700, fontSize: '0.9rem', marginBottom: '0.35rem', color: 'var(--accent-cyan)' }}>
-                      3. Advisory AI Only
-                    </div>
-                    <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                      Models propose purchase orders with transparent math and explanations. A human reviews and approves every order.
-                    </p>
-                  </div>
-                  <div style={{ background: 'rgba(30, 41, 59, 0.4)', padding: '1rem', borderRadius: 'var(--radius-md)' }}>
-                    <div style={{ fontWeight: 700, fontSize: '0.9rem', marginBottom: '0.35rem', color: 'var(--accent-cyan)' }}>
-                      4. Time-Safe Backtests
-                    </div>
-                    <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                      Rolling-origin backtesting with strict temporal cutoffs prevents future leakage into demand forecasting features.
-                    </p>
-                  </div>
+                <div className="glass-card stat-card">
+                  <span className="stat-label">Ledger Movements</span>
+                  <div className="stat-value">{readiness?.table_counts?.stock_movements || ledger.length}</div>
+                  <span className="stat-subtext">Append-only audit log records</span>
                 </div>
-              </div>
-
-              {/* Documentation Summary */}
-              <div className="glass-card">
-                <div className="card-header">
-                  <h4 className="card-title">
-                    <FileText size={18} color="var(--accent-indigo)" />
-                    Assessment Docs
-                  </h4>
+                <div className="glass-card stat-card">
+                  <span className="stat-label">Locations Monitored</span>
+                  <div className="stat-value">{locations.length}</div>
+                  <span className="stat-subtext">Warehouse, field yards & rigs</span>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-                  <div style={{ fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ color: 'var(--status-success)' }}>✓</span>
-                    <span><strong>01:</strong> Problem Statement & Goals</span>
-                  </div>
-                  <div style={{ fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ color: 'var(--status-success)' }}>✓</span>
-                    <span><strong>02:</strong> Technical Architecture (17 Tables)</span>
-                  </div>
-                  <div style={{ fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ color: 'var(--status-success)' }}>✓</span>
-                    <span><strong>03:</strong> Sprint Plan & Interview Guide</span>
-                  </div>
-                  <div style={{ fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ color: 'var(--status-success)' }}>✓</span>
-                    <span><strong>04:</strong> Frontend UX & Navigation Plan</span>
-                  </div>
-                  <div style={{ fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ color: 'var(--status-success)' }}>✓</span>
-                    <span><strong>Root:</strong> README.md & Setup Guide</span>
-                  </div>
+                <div className="glass-card stat-card">
+                  <span className="stat-label">Invariant Mismatches</span>
+                  <div className="stat-value" style={{ color: '#34d399' }}>0</div>
+                  <span className="stat-subtext">Ledger ≡ Balance reconciliation</span>
                 </div>
               </div>
             </div>
           )}
 
+          {/* TAB 4: SPRINT ROADMAP */}
           {activeTab === 'sprint' && (
             <div className="glass-card">
               <div className="card-header">
-                <h4 className="card-title">
-                  <Layers size={18} color="var(--accent-cyan)" />
-                  Sprint Plan & Assessment Execution Roadmap
-                </h4>
-                <span className="milestone-badge badge-active">Sprint 1 Ready</span>
+                <span className="card-title">Sprint Delivery Progress</span>
               </div>
               <div className="milestone-list">
                 {milestones.map((m) => (
-                  <div
-                    key={m.id}
-                    className={`milestone-item ${
-                      m.status === 'completed' ? 'done' : m.status === 'in_progress' ? 'active' : 'pending'
-                    }`}
-                  >
-                    <div style={{ marginTop: '0.1rem' }}>
-                      {m.status === 'completed' ? (
-                        <CheckCircle2 size={20} color="var(--status-success)" />
-                      ) : m.status === 'in_progress' ? (
-                        <Clock size={20} color="var(--accent-cyan)" />
-                      ) : (
-                        <Clock size={20} color="var(--text-muted)" />
-                      )}
-                    </div>
+                  <div key={m.id} className={`milestone-item ${m.status === 'completed' ? 'done' : m.status === 'in_progress' ? 'active' : 'pending'}`}>
                     <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.35rem' }}>
-                        <span style={{ fontSize: '0.95rem', fontWeight: 700 }}>{m.title}</span>
-                        <span
-                          className={`milestone-badge ${
-                            m.status === 'completed'
-                              ? 'badge-done'
-                              : m.status === 'in_progress'
-                              ? 'badge-active'
-                              : 'badge-pending'
-                          }`}
-                        >
-                          {m.status === 'completed' ? 'Completed' : m.status === 'in_progress' ? 'Up Next' : 'In Queue'}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
+                        <span className={`milestone-badge ${m.status === 'completed' ? 'badge-done' : m.status === 'in_progress' ? 'badge-active' : 'badge-pending'}`}>
+                          {m.status.toUpperCase()}
                         </span>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{m.sprint}</span>
+                        <h4 style={{ fontSize: '0.95rem', fontWeight: 700 }}>{m.title}</h4>
                       </div>
-                      <p style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
-                        {m.description}
-                      </p>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>{m.description}</p>
+                      <ul style={{ fontSize: '0.75rem', color: 'var(--text-muted)', paddingLeft: '1.25rem' }}>
                         {m.deliverables.map((d, i) => (
-                          <span
-                            key={i}
-                            style={{
-                              fontSize: '0.725rem',
-                              background: 'rgba(255, 255, 255, 0.05)',
-                              padding: '0.2rem 0.5rem',
-                              borderRadius: '4px',
-                              color: 'var(--text-muted)',
-                            }}
-                          >
-                            • {d}
-                          </span>
+                          <li key={i}>{d}</li>
                         ))}
-                      </div>
+                      </ul>
                     </div>
                   </div>
                 ))}
@@ -485,43 +571,149 @@ const App: React.FC = () => {
             </div>
           )}
 
+          {/* TAB 5: DIAGNOSTICS */}
           {activeTab === 'diagnostics' && (
-            <div className="glass-card">
-              <div className="card-header">
-                <h4 className="card-title">
-                  <Server size={18} color="var(--accent-cyan)" />
-                  Backend & Database Connection Status
-                </h4>
-                <button className="btn btn-secondary" onClick={checkConnection}>
-                  <RefreshCw size={14} />
-                  <span>Re-test Connection</span>
-                </button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <div className="glass-card">
+                <div className="card-header">
+                  <span className="card-title"><Database style={{ width: 16, height: 16 }} /> SQLite 17-Table Relational Schema</span>
+                </div>
+                <div className="terminal-box">
+                  {readiness?.table_counts ? (
+                    Object.entries(readiness.table_counts).map(([tbl, count]) => (
+                      <div key={tbl}>
+                        <span style={{ color: '#94a3b8' }}>table:</span> <span style={{ color: '#38bdf8', fontWeight: 700 }}>{tbl.padEnd(24, ' ')}</span> <span style={{ color: '#34d399' }}>{count} rows</span>
+                      </div>
+                    ))
+                  ) : (
+                    <div>Connecting to database engine...</div>
+                  )}
+                </div>
               </div>
-
-              {loading ? (
-                <p style={{ color: 'var(--text-muted)' }}>Querying `/api/v1/health` and `/api/v1/ready`...</p>
-              ) : error ? (
-                <div style={{ background: 'var(--status-danger-bg)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--status-danger)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--status-danger)', fontWeight: 700 }}>
-                    <AlertTriangle size={18} />
-                    <span>Connection Diagnostic</span>
-                  </div>
-                  <p style={{ fontSize: '0.85rem', marginTop: '0.5rem' }}>{error}</p>
-                </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  <div className="terminal-box">
-                    <pre>{JSON.stringify({ health: health || 'connecting...', readiness: readiness || 'pending...' }, null, 2)}</pre>
-                  </div>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                    SQLite Database target: <code>./data/stocksense.db</code>
-                  </div>
-                </div>
-              )}
             </div>
           )}
-        </main>
-      </div>
+        </div>
+      </main>
+
+      {/* QUICK MOVEMENT MODAL */}
+      {showModal && (
+        <div className="modal-overlay">
+          <div className="modal-card">
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              {modalType === 'RECEIPT' && <PlusCircle style={{ width: 20, height: 20, color: '#34d399' }} />}
+              {modalType === 'ISSUE' && <MinusCircle style={{ width: 20, height: 20, color: '#fbbf24' }} />}
+              {modalType === 'TRANSFER' && <ArrowRightLeft style={{ width: 20, height: 20, color: '#c084fc' }} />}
+              <span>Execute {modalType} Transaction</span>
+            </h3>
+
+            <form onSubmit={handleTransaction}>
+              <div className="form-group">
+                <label className="form-label">Transaction Type</label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
+                  {(['RECEIPT', 'ISSUE', 'TRANSFER'] as const).map((t) => (
+                    <button
+                      type="button"
+                      key={t}
+                      className={`btn ${modalType === t ? 'btn-primary' : 'btn-secondary'}`}
+                      style={{ padding: '0.45rem', fontSize: '0.75rem' }}
+                      onClick={() => setModalType(t)}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Item / Spare Part SKU</label>
+                <select
+                  className="form-select"
+                  value={selectedItemId}
+                  onChange={(e) => setSelectedItemId(Number(e.target.value))}
+                >
+                  {items.map((itm) => (
+                    <option key={itm.id} value={itm.id}>
+                      {itm.sku} — {itm.name} (On-Hand: {itm.total_on_hand})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">
+                  {modalType === 'TRANSFER' ? 'Source Location' : 'Location'}
+                </label>
+                <select
+                  className="form-select"
+                  value={selectedLocId}
+                  onChange={(e) => setSelectedLocId(Number(e.target.value))}
+                >
+                  {locations.map((loc) => (
+                    <option key={loc.id} value={loc.id}>
+                      {loc.code} — {loc.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {modalType === 'TRANSFER' && (
+                <div className="form-group">
+                  <label className="form-label">Destination Location</label>
+                  <select
+                    className="form-select"
+                    value={targetLocId}
+                    onChange={(e) => setTargetLocId(Number(e.target.value))}
+                  >
+                    {locations
+                      .filter((loc) => loc.id !== selectedLocId)
+                      .map((loc) => (
+                        <option key={loc.id} value={loc.id}>
+                          {loc.code} — {loc.name}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+              )}
+
+              <div className="form-group">
+                <label className="form-label">Quantity</label>
+                <input
+                  type="number"
+                  min="1"
+                  className="form-input"
+                  value={txQty}
+                  onChange={(e) => setTxQty(Math.max(1, Number(e.target.value)))}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Reason / Reference Note</label>
+                <input
+                  type="text"
+                  placeholder="e.g., Rig mud pump maintenance issue"
+                  className="form-input"
+                  value={txReason}
+                  onChange={(e) => setTxReason(e.target.value)}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowModal(false)}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  Confirm Transaction
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

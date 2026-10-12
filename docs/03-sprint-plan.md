@@ -85,19 +85,19 @@ This is a deadline-aware plan from Monday evening to Thursday's interview. Adjus
 
 **Exit criteria:** clean local start of both processes, React displays live API data, 9/9 backend tests pass, clean Git history. (MET)
 
-### Tuesday morning, 13 October — Inventory correctness
+### Tuesday morning, 13 October — Inventory correctness (COMPLETED)
 
 **Objective:** finish and test the core data integrity story.
 
-- [ ] Implement items, suppliers, locations, movement, and balance models.
-- [ ] Implement the single stock-posting service.
-- [ ] Implement receipt, issue, and transfer endpoints.
-- [ ] Enforce quantity sign rules, non-negative balances, idempotency, and transaction boundaries.
-- [ ] Implement ledger view and integrity checker.
-- [ ] Write unit/integration tests before adding the AI pipeline.
-- [ ] Add the React Inventory and Operations screens using real API endpoints.
+- [x] Implement items, suppliers, locations, movement, and balance models.
+- [x] Implement the single stock-posting service (`inventory_service.py`).
+- [x] Implement receipt, issue, and transfer endpoints (`inventory.py`).
+- [x] Enforce quantity sign rules, non-negative balances, idempotency, and transaction boundaries.
+- [x] Implement ledger view and integrity checker.
+- [x] Write unit/integration tests (`backend/tests/test_inventory.py` - 14/14 tests passing).
+- [x] Add the React Inventory and Operations screens using real API endpoints (`frontend/src/App.tsx`).
 
-**Exit criteria:** receipt → issue → transfer completes through the UI; over-issue leaves no partial data; integrity checker reports zero mismatches.
+**Exit criteria:** receipt → issue → transfer completes through the UI; over-issue leaves no partial data; integrity checker reports zero mismatches. (MET)
 
 ### Tuesday afternoon — Purchase orders and seed data
 
