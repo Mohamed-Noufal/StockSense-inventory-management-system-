@@ -67,7 +67,22 @@ flowchart TB
 
 ---
 
-## 3. Sprint Plan & Milestones
+## 3. Documentation Suite & Developer Playbook
+
+All specifications, architectural RFCs, sprint roadmaps, and autonomous agent guides are indexed under the [`docs/`](./docs) directory:
+
+| Document | Title | Purpose |
+|---|---|---|
+| 📑 **[`docs/INDEX.md`](./docs/INDEX.md)** | **Master Index & AI Agent Playbook** | Complete architectural index, senior directory critique, developer onboarding guide, skills manual, and enterprise production roadmap. |
+| 🎯 **[`docs/01-problem-statement.md`](./docs/01-problem-statement.md)** | **Problem Statement & Operating Context** | Oilfield spare parts & consumables domain, pain points (P1–P6), persona journeys, and the Golden Demo scenario. |
+| 🏗️ **[`docs/02-technical-architecture.md`](./docs/02-technical-architecture.md)** | **Technical Architecture & Data Model** | System architecture diagrams, 17-table data dictionary, append-only ledger mechanics, and non-negative constraints. |
+| 🗓️ **[`docs/03-sprint-plan.md`](./docs/03-sprint-plan.md)** | **Sprint Plan & Delivery Roadmap** | Milestone tracking (Sprint 1 to Sprint 6), P0/P1/P2 scope management, exit criteria, and interview preparation. |
+| 🎨 **[`docs/04-frontend-plan.md`](./docs/04-frontend-plan.md)** | **Frontend UX & Page Routing Guide** | InvenTree/ERPNext inspired interaction patterns, 6 screens, design system tokens, and API interaction states. |
+| 📖 **[`docs/stocksense-technical-plan.md`](./docs/stocksense-technical-plan.md)** | **Master Technical Plan (Single Source of Truth)** | Comprehensive architectural reference covering domain models, intermittent forecasting math, Monte Carlo policy, and ADRs. |
+
+---
+
+## 4. Sprint Plan & Milestones
 
 | Sprint / Milestone | Focus Area | Status | Deliverables |
 |---|---|---|---|
@@ -80,7 +95,7 @@ flowchart TB
 
 ---
 
-## 4. Quick Start Guide
+## 5. Quick Start Guide
 
 ### Prerequisites
 - Python 3.11+ (Python 3.12 supported)
@@ -133,48 +148,62 @@ The application interface will be accessible at:
 
 ---
 
-## 5. Repository Structure
+## 6. Repository Structure
 
 ```text
 stocksense/
-├── .agents/                    # Custom agent skills and domain rules
-│   └── skills/stocksense/      # StockSense domain rules & architectural invariants
+├── .agents/                    # Custom agent skills and domain rules (14 installed)
+│   └── skills/                 # stocksense, ui-ux-pro-max, backend-scalable, etc.
 ├── docs/                       # Project specifications, sprint plans, frontend guide
+│   ├── INDEX.md                # Master Documentation Index & AI Agent Playbook
+│   ├── README.md               # Docs Hub Overview
 │   ├── 01-problem-statement.md
 │   ├── 02-technical-architecture.md
 │   ├── 03-sprint-plan.md
 │   ├── 04-frontend-plan.md
 │   └── stocksense-technical-plan.md
 ├── backend/
+│   ├── ai/                     # Dedicated AI & Advisory Engine (Self-contained)
+│   │   ├── agent.py            # ReplenishmentAgent advisory service
+│   │   ├── classification.py   # Demand pattern classification (ADI & CV²)
+│   │   ├── forecasting.py      # Croston, SBA, MA8, SES algorithms
+│   │   ├── policy.py           # Safety stock, ROP, Order-Up-To calculations
+│   │   ├── evaluator.py        # Out-of-sample evaluation & backtesting
+│   │   ├── models.py           # SQLAlchemy AI models
+│   │   ├── schemas.py          # Pydantic v2 AI DTOs
+│   │   ├── service.py          # AI orchestration service
+│   │   └── router.py           # AI REST endpoints (/api/v1/ai)
 │   ├── app/
 │   │   ├── main.py             # FastAPI entrypoint, middleware, lifespan
-│   │   ├── core/               # Configuration, SQLite engine, WAL pragma, exceptions
-│   │   ├── models/             # SQLAlchemy 2.0 ORM models (17 tables)
+│   │   ├── core/               # Configuration, SQLite engine, WAL pragma
+│   │   ├── models/             # Master data & stock ledger models (12 tables)
 │   │   ├── schemas/            # Pydantic v2 schemas and validation
 │   │   ├── api/v1/             # Modular REST API endpoints (/health, /ready, etc.)
-│   │   ├── services/           # Inventory, ledger, procurement domain services
-│   │   └── ai/                 # Demand classification, SBA/Croston, policy simulation
-│   ├── tests/                  # Backend pytest suite
+│   │   └── services/           # Inventory, ledger, procurement domain services
+│   ├── tests/                  # Backend pytest suite (health, AI, inventory)
 │   ├── scripts/                # Database initialization & synthetic generation
 │   └── requirements.txt        # Pinned Python dependencies
 ├── frontend/
 │   ├── src/
-│   │   ├── api/                # Typed REST API client & Axios/fetch wrapper
-│   │   ├── components/         # Reusable UI widgets, badges, tables, alerts
-│   │   ├── layouts/            # Sidebar navigation & header
-│   │   ├── pages/              # Overview, Inventory, Operations, Purchasing, AI
-│   │   └── types/              # TypeScript domain types & API models
+│   │   ├── api/                # Central typed REST API client (client.ts)
+│   │   ├── types/              # TypeScript domain types & API models
+│   │   ├── App.tsx             # Main application layout, navigation, and dashboard
+│   │   ├── index.css           # Industrial dark slate design tokens & styles
+│   │   └── main.tsx            # React application entrypoint
 │   ├── package.json
 │   └── vite.config.ts          # Vite proxy configured for /api/v1
-├── data/                       # Local SQLite database (gitignored)
+├── config/                     # Configuration templates
+├── data/                       # Local SQLite database (WAL mode, gitignored)
+├── scripts/                    # Developer & operations helper scripts
 ├── .env.example                # Sample environment variables
 ├── .gitignore
+├── pytest.ini
 └── README.md
 ```
 
 ---
 
-## 6. Data Model Overview (17 Tables)
+## 7. Data Model Overview (17 Tables)
 
 1. `categories` — Item classifications.
 2. `items` — SKU master data, base unit of measure, unit cost in minor currency units, criticality (`CRITICAL`, `STANDARD`, `LOW`).
@@ -196,7 +225,7 @@ stocksense/
 
 ---
 
-## 7. AI Replenishment & Decision Intelligence
+## 8. AI Replenishment & Decision Intelligence
 
 - **Intermittent Demand Forecasting:** Utilizes Croston's Method and Syntetos-Boylan Approximation (SBA) to decouple demand inter-arrival times from non-zero order sizes, avoiding biased moving average projections.
 - **Lead-Time Risk & Monte Carlo:** Simulates lead-time demand distributions under variable supply delay assumptions to derive quantile-based safety stock.
@@ -204,7 +233,7 @@ stocksense/
 
 ---
 
-## 8. Verification & Golden Demo Flow
+## 9. Verification & Golden Demo Flow
 
 The system is tested against the Golden End-to-End Workflow:
 1. Verify database integrity check (0 mismatches between ledger and balances).
@@ -217,8 +246,9 @@ The system is tested against the Golden End-to-End Workflow:
 
 ---
 
-## 9. Acknowledgments & Design References
+## 10. Acknowledgments & Design References
 StockSense draws architectural inspiration from prominent open-source inventory paradigms:
 - **InvenTree**: Part master data, location hierarchies, and purchasing structures.
 - **ERPNext**: Append-only stock ledger entry (`Stock Ledger Entry`) paired with running balances (`Bin`).
 *(All code in StockSense is implemented independently; no code was copied).*
+
