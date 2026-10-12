@@ -187,8 +187,10 @@ stocksense/
 │   │   ├── policy.py           # Safety stock, ROP, Order-Up-To calculations
 │   │   ├── evaluator.py        # Out-of-sample evaluation & backtesting
 │   │   ├── models.py           # SQLAlchemy AI models
+│   │   ├── demand_extractor.py # Zero-leakage 52-week demand extractor
+│   │   ├── pipeline.py         # Per-item calculation pipeline (Croston/SBA, policies, proposals)
 │   │   ├── schemas.py          # Pydantic v2 AI DTOs
-│   │   ├── service.py          # AI orchestration service
+│   │   ├── service.py          # AI orchestration service & HITL queue
 │   │   └── router.py           # AI REST endpoints (/api/v1/ai)
 │   ├── app/
 │   │   ├── main.py             # FastAPI entrypoint, middleware, lifespan
@@ -200,13 +202,13 @@ stocksense/
 │   │       ├── inventory_service.py   # Movements, over-issue rejection, paired transfers
 │   │       ├── integrity_service.py   # Ledger-sum vs running-balance reconciliation
 │   │       └── procurement_service.py # PO state machine, goods receiving, over-receipt check
-│   ├── tests/                  # Backend pytest suite (26 passed)
+│   ├── tests/                  # Backend pytest suite (27 passed, full golden flow integration)
 │   ├── scripts/                # Database initialization & synthetic generation (init_db, seed_data)
 │   └── requirements.txt        # Pinned Python dependencies
 ├── frontend/
 │   ├── src/
 │   │   ├── api/                # Central typed REST API client (client.ts)
-│   │   ├── components/         # Modular UI views (Sidebar, Header, InventoryView, LedgerView, ProcurementView, AIInsightsView, RecommendationModal, MovementModal, etc.)
+│   │   ├── components/         # Modular UI views (Sidebar, Header, InventoryView, LedgerView, ProcurementView, AIInsightsView, AIMetricsCards, AIRowItem, RecommendationModal, MovementModal, etc.)
 │   │   ├── types/              # TypeScript domain types & API models (index.ts)
 │   │   ├── App.tsx             # Concise layout coordinator (<260 lines)
 │   │   ├── index.css           # Industrial dark slate design tokens & styles

@@ -181,11 +181,11 @@ This is a deadline-aware plan from Monday evening to Thursday's interview. Adjus
 
 **Done when:** every output has a cutoff and method; the final evaluation period was not used to select the method; the policy's target and quantity can be recalculated by hand on a small example; edge cases are handled. (MET)
 
-### Sprint E — React workflow and hardening
+### Sprint E — React workflow and hardening (COMPLETED)
 
 **Tasks:** inventory/operations, PO, AI insights, loading/error states, documentation, public release.
 
-**Done when:** the golden workflow works end to end through the UI; no manual SQL is needed; clean-clone instructions work; limitations are accurate.
+**Done when:** the golden workflow works end to end through the UI; no manual SQL is needed; clean-clone instructions work; limitations are accurate. (MET — verified via `test_golden_flow.py`, `./scripts/verify_system.sh`, and full UI state lifecycle)
 
 ## 5. Golden demo script (6–7 minutes)
 
