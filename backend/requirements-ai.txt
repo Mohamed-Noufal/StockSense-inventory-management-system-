@@ -1,0 +1,2 @@
+# AI and Statistical Simulation requirements (Sprint 4)
+scipy>=1.13.0
