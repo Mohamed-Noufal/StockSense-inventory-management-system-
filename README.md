@@ -104,12 +104,24 @@ All specifications, architectural RFCs, sprint roadmaps, and autonomous agent gu
 - Node.js 18+ (Node 24 supported)
 - Git
 
-### 1. Clone & Setup Environment
-```bash
-# Clone the repository
-git clone <repo-url>
-cd inventory-poc-project
+### 1. One-Command Quick Start (Recommended)
 
+To automatically verify environment dependencies, initialize the database, seed test records, and start both the FastAPI backend and React frontend concurrently:
+
+```bash
+./run.sh
+```
+
+- **StockSense Dashboard:** [http://localhost:5173](http://localhost:5173)
+- **Interactive Swagger Docs:** [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+- **Backend Health Check:** [http://127.0.0.1:8000/api/v1/health](http://127.0.0.1:8000/api/v1/health)
+
+Press `Ctrl+C` at any time to gracefully stop all services.
+
+---
+
+### 2. Manual / Granular Setup
+```bash
 # Copy environment variables
 cp .env.example .env
 ```
@@ -202,7 +214,10 @@ stocksense/
 │   └── vite.config.ts          # Vite proxy configured for /api/v1
 ├── config/                     # Configuration templates
 ├── data/                       # Local SQLite database (WAL mode, gitignored)
-├── scripts/                    # Developer & operations helper scripts (verify_system.sh)
+├── scripts/                    # Developer & operations helper scripts
+│   ├── run_app.sh              # Unified one-command runner (backend + frontend)
+│   └── verify_system.sh        # Health & verification test runner
+├── run.sh                      # Convenient root runner entrypoint (./run.sh)
 ├── .env.example                # Sample environment variables
 ├── .gitignore
 ├── pytest.ini
