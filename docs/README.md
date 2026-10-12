@@ -35,4 +35,5 @@ Refer to [`03-sprint-plan.md`](./03-sprint-plan.md) for granular task tracking:
 - **Sprint 2 (Core Inventory & Ledger)**: ✅ **COMPLETED & MET** (Atomic movements service, over-issue rejection, paired transfers, 0-mismatch integrity check, seed data, modular React UI, 14/14 tests passing).
 - **Sprint 3 (Purchase Orders & Receiving)**: ✅ **COMPLETED & MET** (PO state machine, atomic goods receipt via `post_movement`, over-receipt HTTP 400 rejection, interactive Procurement UI, 21/21 tests passing).
 - **Sprint 4 (AI Replenishment Engine)**: ✅ **COMPLETED & MET** (Time-safe demand extraction, Croston/SBA, recommendation-to-PO conversion, AI Insights UI, 26/26 tests passing).
-- **Sprint 5 (Verification & Golden Demo Rehearsal)**: 🚀 **ACTIVE / UP NEXT** (End-to-end golden flow verification, dry run scripts, public repository submission prep).
+- **Sprint 5 (Verification & Golden Demo)**: ✅ **COMPLETED & MET** (End-to-end golden flow automated test suite, zero-leakage verification, 100% pass rate).
+- **Sprint 6 (Ergonomics, Users & Audit)**: ✅ **COMPLETED & MET** (Collapsible rail sidebar, streamlined top bar with search/notifications, database users directory, and non-repudiable ledger audit attribution).

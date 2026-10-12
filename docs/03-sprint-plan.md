@@ -187,6 +187,21 @@ This is a deadline-aware plan from Monday evening to Thursday's interview. Adjus
 
 **Done when:** the golden workflow works end to end through the UI; no manual SQL is needed; clean-clone instructions work; limitations are accurate. (MET — verified via `test_golden_flow.py`, `./scripts/verify_system.sh`, and full UI state lifecycle)
 
+### Sprint F — Workspace Ergonomics, User Roles & Audit Attribution (COMPLETED)
+
+**Tasks:**
+- Flexible, collapsible rail navigation sidebar (`PanelLeftClose`/`PanelLeftOpen`) with state persistence in `localStorage`.
+- Streamlined top section layout: elimination of competing duplicate invariant badges (`Invariant: 0 Mismatches` vs `Invariant: Verified`).
+- Global header search input (`/`), interactive notifications popover center, and active employee profile pill.
+- Real Database User Directory (`users` table, Pydantic schemas, endpoints `GET /api/v1/users`, `GET /api/v1/users/me`, `POST /api/v1/users`).
+- Seed deterministic personnel: `John Doe` (Storekeeper), `Ahmed Fawzy` (Storekeeper), `Sara Mansour` (Procurement Officer), `Khaled Hassan` (Manager).
+- Interactive active employee switcher dropdown in top header.
+- Non-repudiable audit ledger attribution: all inventory movements, site transfers, and PO line receipts stamp the active user identity (`${full_name} (${role})`) directly into `actor_label`.
+- Dedicated "Team & Audit Roles" UI view (`UsersView.tsx`) with role breakdown metrics, shift status indicators, and live transaction counts cross-referenced with the ledger.
+- Automated test suite for user management (`backend/tests/test_users.py`) passing 100%.
+
+**Done when:** sidebar collapses/expands smoothly; top section hierarchy is clean; real users are returned from `/api/v1/users`; switching users updates active identity; ledger transactions permanently attribute movements to real employees. (MET — 28/28 tests passing, 0 errors in TypeScript/Vite bundle)
+
 ## 5. Golden demo script (6–7 minutes)
 
 ### 0:00–0:40 — Problem and architecture

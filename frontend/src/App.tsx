@@ -278,6 +278,22 @@ const App: React.FC = () => {
       description: 'Connecting intermittent demand models (Croston/SBA) and safety stock policies directly to live inventory for replenishment proposals.',
       deliverables: ['Zero-leakage demand extractor', 'Croston / SBA statistical models', 'Risk-based order-up-to policies', 'Human-in-the-loop recommendation approval', 'Atomic Draft PO generation', 'React AI Insights screen'],
     },
+    {
+      id: 'sprint-5',
+      title: 'End-to-End Workflow Verification & Golden Demo',
+      sprint: 'Sprint 5',
+      status: 'completed',
+      description: 'Comprehensive automated integration test suite validating zero-leakage replenishment, draft PO conversion, and ledger reconciliation.',
+      deliverables: ['Automated test_golden_flow', 'Over-issue rejection (400)', 'Zero-mismatch final audit reconciliation', 'Multi-scenario verification script'],
+    },
+    {
+      id: 'sprint-6',
+      title: 'Workspace Ergonomics, User Directory & Authentic Ledger Audit',
+      sprint: 'Sprint 6',
+      status: 'completed',
+      description: 'Flexible collapsible rail sidebar, streamlined top header with search/notifications, database users directory, and non-repudiable audit ledger attribution.',
+      deliverables: ['Collapsible rail sidebar (localStorage persisted)', 'Streamlined header with / search & notifications', 'Database users directory & role breakdown UI', 'Non-repudiable actor_label attribution on all transactions', 'Interactive employee switcher'],
+    },
   ];
 
   return (

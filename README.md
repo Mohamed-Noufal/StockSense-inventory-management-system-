@@ -90,10 +90,10 @@ All specifications, architectural RFCs, sprint roadmaps, and autonomous agent gu
 |---|---|---|---|
 | **Sprint 1: Foundation & Environment** | Environment & Skeletons | **Completed** | Git repository, docs architecture, SQLite WAL engine, FastAPI health API, React+Vite app, typed client, test harness. |
 | **Sprint 2: Core Inventory & Ledger** | Master Data & Movements | **Completed** | 17-table schema, append-only movements, atomic balance sync, over-issue rejection, paired transfers, 0-mismatch check, seed data, modular UI. |
-| **Sprint 3: Purchasing & Lifecycle** | Procurement Flow | Up Next | Purchase orders (Draft -> Approved -> Partially Received -> Received), partial receiving, audit attribution. |
-| **Sprint 4: AI & Replenishment** | Forecasting & Simulation | In Queue | Syntetos-Boylan Approximation (SBA), Croston, ADI/CV² classification, Monte Carlo safety stock, explainable recommendations. |
-| **Sprint 5: User Interface & Golden Demo** | Operations UI | In Queue | Modern responsive dashboard, inventory ledger viewer, PO workflow, recommendation review modal, integrity check UI. |
-| **Sprint 6: Evaluation & Hardening** | Backtesting & Verification | In Queue | Out-of-sample backtest, paired simulation (baseline vs AI), fresh clone smoke test, rehearsal guide. |
+| **Sprint 3: Purchasing & Lifecycle** | Procurement Flow | **Completed** | Purchase orders (Draft -> Approved -> Partially Received -> Received), partial receiving, over-receipt prohibition, Procurement UI. |
+| **Sprint 4: AI & Replenishment** | Forecasting & Advisory | **Completed** | Zero-leakage demand extraction, Croston & SBA intermittent demand models, risk policies, human approval to Draft PO, AI Insights screen. |
+| **Sprint 5: Golden Demo Verification** | Workflow Hardening | **Completed** | Automated golden flow integration test, end-to-end audit reconciliation, zero-mismatch verification, verification script. |
+| **Sprint 6: Ergonomics & User Audit** | Workspace & Directory | **Completed** | Collapsible rail sidebar with local persistence, streamlined header, real database user directory, and non-repudiable ledger audit attribution. |
 
 ---
 
