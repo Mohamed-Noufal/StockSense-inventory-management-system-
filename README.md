@@ -89,8 +89,8 @@ All specifications, architectural RFCs, sprint roadmaps, and autonomous agent gu
 | Sprint / Milestone | Focus Area | Status | Deliverables |
 |---|---|---|---|
 | **Sprint 1: Foundation & Environment** | Environment & Skeletons | **Completed** | Git repository, docs architecture, SQLite WAL engine, FastAPI health API, React+Vite app, typed client, test harness. |
-| **Sprint 2: Core Inventory & Ledger** | Master Data & Movements | Up Next | 17-table schema, append-only ledger triggers, receipt/issue/transfer transactions, zero-mismatch integrity check. |
-| **Sprint 3: Purchasing & Lifecycle** | Procurement Flow | In Queue | Purchase orders (Draft -> Approved -> Partially Received -> Received), partial receiving, audit attribution. |
+| **Sprint 2: Core Inventory & Ledger** | Master Data & Movements | **Completed** | 17-table schema, append-only movements, atomic balance sync, over-issue rejection, paired transfers, 0-mismatch check, seed data, modular UI. |
+| **Sprint 3: Purchasing & Lifecycle** | Procurement Flow | Up Next | Purchase orders (Draft -> Approved -> Partially Received -> Received), partial receiving, audit attribution. |
 | **Sprint 4: AI & Replenishment** | Forecasting & Simulation | In Queue | Syntetos-Boylan Approximation (SBA), Croston, ADI/CV² classification, Monte Carlo safety stock, explainable recommendations. |
 | **Sprint 5: User Interface & Golden Demo** | Operations UI | In Queue | Modern responsive dashboard, inventory ledger viewer, PO workflow, recommendation review modal, integrity check UI. |
 | **Sprint 6: Evaluation & Hardening** | Backtesting & Verification | In Queue | Out-of-sample backtest, paired simulation (baseline vs AI), fresh clone smoke test, rehearsal guide. |
@@ -181,24 +181,27 @@ stocksense/
 │   │   ├── main.py             # FastAPI entrypoint, middleware, lifespan
 │   │   ├── core/               # Configuration, SQLite engine, WAL pragma
 │   │   ├── models/             # Master data & stock ledger models (12 tables)
-│   │   ├── schemas/            # Pydantic v2 schemas and validation
-│   │   ├── api/v1/             # Modular REST API endpoints (/health, /ready, etc.)
-│   │   └── services/           # Inventory, ledger, procurement domain services
-│   ├── tests/                  # Backend pytest suite (health, AI, inventory)
-│   ├── scripts/                # Database initialization & synthetic generation
+│   │   ├── schemas/            # Pydantic v2 schemas and validation (health, inventory)
+│   │   ├── api/v1/             # Modular REST API endpoints (/health, /inventory, /ai)
+│   │   └── services/           # Authoritative domain services
+│   │       ├── inventory_service.py # Movements, over-issue rejection, paired transfers
+│   │       └── integrity_service.py # Ledger-sum vs running-balance reconciliation
+│   ├── tests/                  # Backend pytest suite (14 passed)
+│   ├── scripts/                # Database initialization & synthetic generation (init_db, seed_data)
 │   └── requirements.txt        # Pinned Python dependencies
 ├── frontend/
 │   ├── src/
 │   │   ├── api/                # Central typed REST API client (client.ts)
-│   │   ├── types/              # TypeScript domain types & API models
-│   │   ├── App.tsx             # Main application layout, navigation, and dashboard
+│   │   ├── components/         # Modular UI views (Sidebar, Header, InventoryView, LedgerView, MovementModal, etc.)
+│   │   ├── types/              # TypeScript domain types & API models (index.ts)
+│   │   ├── App.tsx             # Concise layout coordinator (<220 lines)
 │   │   ├── index.css           # Industrial dark slate design tokens & styles
 │   │   └── main.tsx            # React application entrypoint
 │   ├── package.json
 │   └── vite.config.ts          # Vite proxy configured for /api/v1
 ├── config/                     # Configuration templates
 ├── data/                       # Local SQLite database (WAL mode, gitignored)
-├── scripts/                    # Developer & operations helper scripts
+├── scripts/                    # Developer & operations helper scripts (verify_system.sh)
 ├── .env.example                # Sample environment variables
 ├── .gitignore
 ├── pytest.ini

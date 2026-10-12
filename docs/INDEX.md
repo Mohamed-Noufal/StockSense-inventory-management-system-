@@ -71,31 +71,34 @@ inventory-poc-project/
 │   ├── app/                      # CORE TRANSACTIONAL BACKEND
 │   │   ├── api/v1/               # API version 1 routing layer
 │   │   │   ├── api.py            # Master v1 router aggregating endpoints
-│   │   │   └── endpoints/        # Domain route controllers (health, inventory, movements, po)
+│   │   │   └── endpoints/        # Domain route controllers (health, inventory, po)
 │   │   ├── core/                 # Core infrastructure (config, database engine, WAL listeners)
 │   │   ├── models/               # SQLAlchemy 2.0 master data & ledger models (12 models)
-│   │   ├── schemas/              # Pydantic v2 domain schemas and request/response DTOs
-│   │   └── services/             # Authoritative inventory & procurement transactional services
+│   │   ├── schemas/              # Pydantic v2 domain schemas (health, inventory)
+│   │   └── services/             # Authoritative domain transactional services
+│   │       ├── inventory_service.py  # Movements, over-issue rejection, paired transfers
+│   │       └── integrity_service.py  # Ledger-sum vs running-balance reconciliation
 │   ├── pyproject.toml            # Backend build & packaging configuration
 │   ├── requirements.txt          # Pinned core production dependencies
 │   ├── requirements-ai.txt       # Optional heavier statistical extensions
-│   ├── scripts/                  # Database initialization and seeding scripts
-│   └── tests/                    # Pytest test suite (health, AI algorithms, inventory invariants)
+│   ├── scripts/                  # init_db.py, seed_data.py
+│   └── tests/                    # Pytest test suite (14 passed)
 ├── config/                       # Application configuration templates & environment files
 ├── data/                         # Local database storage (git-ignored, WAL runtime files)
 ├── docs/                         # Engineering specifications, architecture, and sprint plans
 ├── frontend/                     # React 18 + TypeScript + Vite SPA
 │   ├── src/
 │   │   ├── api/                  # Central typed API client (`client.ts`)
+│   │   ├── components/           # Concise UI modules (Sidebar, Header, InventoryView, LedgerView, etc.)
 │   │   ├── types/                # TypeScript interfaces matching backend DTOs (`index.ts`)
-│   │   ├── App.tsx               # Main application layout, navigation, and dashboard views
+│   │   ├── App.tsx               # Modular layout coordinator (<220 lines)
 │   │   ├── index.css             # Industrial dark slate design tokens & utility styles
 │   │   └── main.tsx              # React application entrypoint
 │   ├── package.json              # Frontend dependencies and npm scripts
 │   ├── tsconfig.json             # TypeScript strict compiler configuration
 │   └── vite.config.ts            # Vite bundler configuration with backend proxy
 ├── pytest.ini                    # Root pytest configuration
-├── scripts/                      # Operational & developer automation shell scripts
+├── scripts/                      # Developer & ops utilities (`verify_system.sh`)
 └── README.md                     # Public repository landing page & quick start guide
 ```
 
@@ -135,7 +138,8 @@ curl -s -I http://127.0.0.1:5173 | head -n 3
 ### Step 4: Check Current Sprint Status
 Read [`docs/03-sprint-plan.md`](./03-sprint-plan.md) to understand current progress:
 - **Sprint 1 (Foundation & Setup):** ✅ COMPLETED & MET.
-- **Sprint 2 (Core Inventory & Ledger):** 🚀 NEXT ACTIVE MILESTONE.
+- **Sprint 2 (Core Inventory & Ledger):** ✅ COMPLETED & MET.
+- **Sprint 3 (Purchase Orders & Receiving):** 🚀 NEXT ACTIVE MILESTONE.
 
 ### Step 5: The Standard 7-Step Task Execution Lifecycle (SOP)
 
@@ -305,12 +309,16 @@ erDiagram
 As of Monday, 12 October 2026:
 
 - [x] **Full 17-Table Relational Schema:** SQLAlchemy models configured with SQLite WAL mode and foreign key constraints.
-- [x] **Modular Backend Architecture:** Clean separation into `backend/app/` and dedicated `backend/ai/`.
+- [x] **Authoritative Inventory Transaction Engine:** Single `post_movement()` service guaranteeing atomic `stock_movements` ledger insertion and `stock_balances` synchronization.
+- [x] **Over-Issue Protection:** Engine-level check constraints and service-level validation rejecting negative stock with HTTP 400.
+- [x] **Atomic Double-Entry Transfers:** Inter-location transfers execute paired `TRANSFER_OUT` and `TRANSFER_IN` movements sharing a `transfer_group_id`.
+- [x] **Reconciliation Audit Endpoint:** Automated `/integrity-check` reconciling ledger transaction sums against running balances with `0 mismatches`.
+- [x] **Deterministic Synthetic Seed Dataset:** 3 categories, 3 locations, 4 suppliers, 3 projects, 3 users, 15 oilfield spare parts with supplier terms, and 52 weeks of intermittent demand history.
+- [x] **Modular React 18 + TS + Vite Frontend:** Decomposed into clean subcomponents (`Sidebar`, `Header`, `InventoryView`, `LedgerView`, `MovementModal`, `SprintView`, `DiagnosticsView`) with live transaction modals.
 - [x] **Complete AI Core:** Croston, Syntetos-Boylan Approximation (SBA), ADI/$CV^2$ demand classifier, Safety Stock / ROP / Order-Up-To calculations, ReplenishmentAgent advisory service, and out-of-sample backtest evaluator.
-- [x] **Live Health & Diagnostic Endpoints:** `/api/v1/health` and `/api/v1/ready` reporting engine status, journal mode, and table counts.
-- [x] **Modern React 18 + TS + Vite Frontend:** Industrial dark slate UI tokens, central typed API client, and live system diagnostics.
-- [x] **Passing Test Harness:** 9/9 unit and integration tests passing in 0.13s.
-- [x] **Organized Documentation Suite:** All specifications, architecture documents, frontend plans, and sprint schedules organized cleanly in `docs/`.
+- [x] **Passing Test Harness:** 14/14 unit and integration tests passing in 0.18s.
+- [x] **Lean, Concise Files:** All files partitioned into micro-modules (<150 lines); zero bloated files.
+- [x] **Organized Documentation Suite:** All specifications, architecture charts, data flows, and sprint schedules organized cleanly in `docs/`.
 
 ---
 
