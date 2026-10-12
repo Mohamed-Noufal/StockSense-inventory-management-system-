@@ -15,6 +15,7 @@ from backend.app.models.items import Item
 from backend.app.models.item_suppliers import ItemSupplier
 from backend.app.models.stock_balances import StockBalance
 from backend.app.models.stock_movements import StockMovement
+from backend.app.models.purchase_orders import PurchaseOrder, PurchaseOrderLine
 from backend.app.services.inventory_service import run_integrity_check
 
 def seed():
@@ -206,7 +207,49 @@ def seed():
             db.commit()
             print("✓ Generated 52-week intermittent demand ledger history")
 
-        db.commit()
+        # 9. Seed Initial Purchase Orders if none exist
+        if db.query(PurchaseOrder).count() == 0:
+            wh_loc = locations.get("WH-01") or db.query(Location).filter_by(is_default_replenishment=1).first()
+            item_list = list(items.values()) if 'items' in locals() else db.query(Item).all()
+            supplier_list = list(suppliers.values()) if 'suppliers' in locals() else db.query(Supplier).all()
+            
+            if item_list and supplier_list and wh_loc:
+                # PO 1: APPROVED - ready for warehouse receipt
+                po1 = PurchaseOrder(
+                    po_number="PO-202610-001",
+                    supplier_id=supplier_list[0].id,
+                    status="APPROVED",
+                    order_date=datetime.now(timezone.utc).isoformat(),
+                    notes="Approved replenishment for Cairo central warehouse",
+                )
+                db.add(po1)
+                db.flush()
+                db.add(PurchaseOrderLine(
+                    po_id=po1.id, item_id=item_list[0].id, destination_location_id=wh_loc.id,
+                    qty_ordered=25, qty_received=0, unit_price_minor=item_list[0].unit_cost_minor or 12000
+                ))
+                if len(item_list) > 1:
+                    db.add(PurchaseOrderLine(
+                        po_id=po1.id, item_id=item_list[1].id, destination_location_id=wh_loc.id,
+                        qty_ordered=15, qty_received=0, unit_price_minor=item_list[1].unit_cost_minor or 8500
+                    ))
+
+                # PO 2: DRAFT - pending approval
+                if len(supplier_list) > 1 and len(item_list) > 2:
+                    po2 = PurchaseOrder(
+                        po_number="PO-202610-002",
+                        supplier_id=supplier_list[1].id,
+                        status="DRAFT",
+                        notes="Draft requisition awaiting procurement sign-off",
+                    )
+                    db.add(po2)
+                    db.flush()
+                    db.add(PurchaseOrderLine(
+                        po_id=po2.id, item_id=item_list[2].id, destination_location_id=wh_loc.id,
+                        qty_ordered=10, qty_received=0, unit_price_minor=item_list[2].unit_cost_minor or 45000
+                    ))
+                db.commit()
+                print("✓ Seeded sample Purchase Orders (PO-202610-001 APPROVED, PO-202610-002 DRAFT)")
         
         # Verify ledger integrity immediately
         report = run_integrity_check(db)

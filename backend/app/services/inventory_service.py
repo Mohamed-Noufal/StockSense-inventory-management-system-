@@ -18,7 +18,7 @@ def _get_or_create_balance(db: Session, item_id: int, location_id: int) -> Stock
         db.flush()
     return balance
 
-def post_movement(db: Session, m_in: MovementCreate) -> StockMovement:
+def post_movement(db: Session, m_in: MovementCreate, commit: bool = True) -> StockMovement:
     if m_in.idempotency_key:
         existing = db.query(StockMovement).filter_by(idempotency_key=m_in.idempotency_key).first()
         if existing:
@@ -63,8 +63,11 @@ def post_movement(db: Session, m_in: MovementCreate) -> StockMovement:
         created_at=now_iso,
     )
     db.add(movement)
-    db.commit()
-    db.refresh(movement)
+    if commit:
+        db.commit()
+        db.refresh(movement)
+    else:
+        db.flush()
     return movement
 
 def transfer_stock(db: Session, t_in: TransferCreate) -> Dict[str, Any]:

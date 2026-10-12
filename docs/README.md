@@ -33,7 +33,7 @@ Refer to [`03-sprint-plan.md`](./03-sprint-plan.md) for granular task tracking:
 
 - **Sprint 1 (Foundation & Environment)**: ✅ **COMPLETED & MET** (SQLite WAL, 17 tables, FastAPI health APIs, React+Vite frontend, unified `backend/ai/` module, 9/9 tests passing).
 - **Sprint 2 (Core Inventory & Ledger)**: ✅ **COMPLETED & MET** (Atomic movements service, over-issue rejection, paired transfers, 0-mismatch integrity check, seed data, modular React UI, 14/14 tests passing).
-- **Sprint 3 (Purchase Orders & Receiving)**: 🚀 **ACTIVE / UP NEXT** (PO lifecycle: Draft → Approved → Received, partial receiving).
-- **Sprint 4 (AI Replenishment Engine)**: ⏳ In Queue (Intermittent forecasting, lead time risk simulation, human-in-the-loop recommendations).
+- **Sprint 3 (Purchase Orders & Receiving)**: ✅ **COMPLETED & MET** (PO state machine, atomic goods receipt via `post_movement`, over-receipt HTTP 400 rejection, interactive Procurement UI, 21/21 tests passing).
+- **Sprint 4 (AI Replenishment Engine)**: 🚀 **ACTIVE / UP NEXT** (Intermittent forecasting integration, policy math, recommendation-to-PO conversion).
 - **Sprint 5 (Operations & Review UI)**: ⏳ In Queue (Inventory ledger viewer, recommendation review modal, dashboard KPIs).
 - **Sprint 6 (Verification & Demo Rehearsal)**: ⏳ In Queue (Smoke test, out-of-sample backtest validation, presentation dry run).

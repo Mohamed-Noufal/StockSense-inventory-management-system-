@@ -107,3 +107,66 @@ export interface Milestone {
   description: string;
   deliverables: string[];
 }
+
+export interface Supplier {
+  id: number;
+  name: string;
+  country?: string;
+  contact_email?: string;
+  is_import: number;
+  is_active: number;
+}
+
+export interface PurchaseOrderLine {
+  id: number;
+  po_id: number;
+  item_id: number;
+  destination_location_id: number;
+  qty_ordered: number;
+  qty_received: number;
+  remaining_quantity: number;
+  unit_price_minor: number;
+  created_at: string;
+  item_sku?: string;
+  item_name?: string;
+  location_code?: string;
+}
+
+export interface PurchaseOrder {
+  id: number;
+  po_number: string;
+  supplier_id: number;
+  supplier_name?: string;
+  status: 'DRAFT' | 'APPROVED' | 'PARTIALLY_RECEIVED' | 'RECEIVED' | 'CANCELLED';
+  created_at: string;
+  order_date?: string;
+  expected_date?: string;
+  notes?: string;
+  lines: PurchaseOrderLine[];
+  total_lines: number;
+  total_amount_minor: number;
+}
+
+export interface POLineCreatePayload {
+  item_id: number;
+  destination_location_id: number;
+  qty_ordered: number;
+  unit_price_minor: number;
+}
+
+export interface POCreatePayload {
+  supplier_id: number;
+  po_number?: string;
+  expected_date?: string;
+  notes?: string;
+  lines: POLineCreatePayload[];
+}
+
+export interface POReceivePayload {
+  po_line_id: number;
+  quantity_received: number;
+  destination_location_id?: number;
+  idempotency_key?: string;
+  actor_label?: string;
+}
+

@@ -1,7 +1,7 @@
 import {
   HealthResponse, ReadyResponse, InventoryItem, InventoryLocation,
   StockBalance, StockMovement, MovementCreatePayload, TransferCreatePayload,
-  IntegrityCheckResponse
+  IntegrityCheckResponse, Supplier, PurchaseOrder, POCreatePayload, POReceivePayload
 } from '../types';
 
 const API_BASE = '/api/v1';
@@ -63,4 +63,27 @@ export const api = {
       { method: 'POST', body: JSON.stringify(payload) }
     ),
   getIntegrityCheck: () => request<IntegrityCheckResponse>('/inventory/integrity-check'),
+  getSuppliers: () => request<Supplier[]>('/po/suppliers'),
+  getPurchaseOrders: (status?: string) =>
+    request<PurchaseOrder[]>(`/po${status && status !== 'ALL' ? `?status=${status}` : ''}`),
+  getPurchaseOrder: (id: number) => request<PurchaseOrder>(`/po/${id}`),
+  createPurchaseOrder: (payload: POCreatePayload) =>
+    request<PurchaseOrder>('/po', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  approvePurchaseOrder: (id: number) =>
+    request<PurchaseOrder>(`/po/${id}/approve`, {
+      method: 'POST',
+    }),
+  receivePOLine: (id: number, payload: POReceivePayload) =>
+    request<PurchaseOrder>(`/po/${id}/receive`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  cancelPurchaseOrder: (id: number) =>
+    request<PurchaseOrder>(`/po/${id}/cancel`, {
+      method: 'POST',
+    }),
 };
+

@@ -306,18 +306,21 @@ erDiagram
 
 ## 9. Current State Assessment: What We Have
 
-As of Monday, 12 October 2026:
+As of Tuesday, 13 October 2026:
 
 - [x] **Full 17-Table Relational Schema:** SQLAlchemy models configured with SQLite WAL mode and foreign key constraints.
 - [x] **Authoritative Inventory Transaction Engine:** Single `post_movement()` service guaranteeing atomic `stock_movements` ledger insertion and `stock_balances` synchronization.
 - [x] **Over-Issue Protection:** Engine-level check constraints and service-level validation rejecting negative stock with HTTP 400.
 - [x] **Atomic Double-Entry Transfers:** Inter-location transfers execute paired `TRANSFER_OUT` and `TRANSFER_IN` movements sharing a `transfer_group_id`.
+- [x] **Complete Purchase Order Lifecycle (Sprint 3 Complete):** Full state machine (`DRAFT` → `APPROVED` → `PARTIALLY_RECEIVED` → `RECEIVED` / `CANCELLED`), supplier purchasing terms, and line items.
+- [x] **Atomic Inbound Goods Receiving:** PO line receipts route strictly through `post_movement(type="RECEIPT")`, updating ledger and balance atomically in a single transaction.
+- [x] **Over-Receipt Prohibition:** Validation rejects any receiving attempt where $Q_{received} > Q_{ordered} - Q_{already\_received}$ with HTTP 400.
 - [x] **Reconciliation Audit Endpoint:** Automated `/integrity-check` reconciling ledger transaction sums against running balances with `0 mismatches`.
-- [x] **Deterministic Synthetic Seed Dataset:** 3 categories, 3 locations, 4 suppliers, 3 projects, 3 users, 15 oilfield spare parts with supplier terms, and 52 weeks of intermittent demand history.
-- [x] **Modular React 18 + TS + Vite Frontend:** Decomposed into clean subcomponents (`Sidebar`, `Header`, `InventoryView`, `LedgerView`, `MovementModal`, `SprintView`, `DiagnosticsView`) with live transaction modals.
+- [x] **Deterministic Synthetic Seed Dataset:** 3 categories, 3 locations, 4 suppliers, 3 projects, 3 users, 15 oilfield spare parts with supplier terms, 52 weeks of intermittent demand history, and active sample POs.
+- [x] **Modular React 18 + TS + Vite Frontend:** Decomposed into clean subcomponents (`Sidebar`, `Header`, `InventoryView`, `LedgerView`, `ProcurementView`, `MovementModal`, `POCreateModal`, `POReceiveModal`, `SprintView`, `DiagnosticsView`) with live transaction modals.
 - [x] **Complete AI Core:** Croston, Syntetos-Boylan Approximation (SBA), ADI/$CV^2$ demand classifier, Safety Stock / ROP / Order-Up-To calculations, ReplenishmentAgent advisory service, and out-of-sample backtest evaluator.
-- [x] **Passing Test Harness:** 14/14 unit and integration tests passing in 0.18s.
-- [x] **Lean, Concise Files:** All files partitioned into micro-modules (<150 lines); zero bloated files.
+- [x] **Passing Test Harness:** 21/21 unit and integration tests passing in 0.37s.
+- [x] **Lean, Concise Files:** All files partitioned into micro-modules (<140 lines); zero bloated files.
 - [x] **Organized Documentation Suite:** All specifications, architecture charts, data flows, and sprint schedules organized cleanly in `docs/`.
 
 ---

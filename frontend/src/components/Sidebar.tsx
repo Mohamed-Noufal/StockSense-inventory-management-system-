@@ -1,17 +1,18 @@
 import React from 'react';
-import { Boxes, History, Activity, FileText, Server } from 'lucide-react';
+import { Boxes, History, ShoppingCart, Activity, FileText, Server } from 'lucide-react';
 import { HealthResponse } from '../types';
 
 interface SidebarProps {
-  activeTab: 'overview' | 'inventory' | 'ledger' | 'sprint' | 'diagnostics';
-  setActiveTab: (tab: 'overview' | 'inventory' | 'ledger' | 'sprint' | 'diagnostics') => void;
+  activeTab: 'overview' | 'inventory' | 'ledger' | 'procurement' | 'sprint' | 'diagnostics';
+  setActiveTab: (tab: 'overview' | 'inventory' | 'ledger' | 'procurement' | 'sprint' | 'diagnostics') => void;
   itemsCount: number;
   ledgerCount: number;
+  poCount: number;
   health: HealthResponse | null;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
-  activeTab, setActiveTab, itemsCount, ledgerCount, health,
+  activeTab, setActiveTab, itemsCount, ledgerCount, poCount, health,
 }) => {
   return (
     <aside className="sidebar">
@@ -43,6 +44,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <History className="nav-icon" />
           <span>Stock Ledger</span>
           {ledgerCount > 0 && <span className="nav-badge">{ledgerCount}</span>}
+        </button>
+
+        <button
+          className={`nav-item ${activeTab === 'procurement' ? 'active' : ''}`}
+          onClick={() => setActiveTab('procurement')}
+        >
+          <ShoppingCart className="nav-icon" />
+          <span>Purchase Orders</span>
+          {poCount > 0 && <span className="nav-badge">{poCount}</span>}
         </button>
 
         <button

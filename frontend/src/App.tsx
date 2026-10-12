@@ -3,24 +3,30 @@ import { AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { api } from './api/client';
 import {
   HealthResponse, ReadyResponse, InventoryItem, InventoryLocation,
-  StockMovement, IntegrityCheckResponse, Milestone,
+  StockMovement, IntegrityCheckResponse, Milestone, PurchaseOrder,
+  Supplier, POCreatePayload, POReceivePayload,
 } from './types';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
 import { InventoryView } from './components/InventoryView';
 import { LedgerView } from './components/LedgerView';
 import { OverviewView } from './components/OverviewView';
+import { ProcurementView } from './components/ProcurementView';
 import { SprintView } from './components/SprintView';
 import { DiagnosticsView } from './components/DiagnosticsView';
 import { MovementModal } from './components/MovementModal';
+import { POCreateModal } from './components/POCreateModal';
+import { POReceiveModal } from './components/POReceiveModal';
 
 const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'inventory' | 'ledger' | 'sprint' | 'diagnostics'>('inventory');
+  const [activeTab, setActiveTab] = useState<'overview' | 'inventory' | 'ledger' | 'procurement' | 'sprint' | 'diagnostics'>('inventory');
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [readiness, setReadiness] = useState<ReadyResponse | null>(null);
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [locations, setLocations] = useState<InventoryLocation[]>([]);
   const [ledger, setLedger] = useState<StockMovement[]>([]);
+  const [orders, setOrders] = useState<PurchaseOrder[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [integrity, setIntegrity] = useState<IntegrityCheckResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -35,17 +41,23 @@ const App: React.FC = () => {
   const [txQty, setTxQty] = useState<number>(5);
   const [txReason, setTxReason] = useState<string>('');
 
+  // PO Modals
+  const [showPOCreateModal, setShowPOCreateModal] = useState<boolean>(false);
+  const [receivingPO, setReceivingPO] = useState<PurchaseOrder | null>(null);
+
   const fetchData = async () => {
     setLoading(true);
     setError(null);
     try {
-      const [hData, rData, itmData, locData, ledgData, integData] = await Promise.all([
+      const [hData, rData, itmData, locData, ledgData, integData, poData, supData] = await Promise.all([
         api.getHealth().catch(() => null),
         api.getReadiness().catch(() => null),
         api.getItems().catch(() => []),
         api.getLocations().catch(() => []),
         api.getLedger(30).catch(() => []),
         api.getIntegrityCheck().catch(() => null),
+        api.getPurchaseOrders().catch(() => []),
+        api.getSuppliers().catch(() => []),
       ]);
       setHealth(hData);
       setReadiness(rData);
@@ -53,6 +65,8 @@ const App: React.FC = () => {
       setLocations(locData);
       setLedger(ledgData);
       setIntegrity(integData);
+      setOrders(poData);
+      setSuppliers(supData);
       if (itmData.length > 0 && selectedItemId === 0) setSelectedItemId(itmData[0].id);
       if (locData.length > 0 && selectedLocId === 0) {
         setSelectedLocId(locData[0].id);
@@ -98,6 +112,47 @@ const App: React.FC = () => {
     }
   };
 
+  const handleCreatePO = async (payload: POCreatePayload) => {
+    setError(null);
+    const po = await api.createPurchaseOrder(payload);
+    setSuccessMsg(`Purchase Order ${po.po_number} created in DRAFT!`);
+    fetchData();
+  };
+
+  const handleApprovePO = async (poId: number) => {
+    setError(null);
+    try {
+      const po = await api.approvePurchaseOrder(poId);
+      setSuccessMsg(`Purchase Order ${po.po_number} APPROVED for procurement!`);
+      fetchData();
+    } catch (err: any) {
+      setError(err.message || 'Failed to approve purchase order');
+    }
+  };
+
+  const handleReceivePOLine = async (poId: number, payload: POReceivePayload) => {
+    setError(null);
+    try {
+      const po = await api.receivePOLine(poId, payload);
+      setSuccessMsg(`Received ${payload.quantity_received} units on ${po.po_number}! Status: ${po.status}`);
+      fetchData();
+    } catch (err: any) {
+      setError(err.message || 'Receipt rejected');
+      throw err;
+    }
+  };
+
+  const handleCancelPO = async (poId: number) => {
+    setError(null);
+    try {
+      const po = await api.cancelPurchaseOrder(poId);
+      setSuccessMsg(`Purchase Order ${po.po_number} CANCELLED.`);
+      fetchData();
+    } catch (err: any) {
+      setError(err.message || 'Failed to cancel purchase order');
+    }
+  };
+
   const handleRunIntegrityCheck = async () => {
     try {
       const res = await api.getIntegrityCheck();
@@ -106,12 +161,6 @@ const App: React.FC = () => {
     } catch (err: any) {
       setError(err.message || 'Integrity check failed');
     }
-  };
-
-  const handleOpenActionModal = (itemId: number, type: 'RECEIPT' | 'ISSUE' | 'TRANSFER') => {
-    setSelectedItemId(itemId);
-    setModalType(type);
-    setShowModal(true);
   };
 
   const milestones: Milestone[] = [
@@ -135,9 +184,17 @@ const App: React.FC = () => {
       id: 'sprint-3',
       title: 'Procurement & Purchase Order Lifecycle',
       sprint: 'Sprint 3',
+      status: 'completed',
+      description: 'Draft PO creation, approval workflow, supplier terms, and partial/full goods receiving linked to stock movements ledger.',
+      deliverables: ['PO state machine', 'Partial goods receiving', 'Over-receipt prohibition (400)', 'Ledger append & balance sync', 'Interactive Procurement UI'],
+    },
+    {
+      id: 'sprint-4',
+      title: 'AI Intermittent Demand & Replenishment Integration',
+      sprint: 'Sprint 4',
       status: 'queued',
-      description: 'Draft PO creation, approval workflow, supplier terms, and partial/full goods receiving.',
-      deliverables: ['PO state machine', 'Partial goods receiving', 'Over-receipt prohibition'],
+      description: 'Connecting intermittent demand models (Croston/SBA) and safety stock policies directly to live inventory for replenishment proposals.',
+      deliverables: ['AI recommendation trigger', 'Approval-to-PO conversion', 'Out-of-sample backtest dashboard'],
     },
   ];
 
@@ -148,6 +205,7 @@ const App: React.FC = () => {
         setActiveTab={setActiveTab}
         itemsCount={items.length}
         ledgerCount={ledger.length}
+        poCount={orders.length}
         health={health}
       />
 
@@ -176,8 +234,18 @@ const App: React.FC = () => {
         )}
 
         <div className="content-body">
-          {activeTab === 'inventory' && <InventoryView items={items} onAction={handleOpenActionModal} />}
+          {activeTab === 'inventory' && <InventoryView items={items} onAction={(itemId, type) => { setSelectedItemId(itemId); setModalType(type); setShowModal(true); }} />}
           {activeTab === 'ledger' && <LedgerView ledger={ledger} onRefresh={fetchData} />}
+          {activeTab === 'procurement' && (
+            <ProcurementView
+              orders={orders}
+              onOpenCreateModal={() => setShowPOCreateModal(true)}
+              onOpenReceiveModal={(po) => setReceivingPO(po)}
+              onApprove={handleApprovePO}
+              onCancel={handleCancelPO}
+              loading={loading}
+            />
+          )}
           {activeTab === 'overview' && <OverviewView itemsCount={items.length} movementsCount={ledger.length} locationsCount={locations.length} />}
           {activeTab === 'sprint' && <SprintView milestones={milestones} />}
           {activeTab === 'diagnostics' && <DiagnosticsView readiness={readiness} />}
@@ -202,6 +270,24 @@ const App: React.FC = () => {
           setTxReason={setTxReason}
           onClose={() => setShowModal(false)}
           onSubmit={handleTransaction}
+        />
+      )}
+
+      {showPOCreateModal && (
+        <POCreateModal
+          suppliers={suppliers}
+          items={items}
+          locations={locations}
+          onClose={() => setShowPOCreateModal(false)}
+          onSubmit={handleCreatePO}
+        />
+      )}
+
+      {receivingPO && (
+        <POReceiveModal
+          po={receivingPO}
+          onClose={() => setReceivingPO(null)}
+          onSubmit={handleReceivePOLine}
         />
       )}
     </div>

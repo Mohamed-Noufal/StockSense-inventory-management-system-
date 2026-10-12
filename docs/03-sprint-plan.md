@@ -99,19 +99,19 @@ This is a deadline-aware plan from Monday evening to Thursday's interview. Adjus
 
 **Exit criteria:** receipt → issue → transfer completes through the UI; over-issue leaves no partial data; integrity checker reports zero mismatches. (MET)
 
-### Tuesday afternoon — Purchase orders and seed data
+### Tuesday afternoon — Purchase orders and seed data (COMPLETED)
 
 **Objective:** complete the basic business workflow and generate repeatable history.
 
-- [ ] Implement suppliers' item terms (MOQ, order multiple, nominal lead time).
-- [ ] Implement draft PO creation, approval, and receiving.
-- [ ] Validate partial/full receipt and prohibit over-receipt.
-- [ ] Add a deterministic synthetic dataset generator and documented configuration.
-- [ ] Keep true demand separate from observed issue records if stockout-censoring is modelled.
-- [ ] Add a seed/reset path gated behind demo configuration.
-- [ ] Build the React PO list/detail/receive workflow.
+- [x] Implement suppliers' item terms (MOQ, order multiple, nominal lead time).
+- [x] Implement draft PO creation, approval, and receiving (`backend/app/services/procurement_service.py`).
+- [x] Validate partial/full receipt and prohibit over-receipt (HTTP 400 rejection).
+- [x] Add a deterministic synthetic dataset generator and documented configuration (`backend/scripts/seed_data.py`).
+- [x] Keep true demand separate from observed issue records if stockout-censoring is modelled.
+- [x] Add a seed/reset path gated behind demo configuration (`scripts/verify_system.sh`).
+- [x] Build the React PO list/detail/receive workflow (`ProcurementView.tsx`, `POCreateModal.tsx`, `POReceiveModal.tsx`).
 
-**Exit criteria:** seed can be repeated, stock integrity passes, a PO can be approved and received, and the resulting ledger/balance state is visible in the UI.
+**Exit criteria:** seed can be repeated, stock integrity passes, a PO can be approved and received, and the resulting ledger/balance state is visible in the UI. (MET - 21/21 pytest tests passing, 0 mismatches integrity check, clean React SPA integration)
 
 ### Tuesday evening — Minimum useful AI and public-repo delivery
 
@@ -169,11 +169,11 @@ This is a deadline-aware plan from Monday evening to Thursday's interview. Adjus
 
 **Done when:** invariant tests pass; every stock change uses the same service; invalid actions roll back; movement history explains all valid balance changes.
 
-### Sprint C — Procurement and seed
+### Sprint C — Procurement and seed (COMPLETED)
 
 **Tasks:** PO model/state machine, approval, receiving, supplier terms, synthetic generator.
 
-**Done when:** PO state transitions are validated; over-receipts fail atomically; seed is repeatable; integrity check passes after the generated history.
+**Done when:** PO state transitions are validated; over-receipts fail atomically; seed is repeatable; integrity check passes after the generated history. (MET)
 
 ### Sprint D — Explainable AI slice
 
