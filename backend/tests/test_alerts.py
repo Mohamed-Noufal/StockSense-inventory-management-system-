@@ -1,5 +1,8 @@
+from datetime import datetime, timezone
 from fastapi.testclient import TestClient
 from backend.app.main import app
+from backend.app.core.database import SessionLocal
+from backend.app.models.alerts import Alert
 
 client = TestClient(app)
 
@@ -16,12 +19,18 @@ def test_list_alerts_and_seed():
     assert "message" in first_alert
 
 def test_acknowledge_and_resolve_alert():
-    # List alerts
-    list_res = client.get("/api/v1/alerts?status=OPEN")
-    assert list_res.status_code == 200
-    data = list_res.json()
-    assert len(data) > 0
-    target_id = data[0]["id"]
+    db = SessionLocal()
+    test_alert = Alert(
+        alert_type="LOW_STOCK",
+        severity="WARNING",
+        message="Test alert for unit testing acknowledge and resolve lifecycle",
+        status="OPEN",
+        created_at=datetime.now(timezone.utc).isoformat(),
+    )
+    db.add(test_alert)
+    db.commit()
+    target_id = test_alert.id
+    db.close()
 
     # Acknowledge
     ack_res = client.post(f"/api/v1/alerts/{target_id}/acknowledge", json={"user_id": 1, "notes": "Investigating with rig crew"})
