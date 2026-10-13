@@ -2111,31 +2111,56 @@ body {
 .status-pill {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  padding: 0.2rem 0.6rem;
-  border-radius: 9999px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  gap: 0.45rem;
+  padding: 0;
+  background: transparent;
+  border: none;
+  font-size: 0.74rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
   white-space: nowrap;
 }
 
+.status-pill::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
 .status-in {
-  background: rgba(16, 185, 129, 0.12);
+  background: transparent;
   color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.28);
+  border: none;
+}
+
+.status-in::before {
+  background-color: #10b981;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.45);
 }
 
 .status-low {
-  background: rgba(245, 158, 11, 0.12);
+  background: transparent;
   color: #fbbf24;
-  border: 1px solid rgba(245, 158, 11, 0.28);
+  border: none;
+}
+
+.status-low::before {
+  background-color: #f59e0b;
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.45);
 }
 
 .status-out {
-  background: rgba(239, 68, 68, 0.12);
+  background: transparent;
   color: #f87171;
-  border: 1px solid rgba(239, 68, 68, 0.28);
+  border: none;
+}
+
+.status-out::before {
+  background-color: #ef4444;
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.45);
 }
 
 .table-action-btn {
