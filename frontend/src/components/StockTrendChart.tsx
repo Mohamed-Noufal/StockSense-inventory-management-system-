@@ -187,17 +187,18 @@ export const StockTrendChart: React.FC<StockTrendChartProps> = ({
             );
           })}
 
-          {/* X-Axis Date Labels matching reference mock */}
+          {/* X-Axis Date Labels with clean non-overlapping spacing */}
           {data.map((d, i) => {
-            // Show dates like Jul 20, Aug 3, Aug 17, Aug 31, Sep 14, Sep 28, Oct 12
-            if (i % 2 !== 0 && i !== data.length - 1) return null;
+            // Evenly spaced key dates to prevent label collisions
+            const tickIndices = [0, 3, 6, 9, data.length - 1];
+            if (!tickIndices.includes(i)) return null;
             const x = paddingLeft + (i / (data.length - 1)) * innerWidth;
             return (
               <text
                 key={i}
                 x={x}
                 y={height - 8}
-                textAnchor="middle"
+                textAnchor={i === 0 ? 'start' : i === data.length - 1 ? 'end' : 'middle'}
                 fill="#64748b"
                 fontSize="8.5"
                 fontFamily="var(--font-mono)"
