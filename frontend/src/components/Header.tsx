@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   Plus, Bell,
   ChevronDown, PanelLeft,
-  CheckCircle2, AlertTriangle, Users, ShieldCheck
+  CheckCircle2, AlertTriangle, Users, ShieldCheck, Scan
 } from 'lucide-react';
 import { IntegrityCheckResponse, User } from '../types';
 
@@ -19,6 +19,7 @@ interface HeaderProps {
   currentUser: User | null;
   onSelectUser: (user: User) => void;
   onNavigateTab: (tab: any) => void;
+  onOpenScanner?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -34,6 +35,7 @@ export const Header: React.FC<HeaderProps> = ({
   currentUser,
   onSelectUser,
   onNavigateTab,
+  onOpenScanner,
 }) => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -125,6 +127,17 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Right: Primary Action + Notifications + User Profile */}
       <div className="header-actions">
+        {onOpenScanner && (
+          <button
+            className="btn btn-secondary"
+            onClick={onOpenScanner}
+            style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+            title="Scan Barcode (F2)"
+          >
+            <Scan style={{ width: 14, height: 14 }} />
+            <span>Scan SKU</span>
+          </button>
+        )}
         <button className="btn btn-primary" onClick={onOpenModal}>
           <Plus style={{ width: 14, height: 14 }} />
           <span>Record Movement</span>

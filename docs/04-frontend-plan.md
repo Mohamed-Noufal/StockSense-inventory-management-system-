@@ -810,9 +810,18 @@ The Operations Workstation (`/operations`, rendered via `OperationsView.tsx`) ma
   - Wired into `OperationsTable.tsx`, `OperationsView.tsx`, `ActivityView.tsx`, and `App.tsx`.
 
 
-### 16.2 Warehouse Mobility: Barcode & QR Label Printing (`LabelPrintModal.tsx` & `BarcodeScannerModal.tsx`)
-- **Thermal Label Generator**: 4x2" and 2x1" printable part labels featuring Code128 barcode, SKU, Part Name, Criticality badge, and Warehouse Bin coordinates (`LOC-MAIN-A01`).
-- **Rapid Scanner Interface**: Modal supporting camera scan and USB HID barcode gun input for instantaneous stock lookups, rapid cycle counts, and fast-path receiving.
+### 16.2 Warehouse Mobility: Barcode & QR Label Printing (`BinLabelModal.tsx` & `BarcodeScannerModal.tsx`) (COMPLETED)
+- **Thermal Label Generator (`BinLabelModal.tsx`)**:
+  - Zebra ZD421/ZT230 compliant printable label generator with size toggle: 4"×2" Rack/Bin Tag and 2"×1" Compact Part Sticker.
+  - Zero-dependency mathematical vector Code 128 (Subset B) 1D barcode and 2D Matrix QR code SVG renderer (`frontend/src/utils/barcode.ts`), guaranteeing 100% crisp vector output on thermal print heads without anti-aliasing raster blur.
+  - Full industrial metadata: rack bin location coordinates, SKU, item description, category, criticality rating, ROP, stock on-hand, unit cost, and download SVG action.
+  - Scoped print stylesheet in `frontend/src/styles/mobility.css` with `@page { size: 4in 2in; margin: 0; }` preventing page creep and blank labels.
+- **Unified Hardware-Agnostic Scanner (`BarcodeScannerModal.tsx`)**:
+  - Global USB barcode scanner gun listener (`frontend/src/hooks/useBarcodeScanner.ts`) distinguishing hardware bursts (<50ms keystrokes + Enter suffix) from manual typing, with 1,500ms debounce gate preventing double-scans.
+  - Web Audio API synthesized tactile confirmation (`frontend/src/utils/audio.ts`): 800Hz positive sine chime for valid scans, 220Hz buzz for unrecognized barcodes.
+  - Quick interview demo test chips allowing immediate one-click simulation of real spare parts (`HVAC-FLT-001`, `VALV-CHK-002`, `ELEC-MOD-005`, etc.).
+  - Instant transaction routing: 1-click quick actions to Record Issue (Pick), Record Receipt, Print Bin Tag, or Inspect in Inventory.
+  - Accessible anywhere via `F2` global hotkey or top bar `Scan SKU` button.
 
 ### 16.3 Production Authentication & Role-Based Navigation
 - **Login / Session Shell**: Dedicated login modal and token management.

@@ -1,0 +1,618 @@
+/* ==========================================================================
+   StockSense Physical Warehouse Mobility Styles
+   - Thermal Shelf & Bin Label Printing (4x2" & 2x1" Zebra Standards)
+   - Optical Scanner HUD Modal & Audio Feedback Animations
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Print Media Overrides (@media print)
+   -------------------------------------------------------------------------- */
+@media print {
+  /* Hide all application chrome, sidebars, headers, backdrop */
+  html, body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    overflow: visible !important;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  /* Show only the active printable thermal label container */
+  .printable-thermal-label,
+  .printable-thermal-label * {
+    visibility: visible !important;
+  }
+
+  .printable-thermal-label {
+    position: fixed !important;
+    left: 0 !important;
+    top: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: #ffffff !important;
+  }
+
+  /* 4x2 inch label print size */
+  .printable-thermal-label.size-4x2 {
+    width: 4.00in !important;
+    height: 2.00in !important;
+    padding: 0.12in 0.15in !important;
+    box-sizing: border-box !important;
+    page-break-after: always;
+  }
+
+  /* 2x1 inch label print size */
+  .printable-thermal-label.size-2x1 {
+    width: 2.00in !important;
+    height: 1.00in !important;
+    padding: 0.05in 0.08in !important;
+    box-sizing: border-box !important;
+    page-break-after: always;
+  }
+}
+
+/* Page rules for standard thermal printers */
+@page {
+  size: 4in 2in;
+  margin: 0;
+}
+
+/* --------------------------------------------------------------------------
+   2. Screen Modal Preview Styles
+   -------------------------------------------------------------------------- */
+.label-modal-backdrop,
+.scanner-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.label-modal-container {
+  background: #0a0a0c;
+  border: 1px solid #222222;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 620px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.7);
+}
+
+.label-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #222222;
+  background: #111113;
+}
+
+.label-modal-title {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #ededed;
+}
+
+.label-modal-body {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  background: #0a0a0c;
+}
+
+/* Size Selector Tabs */
+.label-size-toggle {
+  display: flex;
+  gap: 0.5rem;
+  background: #121214;
+  padding: 0.25rem;
+  border-radius: 8px;
+  border: 1px solid #222222;
+}
+
+.label-size-btn {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #888888;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.label-size-btn:hover {
+  color: #ededed;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.label-size-btn.active {
+  color: #000000;
+  background: #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* Label Preview Card (Screen Display) */
+.label-preview-wrapper {
+  background: #16161a;
+  border: 1px dashed #333338;
+  border-radius: 8px;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Physical Printable Label Card */
+.printable-thermal-label {
+  background: #ffffff;
+  color: #000000;
+  border: 1px solid #d4d4d8;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  user-select: text;
+}
+
+/* 4x2 Display Dimensions */
+.printable-thermal-label.size-4x2 {
+  width: 440px;
+  height: 220px;
+  padding: 12px 16px;
+}
+
+/* 2x1 Display Dimensions */
+.printable-thermal-label.size-2x1 {
+  width: 320px;
+  height: 160px;
+  padding: 8px 10px;
+}
+
+/* 4x2 Label Internal Grid */
+.thermal-header-4x2 {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 2px solid #000000;
+  padding-bottom: 6px;
+}
+
+.thermal-bin-code {
+  font-family: 'Geist Mono', 'JetBrains Mono', monospace;
+  font-size: 1.45rem;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  line-height: 1;
+}
+
+.thermal-company-sub {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #333333;
+  margin-top: 2px;
+}
+
+.thermal-sku-box {
+  text-align: right;
+}
+
+.thermal-sku-text {
+  font-family: 'Geist Mono', 'JetBrains Mono', monospace;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.thermal-crit-tag {
+  display: inline-block;
+  font-size: 0.6rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  border: 1px solid #000000;
+  padding: 1px 4px;
+  border-radius: 2px;
+  margin-top: 2px;
+}
+
+.thermal-body-4x2 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 4px 0;
+}
+
+.thermal-item-name {
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.2;
+  max-height: 2.4em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.thermal-item-meta {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #444444;
+  margin-top: 2px;
+}
+
+.thermal-barcode-box {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.thermal-qr-box {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.thermal-footer-4x2 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid #000000;
+  padding-top: 4px;
+  font-family: 'Geist Mono', 'JetBrains Mono', monospace;
+  font-size: 0.625rem;
+  font-weight: 600;
+}
+
+/* 2x1 Compact Label Layout */
+.thermal-compact-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+}
+
+.thermal-compact-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1px solid #000000;
+  padding-bottom: 2px;
+}
+
+.thermal-compact-bin {
+  font-family: 'Geist Mono', 'JetBrains Mono', monospace;
+  font-size: 0.95rem;
+  font-weight: 900;
+}
+
+.thermal-compact-sku {
+  font-family: 'Geist Mono', 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.thermal-compact-name {
+  font-size: 0.65rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+
+.thermal-compact-barcode {
+  display: flex;
+  justify-content: center;
+  margin: 2px 0;
+}
+
+/* Modal Actions */
+.label-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-top: 1px solid #222222;
+  background: #111113;
+}
+
+/* --------------------------------------------------------------------------
+   3. Scanner HUD Modal Styles
+   -------------------------------------------------------------------------- */
+.scanner-modal-container {
+  background: #0a0a0c;
+  border: 1px solid #222222;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 680px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.85);
+}
+
+.scanner-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.125rem 1.5rem;
+  border-bottom: 1px solid #222222;
+  background: #111113;
+}
+
+.scanner-status-pulse {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 0.25rem 0.625rem;
+  border-radius: 20px;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+  animation: pulse-ring 1.8s infinite;
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.8; }
+}
+
+.scanner-modal-body {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* Input Search Box */
+.scanner-input-box {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #121214;
+  border: 1px solid #333338;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  transition: border-color 0.15s ease;
+}
+
+.scanner-input-box:focus-within {
+  border-color: #ffffff;
+  box-shadow: 0 0 0 1px #ffffff;
+}
+
+.scanner-input-box input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #ededed;
+  font-family: 'Geist Mono', 'JetBrains Mono', monospace;
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.scanner-input-box input::placeholder {
+  color: #555555;
+  font-size: 0.875rem;
+  letter-spacing: normal;
+}
+
+/* Quick Test Presets (Interview Demonstration) */
+.scanner-presets-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.scanner-presets-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #71717a;
+  letter-spacing: 0.5px;
+}
+
+.scanner-chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.scanner-chip-btn {
+  background: #16161a;
+  border: 1px solid #2a2a2e;
+  border-radius: 6px;
+  color: #a1a1aa;
+  font-family: 'Geist Mono', 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.35rem 0.65rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.scanner-chip-btn:hover {
+  background: #222226;
+  border-color: #52525b;
+  color: #ffffff;
+}
+
+/* Resolved Item HUD Card */
+.scanned-item-card {
+  background: #111114;
+  border: 1px solid #27272a;
+  border-radius: 8px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  animation: slideInHUD 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideInHUD {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.scanned-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.scanned-sku-badge {
+  font-family: 'Geist Mono', 'JetBrains Mono', monospace;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.scanned-item-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #ededed;
+  margin-top: 2px;
+}
+
+.scanned-item-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  border-top: 1px solid #1f1f23;
+  border-bottom: 1px solid #1f1f23;
+}
+
+.scanned-stat-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.scanned-stat-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #71717a;
+}
+
+.scanned-stat-value {
+  font-family: 'Geist Mono', 'JetBrains Mono', monospace;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #ededed;
+}
+
+/* Scanned Action Grid */
+.scanned-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.625rem;
+}
+
+.scanned-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: 1px solid transparent;
+}
+
+.scanned-action-btn.issue {
+  background: #ffffff;
+  color: #000000;
+}
+
+.scanned-action-btn.issue:hover {
+  background: #e4e4e7;
+}
+
+.scanned-action-btn.receipt {
+  background: #18181b;
+  color: #ededed;
+  border-color: #27272a;
+}
+
+.scanned-action-btn.receipt:hover {
+  background: #27272a;
+  color: #ffffff;
+}
+
+.scanned-action-btn.label {
+  background: #18181b;
+  color: #a1a1aa;
+  border-color: #27272a;
+}
+
+.scanned-action-btn.label:hover {
+  background: #27272a;
+  color: #ffffff;
+}
+
+/* Empty scan state */
+.scanner-empty-hud {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1.5rem;
+  border: 1px dashed #27272a;
+  border-radius: 8px;
+  color: #71717a;
+  text-align: center;
+  gap: 0.75rem;
+}
+
+.scanner-empty-hud svg {
+  color: #52525b;
+}

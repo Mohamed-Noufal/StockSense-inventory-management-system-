@@ -46,13 +46,14 @@ Refer to [`03-sprint-plan.md`](./03-sprint-plan.md) for granular task tracking:
 - **Sprint 13 (Physical Warehouse Capabilities)**:
   - **Task 1 (Storekeeper Document Attachments & Audit Proof Engine)**: ✅ **COMPLETED & MET** (Delivered full physical document attachment subsystem: `document_attachments` table with composite indexing, Pydantic v2 schemas, endpoints at `/api/v1/attachments` for multipart PDF/photo upload, listing, and file streaming, automatic realistic sample seed hydration, drag-and-drop dropzone in `MovementModal.tsx` and `POReceiveModal.tsx`, attached document cards with View/Download triggers in `MovementDetailDrawer.tsx` and `PODetailView.tsx`, modular `attachments.css`).
   - **Task 2 (Printable Warehouse Transit Waybill & Delivery Docket)**: ✅ **COMPLETED & MET** (Official printable transit docket modal `WaybillModal.tsx` with vector Code128 barcode, carrier metadata, vehicle license, manifest items, dual sign-off blocks for Storekeeper Dispatcher & Material Inspector, native browser print trigger, and print-ready monochrome `@media print` stylesheet `waybill.css`. Dynamically derived from `stock_movements`, `items`, and `locations` with zero schema migrations).
-  - **Test Suite**: 39/39 backend test items verified (37 passed, 2 skipped, 0 failures), 0 TypeScript build errors.
+  - **Task 3 (Physical Warehouse Mobility: Barcode / QR Shelf Labels & Scanner)**: ✅ **COMPLETED & MET** (Zebra 4"×2" and 2"×1" printable thermal label generator `BinLabelModal.tsx` with pure mathematical vector Code128 and QR SVG renderer `barcode.ts`. Hardware-agnostic optical scanner HUD `BarcodeScannerModal.tsx` capturing USB barcode guns via HID keyboard wedge hook `useBarcodeScanner.ts`, Web Audio API tactile chime/buzz feedback `audio.ts`, demo scan presets, and 1-click transaction routing. Accessible via global `F2` hotkey and top bar `Scan SKU` button).
+  - **Test Suite**: 39/39 backend test items verified (37 passed, 2 skipped, 0 failures), 0 TypeScript build errors (`✓ built in 2.32s`).
 
 ---
 
 ## 📋 Remaining Work & Feature Roadmap: What Still Needs to be Built
 
-All 6 primary application workstations (Overview, Inventory, Operations, Purchase Orders, AI Replenishment, Activity & Integrity) plus the Document Attachments Engine and Waybill Docket are completely built, styled with the Vercel Dark Zinc design system, connected to SQLite WAL, and passing all test suites.
+All 6 primary application workstations (Overview, Inventory, Operations, Purchase Orders, AI Replenishment, Activity & Integrity) plus the 3 Physical Warehouse Subsystems (Document Attachments, Transit Waybill, Barcode/QR Mobility) are completely built, styled with the Vercel Dark Zinc design system, connected to SQLite WAL, and passing all test suites.
 
 To elevate StockSense from an advanced working prototype to a fully hardened, enterprise-grade warehouse management system, the following items represent the remaining physical and enterprise features:
 
@@ -60,11 +61,10 @@ To elevate StockSense from an advanced working prototype to a fully hardened, en
 |---|---|---|---|
 | **P1.1** | **Storekeeper Document Attachments** | **Physical Audit Trail**: File upload engine (PDF/images) attached to movements and POs. File streaming, storage, and drawer inspection. | ✅ **COMPLETED** |
 | **P1.2** | **Printable Warehouse Delivery Waybill** | **Physical Transit Documentation**: Printable Delivery Docket modal (`WaybillModal.tsx`) with `@media print` styling, carrier metadata, manifest table, vector Code128 barcode, and dual storekeeper/inspector sign-off boxes. | ✅ **COMPLETED** |
-| **P1.3 (Next)** | **Barcode & QR Code Scanning & Label Printing** | **Physical Warehouse Mobility**: Barcode (Code128) and QR code generation for SKU items and storage bin locations. Printable shelf/bin barcode labels (`BinLabelModal.tsx`). Interactive quick-scan modal (`BarcodeScannerModal.tsx`). | 🔄 **In Progress** |
+| **P1.3** | **Barcode & QR Code Scanning & Label Printing** | **Physical Warehouse Mobility**: Barcode (Code128) and QR code generation for SKU items and storage bin locations. Printable shelf/bin barcode labels (`BinLabelModal.tsx`). Interactive quick-scan modal (`BarcodeScannerModal.tsx`). | ✅ **COMPLETED** |
 | **P2** | **Production JWT Authentication & Granular RBAC** | **Security & Access Control**: Formal JWT authentication endpoints (`/login`, `/refresh`), encrypted password hashing (`bcrypt`), and role decorators (`Storekeeper`, `Procurement Officer`, `Manager`). Frontend route guards and permission-scoped button visibility. | ⏳ **Planned** |
-| **P3** | **Production JWT Authentication & Granular RBAC** | **Security & Access Control**: Formal JWT authentication endpoints (`/login`, `/refresh`), encrypted password hashing (`bcrypt`), and role decorators (`Storekeeper`, `Procurement Officer`, `Manager`). Frontend route guards and permission-scoped button visibility. | ⏳ **Planned** |
-| **P4** | **Tamper-Evident Ledger Integrity & Cryptographic Audit** | **Regulatory Compliance**: SHA-256 hash chaining across `stock_movements` rows guaranteeing tamper-evident immutability. Historical ledger state replay at any arbitrary timestamp $t$. Zip package export for formal regulatory audits. | ⏳ **Planned** |
-| **P5** | **PostgreSQL 16 Migration & Background Worker Queue** | **Enterprise Scale**: Port database layer to PostgreSQL 16 with `asyncpg`/`pgbouncer` and Alembic schema migrations. Move weekly batch AI forecasting and Monte Carlo policy simulations to asynchronous Celery/Redis workers. | ⏳ **Planned** |
+| **P3** | **Tamper-Evident Ledger Integrity & Cryptographic Audit** | **Regulatory Compliance**: SHA-256 hash chaining across `stock_movements` rows guaranteeing tamper-evident immutability. Historical ledger state replay at any arbitrary timestamp $t$. Zip package export for formal regulatory audits. | ⏳ **Planned** |
+| **P4** | **PostgreSQL 16 Migration & Background Worker Queue** | **Enterprise Scale**: Port database layer to PostgreSQL 16 with `asyncpg`/`pgbouncer` and Alembic schema migrations. Move weekly batch AI forecasting and Monte Carlo policy simulations to asynchronous Celery/Redis workers. | ⏳ **Planned** |
 
 
 

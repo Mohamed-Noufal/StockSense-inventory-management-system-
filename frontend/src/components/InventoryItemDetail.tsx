@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Layers, MapPin, ArrowRight, Box, Sparkles, ShieldCheck } from 'lucide-react';
+import { Layers, MapPin, ArrowRight, Box, Sparkles, ShieldCheck, Tag } from 'lucide-react';
 import { InventoryItem, StockMovement } from '../types';
 import { ItemPartThumbnail } from './ItemPartThumbnail';
 import { StockTrendChart, TrendDataPoint } from './StockTrendChart';
@@ -9,6 +9,7 @@ interface InventoryItemDetailProps {
   movements?: StockMovement[];
   onNavigateTab: (tab: any) => void;
   onCreateMovement: (itemId: number) => void;
+  onPrintLabel?: (item: InventoryItem) => void;
 }
 
 export const InventoryItemDetail: React.FC<InventoryItemDetailProps> = ({
@@ -16,6 +17,7 @@ export const InventoryItemDetail: React.FC<InventoryItemDetailProps> = ({
   movements = [],
   onNavigateTab,
   onCreateMovement,
+  onPrintLabel,
 }) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'levels' | 'movements' | 'details'>('overview');
 
@@ -407,6 +409,18 @@ export const InventoryItemDetail: React.FC<InventoryItemDetailProps> = ({
 
       {/* 6. Bottom Docked Action Footer */}
       <div className="detail-action-dock">
+        {onPrintLabel && (
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => onPrintLabel(item)}
+            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '8px' }}
+            title="Generate thermal shelf/bin barcode label"
+          >
+            <Tag style={{ width: 14, height: 14 }} />
+            <span>Print Thermal Shelf Tag</span>
+          </button>
+        )}
         <button
           className="create-movement-cta-btn"
           onClick={() => onCreateMovement(item.id)}

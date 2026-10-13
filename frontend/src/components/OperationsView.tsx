@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Calendar, ChevronDown, X } from 'lucide-react';
+import { Box, Calendar, ChevronDown, X, Scan } from 'lucide-react';
 import { StockMovement, OperationsStats, InventoryItem, InventoryLocation } from '../types';
 import { api } from '../api/client';
 import { OperationsActionCards } from './OperationsActionCards';
@@ -14,12 +14,14 @@ interface OperationsViewProps {
   onRefresh?: () => void;
   onOpenMovementModal: (type: 'RECEIPT' | 'ISSUE' | 'TRANSFER' | 'ADJUSTMENT') => void;
   onPrintWaybill?: (movement: StockMovement) => void;
+  onOpenScanner?: () => void;
 }
 
 export const OperationsView: React.FC<OperationsViewProps> = ({
   ledger,
   onOpenMovementModal,
   onPrintWaybill,
+  onOpenScanner,
 }) => {
 
   const [stats, setStats] = useState<OperationsStats | null>(null);
@@ -56,8 +58,22 @@ export const OperationsView: React.FC<OperationsViewProps> = ({
           <h1 className="ops-title">Operations</h1>
         </div>
 
-        {/* Date Filter Picker */}
-        <div style={{ position: 'relative' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {onOpenScanner && (
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={onOpenScanner}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+              title="Open Barcode Scanner (F2)"
+            >
+              <Scan style={{ width: 14, height: 14 }} />
+              <span>Scan Barcode</span>
+            </button>
+          )}
+
+          {/* Date Filter Picker */}
+          <div style={{ position: 'relative' }}>
           <button
             type="button"
             className="ops-date-picker-btn"
@@ -102,6 +118,7 @@ export const OperationsView: React.FC<OperationsViewProps> = ({
           )}
         </div>
       </div>
+    </div>
 
       {/* 2. Top 4 Action Cards */}
       <OperationsActionCards onOpenAction={onOpenMovementModal} />

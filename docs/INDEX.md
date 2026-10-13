@@ -330,8 +330,9 @@ As of Tuesday, 13 October 2026:
 - [x] **Activity & Integrity Center (Sprint 12 / Page 6 Complete):** Unified audit center (`ActivityView.tsx`) with 3 tabs: Stock Ledger with signed deltas and paired transfer navigation (`MovementDetailDrawer.tsx`), Alerts & Exceptions with Acknowledge/Resolve actions (`AlertsTab.tsx`), and Integrity Diagnostic with 100% Consistency Certificate (`IntegrityTab.tsx`).
 - [x] **Storekeeper Document Attachments & Audit Proof Engine (Sprint 13 / Task 1 Complete):** Physical document attachment engine with `document_attachments` table, multipart PDF/image upload API, file streaming, modal dropzones in Movement and PO Receiving modals, and drawer inspection cards.
 - [x] **Printable Transit Waybill & Delivery Docket (Sprint 13 / Task 2 Complete):** Official warehouse delivery docket modal (`WaybillModal.tsx`) with vector Code128 barcode, carrier metadata, manifest table, dual signature blocks, and `@media print` black-and-white paper layout. Dynamically derived from `stock_movements`, `items`, and `locations` with zero schema migrations.
-- [x] **Passing Test Harness:** 39/39 backend test items verified (37 passed, 2 skipped, 0 failures) in ~2.3s.
-- [x] **TypeScript & Vite Build Verified:** Zero compile errors (`tsc && vite build` bundled in 2.30s, 0 errors).
+- [x] **Physical Warehouse Mobility & Optical Scanner (Sprint 13 / Task 3 Complete):** Thermal bin label printing (`BinLabelModal.tsx`) for Zebra 4"×2" & 2"×1" labels with pure vector Code128 & QR SVG renderer (`barcode.ts`). Unified hardware-agnostic optical scanner (`BarcodeScannerModal.tsx`) capturing USB scanner guns (HID keyboard wedge), Web Audio API tactile chime/buzz (`audio.ts`), instant SKU resolution, and 1-click transaction routing. Accessible via global `F2` hotkey and top bar.
+- [x] **Passing Test Harness:** 39/39 backend test items verified (37 passed, 2 skipped, 0 failures) in ~2.2s.
+- [x] **TypeScript & Vite Build Verified:** Zero compile errors (`tsc && vite build` bundled in 2.32s, 0 errors).
 
 - [x] **Unified Single-Command Runner:** `./run.sh` / `scripts/run_app.sh` with intelligent port conflict detection and clean `Ctrl+C` shutdown trap.
 - [x] **Lean, Concise Files:** All files partitioned into micro-modules; zero bloated files.

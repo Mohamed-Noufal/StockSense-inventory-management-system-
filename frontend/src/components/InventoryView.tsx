@@ -10,6 +10,7 @@ interface InventoryViewProps {
   items: InventoryItem[];
   onAction: (itemId: number, type: 'RECEIPT' | 'ISSUE' | 'TRANSFER') => void;
   onNavigateTab?: (tab: any) => void;
+  onPrintLabel?: (item: InventoryItem) => void;
 }
 
 // Canonical mock reference items representing the oilfield catalogue
@@ -190,6 +191,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
   items: backendItems,
   onAction,
   onNavigateTab = () => {},
+  onPrintLabel,
 }) => {
   // Combine real database items with canonical ordering
   const allItems = useMemo(() => {
@@ -419,6 +421,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
               movements={itemMovements}
               onNavigateTab={onNavigateTab}
               onCreateMovement={(itemId) => onAction(itemId, 'ISSUE')}
+              onPrintLabel={onPrintLabel}
             />
           )}
         </div>

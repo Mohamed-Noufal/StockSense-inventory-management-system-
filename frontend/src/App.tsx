@@ -23,6 +23,9 @@ import { POCreateModal } from './components/POCreateModal';
 import { POReceiveModal } from './components/POReceiveModal';
 import { RecommendationModal } from './components/RecommendationModal';
 import { WaybillModal } from './components/WaybillModal';
+import { BinLabelModal } from './components/BinLabelModal';
+import { BarcodeScannerModal } from './components/BarcodeScannerModal';
+import { useBarcodeScanner } from './hooks/useBarcodeScanner';
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'overview' | 'inventory' | 'ledger' | 'procurement' | 'ai' | 'activity' | 'sprint' | 'diagnostics' | 'users'>('overview');
@@ -78,6 +81,28 @@ const App: React.FC = () => {
   const [inspectingRec, setInspectingRec] = useState<AIRecommendation | null>(null);
   const [navPoId, setNavPoId] = useState<number | null>(null);
   const [waybillMovement, setWaybillMovement] = useState<StockMovement | null>(null);
+  const [showScannerModal, setShowScannerModal] = useState<boolean>(false);
+  const [labelPrintItem, setLabelPrintItem] = useState<InventoryItem | null>(null);
+
+  // Global F2 hotkey to toggle optical scanner modal
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'F2') {
+        e.preventDefault();
+        setShowScannerModal((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, []);
+
+  // Hardware barcode wedge listener: automatically opens scanner when USB gun fires
+  useBarcodeScanner({
+    onScan: (_code) => {
+      setShowScannerModal(true);
+    },
+    enabled: !showScannerModal,
+  });
 
   const fetchData = async () => {
     setLoading(true);
@@ -350,6 +375,7 @@ const App: React.FC = () => {
           currentUser={currentUser}
           onSelectUser={handleSelectUser}
           onNavigateTab={(tab) => setActiveTab(tab)}
+          onOpenScanner={() => setShowScannerModal(true)}
         />
 
         {error && (
@@ -376,6 +402,7 @@ const App: React.FC = () => {
                 setShowModal(true);
               }}
               onNavigateTab={(tab) => setActiveTab(tab)}
+              onPrintLabel={(item) => setLabelPrintItem(item)}
             />
           )}
           {activeTab === 'ledger' && (
@@ -389,6 +416,7 @@ const App: React.FC = () => {
                 setShowModal(true);
               }}
               onPrintWaybill={(mov) => setWaybillMovement(mov)}
+              onOpenScanner={() => setShowScannerModal(true)}
             />
           )}
           {activeTab === 'procurement' && (
@@ -525,6 +553,31 @@ const App: React.FC = () => {
           items={items}
           locations={locations}
           onClose={() => setWaybillMovement(null)}
+        />
+      )}
+
+      {showScannerModal && (
+        <BarcodeScannerModal
+          items={items}
+          onClose={() => setShowScannerModal(false)}
+          onQuickAction={(action, itm) => {
+            setSelectedItemId(itm.id);
+            setModalType(action);
+            setShowModal(true);
+          }}
+          onPrintLabel={(itm) => setLabelPrintItem(itm)}
+          onInspectItem={(itm) => {
+            setSelectedItemId(itm.id);
+            setActiveTab('inventory');
+          }}
+        />
+      )}
+
+      {labelPrintItem && (
+        <BinLabelModal
+          item={labelPrintItem}
+          location={locations.find((l) => l.name === labelPrintItem.warehouse_name) || locations[0]}
+          onClose={() => setLabelPrintItem(null)}
         />
       )}
     </div>
