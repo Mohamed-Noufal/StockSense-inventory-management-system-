@@ -800,12 +800,14 @@ The Operations Workstation (`/operations`, rendered via `OperationsView.tsx`) ma
 
 ## 16. Upcoming Workstation Modules (Roadmap)
 
-### 16.1 Storekeeper Document Attachments (COMPLETED) & Printable Waybills (`WaybillModal.tsx`)
+### 16.1 Storekeeper Document Attachments & Printable Waybills (COMPLETED)
 - **Drag-and-Drop Dropzones (COMPLETED)**: Integrated into `MovementModal.tsx` and `POReceiveModal.tsx` allowing storekeepers to upload signed physical dockets, inspection reports, or defect photos (PDF/PNG/JPEG) with live file chip feedback.
 - **Drawer Attachment Explorer (COMPLETED)**: Embedded in `MovementDetailDrawer.tsx` and `PODetailView.tsx` with file type badges, preview links, download triggers, and modular styling in `frontend/src/styles/attachments.css`.
-- **Printable Warehouse Waybill / Delivery Docket (`WaybillModal.tsx` - NEXT)**:
-  - Full oilfield transit docket layout with company header, Waybill reference, carrier name, vehicle license plate, origin/destination warehouse, manifest lines with quantities, notes, and dual sign-off blocks (Storekeeper Dispatcher & Material Inspector).
-  - Print-ready stylesheet `@media print` providing clean black-and-white paper printouts and instant "Save as PDF" capability.
+- **Printable Warehouse Waybill / Delivery Docket (`WaybillModal.tsx` - COMPLETED)**:
+  - Official oilfield transit docket with company header, Waybill reference, carrier metadata, vehicle license plate, origin/destination warehouse, manifest lines with quantities, notes, vector Code128 barcode, and dual sign-off blocks (Storekeeper Dispatcher & Material Inspector).
+  - Derived dynamically from existing `stock_movements`, `items`, and `locations`—ensuring zero schema migrations or data redundancy.
+  - Print-ready stylesheet `@media print` (`frontend/src/styles/waybill.css`) providing clean black-and-white paper printouts and native "Save as PDF" capability without heavy backend PDF dependencies.
+  - Wired into `OperationsTable.tsx`, `OperationsView.tsx`, `ActivityView.tsx`, and `App.tsx`.
 
 
 ### 16.2 Warehouse Mobility: Barcode & QR Label Printing (`LabelPrintModal.tsx` & `BarcodeScannerModal.tsx`)

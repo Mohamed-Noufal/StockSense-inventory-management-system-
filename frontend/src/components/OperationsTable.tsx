@@ -8,12 +8,15 @@ import { StockMovement } from '../types';
 interface OperationsTableProps {
   ledger: StockMovement[];
   onSelectMovement?: (movement: StockMovement) => void;
+  onPrintWaybill?: (movement: StockMovement) => void;
 }
 
 export const OperationsTable: React.FC<OperationsTableProps> = ({
   ledger,
-  onSelectMovement
+  onSelectMovement,
+  onPrintWaybill,
 }) => {
+
   const [activeTab, setActiveTab] = useState<'ALL' | 'ISSUE' | 'TRANSFER' | 'RECEIPT' | 'ADJUSTMENT'>('ALL');
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [sortAsc, setSortAsc] = useState<boolean>(false);
@@ -290,7 +293,11 @@ export const OperationsTable: React.FC<OperationsTableProps> = ({
                             type="button"
                             className="ops-menu-item"
                             onClick={() => {
-                              window.print();
+                              if (onPrintWaybill) {
+                                onPrintWaybill(mov);
+                              } else {
+                                window.print();
+                              }
                               setOpenActionMenuId(null);
                             }}
                           >
@@ -299,6 +306,7 @@ export const OperationsTable: React.FC<OperationsTableProps> = ({
                           </button>
                         </div>
                       )}
+
                     </td>
                   </tr>
                 );

@@ -22,6 +22,7 @@ import { MovementModal } from './components/MovementModal';
 import { POCreateModal } from './components/POCreateModal';
 import { POReceiveModal } from './components/POReceiveModal';
 import { RecommendationModal } from './components/RecommendationModal';
+import { WaybillModal } from './components/WaybillModal';
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'overview' | 'inventory' | 'ledger' | 'procurement' | 'ai' | 'activity' | 'sprint' | 'diagnostics' | 'users'>('overview');
@@ -76,6 +77,7 @@ const App: React.FC = () => {
   const [receivingPO, setReceivingPO] = useState<PurchaseOrder | null>(null);
   const [inspectingRec, setInspectingRec] = useState<AIRecommendation | null>(null);
   const [navPoId, setNavPoId] = useState<number | null>(null);
+  const [waybillMovement, setWaybillMovement] = useState<StockMovement | null>(null);
 
   const fetchData = async () => {
     setLoading(true);
@@ -386,6 +388,7 @@ const App: React.FC = () => {
                 setModalType(type);
                 setShowModal(true);
               }}
+              onPrintWaybill={(mov) => setWaybillMovement(mov)}
             />
           )}
           {activeTab === 'procurement' && (
@@ -431,6 +434,7 @@ const App: React.FC = () => {
               currentUser={currentUser}
               onRefresh={fetchData}
               onIntegrityUpdated={(rep) => setIntegrity(rep)}
+              onPrintWaybill={(mov) => setWaybillMovement(mov)}
             />
           )}
           {activeTab === 'users' && (
@@ -512,6 +516,15 @@ const App: React.FC = () => {
           onClose={() => setInspectingRec(null)}
           onApprove={async (id) => { await handleApproveRecommendation(id); }}
           onDismiss={handleDismissRecommendation}
+        />
+      )}
+
+      {waybillMovement && (
+        <WaybillModal
+          movement={waybillMovement}
+          items={items}
+          locations={locations}
+          onClose={() => setWaybillMovement(null)}
         />
       )}
     </div>

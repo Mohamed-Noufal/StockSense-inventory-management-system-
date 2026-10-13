@@ -329,8 +329,9 @@ As of Tuesday, 13 October 2026:
 - [x] **AI & Replenishment Intelligence Workstation (Sprint 11 / Page 5 Complete):** Unified AI workstation (`AIInsightsView.tsx`) with 3 tabs: Recommendations, 52-week Forecasts with SVG quantile ribbons (`AIForecastsTab.tsx`), and Model Backtest Report with RMSSE/MASE evaluation (`AIModelReportTab.tsx`). Explainability Drawer (`AIDrawer.tsx`), Window A Approve modal, Window B Dismiss modal with audit reasons, and Window C Run Analysis modal.
 - [x] **Activity & Integrity Center (Sprint 12 / Page 6 Complete):** Unified audit center (`ActivityView.tsx`) with 3 tabs: Stock Ledger with signed deltas and paired transfer navigation (`MovementDetailDrawer.tsx`), Alerts & Exceptions with Acknowledge/Resolve actions (`AlertsTab.tsx`), and Integrity Diagnostic with 100% Consistency Certificate (`IntegrityTab.tsx`).
 - [x] **Storekeeper Document Attachments & Audit Proof Engine (Sprint 13 / Task 1 Complete):** Physical document attachment engine with `document_attachments` table, multipart PDF/image upload API, file streaming, modal dropzones in Movement and PO Receiving modals, and drawer inspection cards.
-- [x] **Passing Test Harness:** 39/39 unit and integration tests passing in ~2.3s with 100% pass rate.
-- [x] **TypeScript & Vite Build Verified:** Zero compile errors (`tsc && vite build` bundled in 2.16s, 0 errors).
+- [x] **Printable Transit Waybill & Delivery Docket (Sprint 13 / Task 2 Complete):** Official warehouse delivery docket modal (`WaybillModal.tsx`) with vector Code128 barcode, carrier metadata, manifest table, dual signature blocks, and `@media print` black-and-white paper layout. Dynamically derived from `stock_movements`, `items`, and `locations` with zero schema migrations.
+- [x] **Passing Test Harness:** 39/39 backend test items verified (37 passed, 2 skipped, 0 failures) in ~2.3s.
+- [x] **TypeScript & Vite Build Verified:** Zero compile errors (`tsc && vite build` bundled in 2.30s, 0 errors).
 
 - [x] **Unified Single-Command Runner:** `./run.sh` / `scripts/run_app.sh` with intelligent port conflict detection and clean `Ctrl+C` shutdown trap.
 - [x] **Lean, Concise Files:** All files partitioned into micro-modules; zero bloated files.

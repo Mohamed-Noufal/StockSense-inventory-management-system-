@@ -13,12 +13,15 @@ interface OperationsViewProps {
   locations?: InventoryLocation[];
   onRefresh?: () => void;
   onOpenMovementModal: (type: 'RECEIPT' | 'ISSUE' | 'TRANSFER' | 'ADJUSTMENT') => void;
+  onPrintWaybill?: (movement: StockMovement) => void;
 }
 
 export const OperationsView: React.FC<OperationsViewProps> = ({
   ledger,
   onOpenMovementModal,
+  onPrintWaybill,
 }) => {
+
   const [stats, setStats] = useState<OperationsStats | null>(null);
   const [selectedMovement, setSelectedMovement] = useState<StockMovement | null>(null);
   const [dateRangeText, setDateRangeText] = useState<string>('Oct 1, 2026 – Oct 15, 2026');
@@ -110,8 +113,10 @@ export const OperationsView: React.FC<OperationsViewProps> = ({
           <OperationsTable
             ledger={ledger}
             onSelectMovement={(m) => setSelectedMovement(m)}
+            onPrintWaybill={onPrintWaybill}
           />
         </div>
+
 
         {/* Right Column: Operation Stats + Recent Activity Feed */}
         <div className="ops-right-column">

@@ -21,6 +21,7 @@ export interface ActivityViewProps {
   currentUser?: UserModel | null;
   onRefresh: () => void;
   onIntegrityUpdated?: (report: IntegrityCheckResponse) => void;
+  onPrintWaybill?: (movement: StockMovement) => void;
 }
 
 type TabType = 'LEDGER' | 'ALERTS' | 'INTEGRITY';
@@ -33,7 +34,9 @@ export const ActivityView: React.FC<ActivityViewProps> = ({
   currentUser,
   onRefresh,
   onIntegrityUpdated,
+  onPrintWaybill,
 }) => {
+
   // Tabs
   const [activeTab, setActiveTab] = useState<TabType>('LEDGER');
 
@@ -573,8 +576,10 @@ export const ActivityView: React.FC<ActivityViewProps> = ({
           allMovements={ledger}
           onClose={() => setSelectedMovement(null)}
           onSelectMovement={(mov) => setSelectedMovement(mov)}
+          onPrintWaybill={onPrintWaybill}
         />
       )}
     </div>
   );
 };
+

@@ -76,6 +76,8 @@ export interface StockMovement {
   reason: string | null;
   actor_label: string;
   occurred_at: string;
+  destination_label?: string | null;
+  idempotency_key?: string | null;
   item_sku?: string;
   item_name?: string;
   location_code?: string;
@@ -83,6 +85,7 @@ export interface StockMovement {
   reference_display?: string;
   status?: string;
 }
+
 
 export interface MovementCreatePayload {
   item_id: number;
