@@ -328,8 +328,10 @@ As of Tuesday, 13 October 2026:
 - [x] **Purchase Orders & Dock Receiving Workstation (Sprint 10 / Page 4 Complete):** High-density procurement workstation (`ProcurementView.tsx`), multi-line draft order creation (`POCreateView.tsx`), order details view with line fulfillment progress (`PODetailView.tsx`), Window C Approval modal, Window D partial/full receiving modal with over-receipt prevention, Window E cancel modal, and RFC 4180 CSV export.
 - [x] **AI & Replenishment Intelligence Workstation (Sprint 11 / Page 5 Complete):** Unified AI workstation (`AIInsightsView.tsx`) with 3 tabs: Recommendations, 52-week Forecasts with SVG quantile ribbons (`AIForecastsTab.tsx`), and Model Backtest Report with RMSSE/MASE evaluation (`AIModelReportTab.tsx`). Explainability Drawer (`AIDrawer.tsx`), Window A Approve modal, Window B Dismiss modal with audit reasons, and Window C Run Analysis modal.
 - [x] **Activity & Integrity Center (Sprint 12 / Page 6 Complete):** Unified audit center (`ActivityView.tsx`) with 3 tabs: Stock Ledger with signed deltas and paired transfer navigation (`MovementDetailDrawer.tsx`), Alerts & Exceptions with Acknowledge/Resolve actions (`AlertsTab.tsx`), and Integrity Diagnostic with 100% Consistency Certificate (`IntegrityTab.tsx`).
-- [x] **Passing Test Harness:** 35/35 unit and integration tests passing in ~1.9s with 100% pass rate.
-- [x] **TypeScript & Vite Build Verified:** Zero compile errors (`tsc && vite build` bundled in 2.1s, 0 errors).
+- [x] **Storekeeper Document Attachments & Audit Proof Engine (Sprint 13 / Task 1 Complete):** Physical document attachment engine with `document_attachments` table, multipart PDF/image upload API, file streaming, modal dropzones in Movement and PO Receiving modals, and drawer inspection cards.
+- [x] **Passing Test Harness:** 39/39 unit and integration tests passing in ~2.3s with 100% pass rate.
+- [x] **TypeScript & Vite Build Verified:** Zero compile errors (`tsc && vite build` bundled in 2.16s, 0 errors).
+
 - [x] **Unified Single-Command Runner:** `./run.sh` / `scripts/run_app.sh` with intelligent port conflict detection and clean `Ctrl+C` shutdown trap.
 - [x] **Lean, Concise Files:** All files partitioned into micro-modules; zero bloated files.
 - [x] **Organized Documentation Suite:** All specifications, architecture charts, data flows, and sprint schedules organized cleanly in `docs/`.
