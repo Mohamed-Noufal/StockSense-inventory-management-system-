@@ -195,12 +195,12 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
 
                     {/* Item with Thumbnail, Name & SKU */}
                     <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
                         <ItemPartThumbnail
                           sku={item.sku}
                           name={item.name}
                           category={item.category_name}
-                          size="sm"
+                          size="md"
                         />
                         <div style={{ minWidth: 0 }}>
                           <div className="table-item-name">{item.name}</div>

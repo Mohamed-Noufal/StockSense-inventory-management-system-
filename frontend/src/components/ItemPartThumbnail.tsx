@@ -19,7 +19,7 @@ export const ItemPartThumbnail: React.FC<ItemPartThumbnailProps> = ({
   size = 'sm',
   className = '',
 }) => {
-  const dim = size === 'lg' ? 64 : size === 'md' ? 44 : 36;
+  const dim = size === 'lg' ? 64 : size === 'md' ? 48 : 38;
   const lowerName = name.toLowerCase();
   const lowerSku = sku.toLowerCase();
   const lowerCat = category.toLowerCase();

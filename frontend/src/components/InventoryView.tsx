@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Box } from 'lucide-react';
 import { InventoryItem, StockMovement } from '../types';
 import { api } from '../api/client';
 import { InventoryKpiCards } from './InventoryKpiCards';
@@ -358,18 +357,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
 
   return (
     <div className="inventory-view-root">
-      {/* 1. Page Header Title */}
-      <div className="inventory-page-header">
-        <div className="inventory-header-icon-box">
-          <Box style={{ width: 22, height: 22, color: '#ffffff' }} />
-        </div>
-        <div className="inventory-header-text">
-          <h1>Inventory</h1>
-          <p>Manage your stock, track movements and monitor availability across all warehouses.</p>
-        </div>
-      </div>
-
-      {/* 2. Top Metric KPI Cards (4 cards) */}
+      {/* Top Metric KPI Cards (4 cards) */}
       <InventoryKpiCards
         totalItems={totalItemsCount}
         totalValue={totalStockValue}
