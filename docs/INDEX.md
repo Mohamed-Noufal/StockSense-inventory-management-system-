@@ -322,8 +322,9 @@ As of Tuesday, 13 October 2026:
 - [x] **Full Mathematical Explainability:** Every recommendation persists structured formula inputs ($Q_{on\_hand}$, $Q_{on\_order}$, $ROP$, $SS$, target $OUT$, $MOQ$) and human-readable natural language justification.
 - [x] **Modular React 18 + TS + Vite Frontend:** Decomposed into clean subcomponents (`Sidebar`, `Header`, `InventoryView`, `LedgerView`, `ProcurementView`, `AIInsightsView`, `MovementModal`, `POCreateModal`, `POReceiveModal`, `RecommendationModal`, `SprintView`, `DiagnosticsView`) with live transaction modals.
 - [x] **Production-Grade Split-Pane Inventory Workstation (Sprint 7 Complete):** Full-fidelity layout matching reference design with 4 KPI metric cards, real-time debounced search, 3 dropdown filters (Category, Location, Status), RFC 4180 CSV export, interactive 12-week SVG stock trend area chart with hover tooltips, deterministic isometric vector part thumbnails, and instant atomic movement execution.
-- [x] **Passing Test Harness:** 28/28 unit and integration tests passing in 0.91s with 100% pass rate.
-- [x] **TypeScript & Vite Build Verified:** Zero compile errors (`tsc && vite build` bundled in 1.95s, 1597 modules transformed).
+- [x] **Production Operations Workstation (Sprint 8 Complete):** Enterprise stock movements workstation matching reference mock: 4 top action cards with direct modal dispatch, Recent Operations table with tabbed filtering and sortable columns, 2x2 Operations Stats widget with dynamic period trend percentages, Recent Activity feed, unified 4-way modal supporting Receipts, Issues, Transfers, and Adjustments.
+- [x] **Passing Test Harness:** 33/33 unit and integration tests passing in 1.74s with 100% pass rate.
+- [x] **TypeScript & Vite Build Verified:** Zero compile errors (`tsc && vite build` bundled in 1.91s, 1602 modules transformed).
 - [x] **Unified Single-Command Runner:** `./run.sh` / `scripts/run_app.sh` with intelligent port conflict detection and clean `Ctrl+C` shutdown trap.
 - [x] **Lean, Concise Files:** All files partitioned into micro-modules; zero bloated files.
 - [x] **Organized Documentation Suite:** All specifications, architecture charts, data flows, and sprint schedules organized cleanly in `docs/`.

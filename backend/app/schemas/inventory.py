@@ -45,7 +45,9 @@ class MovementCreate(BaseModel):
     location_id: int
     movement_type: str = Field(description="RECEIPT, ISSUE, or ADJUSTMENT")
     quantity: int = Field(gt=0, description="Positive quantity (sign is handled by service)")
+    adjustment_direction: Optional[str] = Field(default="SURPLUS", description="For ADJUSTMENT: SURPLUS (+) or SHRINKAGE (-)")
     project_id: Optional[int] = None
+    destination_label: Optional[str] = None
     reference_type: Optional[str] = None
     reference_id: Optional[int] = None
     reason: Optional[str] = None
@@ -73,8 +75,23 @@ class MovementResponse(BaseModel):
     actor_label: str
     occurred_at: str
     item_sku: Optional[str] = None
+    item_name: Optional[str] = None
     location_code: Optional[str] = None
+    route_display: Optional[str] = None
+    reference_display: Optional[str] = None
+    status: str = "Completed"
     model_config = ConfigDict(from_attributes=True)
+
+class OperationsStatsResponse(BaseModel):
+    timeframe_days: int
+    issues_count: int
+    issues_trend_pct: float
+    transfers_count: int
+    transfers_trend_pct: float
+    receipts_count: int
+    receipts_trend_pct: float
+    adjustments_count: int
+    adjustments_trend_pct: float
 
 class IntegrityCheckResponse(BaseModel):
     status: str

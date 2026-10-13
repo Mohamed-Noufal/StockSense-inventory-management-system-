@@ -1,4 +1,5 @@
-from typing import List, Optional
+import re
+from typing import List, Optional, Dict
 from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -10,9 +11,12 @@ from backend.app.models.stock_balances import StockBalance
 from backend.app.models.stock_movements import StockMovement
 from backend.app.schemas.inventory import (
     ItemResponse, LocationResponse, StockBalanceResponse,
-    MovementCreate, TransferCreate, MovementResponse, IntegrityCheckResponse
+    MovementCreate, TransferCreate, MovementResponse,
+    OperationsStatsResponse, IntegrityCheckResponse
 )
-from backend.app.services.inventory_service import post_movement, transfer_stock, run_integrity_check
+from backend.app.services.inventory_service import (
+    post_movement, transfer_stock, run_integrity_check, get_operations_stats
+)
 
 router = APIRouter()
 
@@ -114,6 +118,10 @@ def list_balances(
         for r in results
     ]
 
+@router.get("/operations/stats", response_model=OperationsStatsResponse)
+def get_ops_stats(days: int = Query(7, ge=1, le=365), db: Session = Depends(get_db)):
+    return get_operations_stats(db, days=days)
+
 @router.get("/ledger", response_model=List[MovementResponse])
 def list_ledger(
     item_id: Optional[int] = None, location_id: Optional[int] = None,
@@ -124,7 +132,8 @@ def list_ledger(
         StockMovement.id, StockMovement.item_id, StockMovement.location_id,
         StockMovement.movement_type, StockMovement.quantity, StockMovement.project_id,
         StockMovement.transfer_group_id, StockMovement.reason, StockMovement.actor_label,
-        StockMovement.occurred_at, Item.sku.label("item_sku"), Location.code.label("location_code")
+        StockMovement.occurred_at, Item.sku.label("item_sku"), Item.name.label("item_name"),
+        Location.code.label("location_code")
     ).join(Item, StockMovement.item_id == Item.id).join(Location, StockMovement.location_id == Location.id)
     if item_id:
         query = query.filter(StockMovement.item_id == item_id)
@@ -133,26 +142,94 @@ def list_ledger(
     if movement_type:
         query = query.filter(StockMovement.movement_type == movement_type.upper())
     results = query.order_by(StockMovement.id.desc()).offset(offset).limit(limit).all()
-    return [
-        MovementResponse(
-            id=r.id, item_id=r.item_id, location_id=r.location_id, movement_type=r.movement_type,
-            quantity=r.quantity, project_id=r.project_id, transfer_group_id=r.transfer_group_id,
-            reason=r.reason, actor_label=r.actor_label, occurred_at=r.occurred_at,
-            item_sku=r.item_sku, location_code=r.location_code
+
+    # Pre-fetch transfer mappings to produce clean "WH-01 → WH-02" routes
+    transfer_groups = [r.transfer_group_id for r in results if r.transfer_group_id]
+    transfer_loc_map: Dict[str, Dict[str, str]] = {}
+    if transfer_groups:
+        all_xfer_movs = (
+            db.query(StockMovement.transfer_group_id, StockMovement.movement_type, Location.code)
+            .join(Location, StockMovement.location_id == Location.id)
+            .filter(StockMovement.transfer_group_id.in_(transfer_groups))
+            .all()
         )
-        for r in results
-    ]
+        for tg, mt, lc in all_xfer_movs:
+            if tg not in transfer_loc_map:
+                transfer_loc_map[tg] = {}
+            transfer_loc_map[tg][mt] = lc
+
+    res = []
+    for r in results:
+        m_type = r.movement_type
+        route = r.location_code or "WH-01"
+        if m_type == "RECEIPT":
+            route = f"Supplier → {r.location_code}"
+        elif m_type == "ISSUE":
+            dest = "Rig-12"
+            if r.reason and "To: " in r.reason:
+                dest = r.reason.split("To: ")[1].split(" - ")[0].strip()
+            elif r.project_id:
+                dest = f"Rig-{r.project_id:02d}"
+            elif r.reason:
+                for cand in ["Rig-12", "Rig-07", "Workshop", "Rig-03"]:
+                    if cand.lower() in r.reason.lower():
+                        dest = cand
+                        break
+            route = f"{r.location_code} → {dest}"
+        elif m_type in ("TRANSFER_OUT", "TRANSFER_IN"):
+            tg_map = transfer_loc_map.get(r.transfer_group_id, {})
+            out_loc = tg_map.get("TRANSFER_OUT", r.location_code)
+            in_loc = tg_map.get("TRANSFER_IN", "WH-02")
+            route = f"{out_loc} → {in_loc}"
+        elif m_type == "ADJUSTMENT":
+            route = r.location_code
+
+        ref = "—"
+        if r.reason:
+            match = re.search(r'\b(PO-\d+|REQ-\d+|TR-\d+|CT-\d+|WO-\d+)\b', r.reason)
+            if match:
+                ref = match.group(1)
+            else:
+                ref = r.reason.strip()
+
+        res.append(
+            MovementResponse(
+                id=r.id, item_id=r.item_id, location_id=r.location_id, movement_type=r.movement_type,
+                quantity=r.quantity, project_id=r.project_id, transfer_group_id=r.transfer_group_id,
+                reason=r.reason, actor_label=r.actor_label, occurred_at=r.occurred_at,
+                item_sku=r.item_sku, item_name=r.item_name, location_code=r.location_code,
+                route_display=route, reference_display=ref, status="Completed"
+            )
+        )
+    return res
 
 @router.post("/movements", response_model=MovementResponse, status_code=201)
 def create_movement(payload: MovementCreate, db: Session = Depends(get_db)):
     mov = post_movement(db, payload)
     item = db.query(Item).filter_by(id=mov.item_id).first()
     loc = db.query(Location).filter_by(id=mov.location_id).first()
+    loc_code = loc.code if loc else "WH-01"
+
+    route = loc_code
+    if mov.movement_type == "RECEIPT":
+        route = f"Supplier → {loc_code}"
+    elif mov.movement_type == "ISSUE":
+        dest = payload.destination_label or "Rig-12"
+        route = f"{loc_code} → {dest}"
+    elif mov.movement_type == "ADJUSTMENT":
+        route = loc_code
+
+    ref = "—"
+    if mov.reason:
+        match = re.search(r'\b(PO-\d+|REQ-\d+|TR-\d+|CT-\d+|WO-\d+)\b', mov.reason)
+        ref = match.group(1) if match else mov.reason.strip()
+
     return MovementResponse(
         id=mov.id, item_id=mov.item_id, location_id=mov.location_id, movement_type=mov.movement_type,
         quantity=mov.quantity, project_id=mov.project_id, transfer_group_id=mov.transfer_group_id,
         reason=mov.reason, actor_label=mov.actor_label, occurred_at=mov.occurred_at,
-        item_sku=item.sku if item else None, location_code=loc.code if loc else None
+        item_sku=item.sku if item else None, item_name=item.name if item else None,
+        location_code=loc_code, route_display=route, reference_display=ref, status="Completed"
     )
 
 @router.post("/transfer", status_code=201)

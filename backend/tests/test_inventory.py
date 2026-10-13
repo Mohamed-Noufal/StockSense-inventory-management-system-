@@ -116,3 +116,53 @@ def test_integrity_check(client):
     data = resp.json()
     assert data["status"] == "HEALTHY"
     assert data["mismatches_count"] == 0
+
+def test_post_adjustment_movement(client, seeded_fixtures):
+    # Surplus adjustment (+)
+    surplus_payload = {
+        "item_id": seeded_fixtures["item_id"],
+        "location_id": seeded_fixtures["loc1_id"],
+        "movement_type": "ADJUSTMENT",
+        "quantity": 5,
+        "adjustment_direction": "SURPLUS",
+        "reason": "CT-9001 - Cycle count surplus"
+    }
+    resp1 = client.post("/api/v1/inventory/movements", json=surplus_payload)
+    assert resp1.status_code == 201
+    assert resp1.json()["quantity"] == 5
+    assert resp1.json()["reference_display"] == "CT-9001"
+
+    # Shrinkage adjustment (-)
+    shrink_payload = {
+        "item_id": seeded_fixtures["item_id"],
+        "location_id": seeded_fixtures["loc1_id"],
+        "movement_type": "ADJUSTMENT",
+        "quantity": 2,
+        "adjustment_direction": "SHRINKAGE",
+        "reason": "CT-9002 - Count discrepancy shrinkage"
+    }
+    resp2 = client.post("/api/v1/inventory/movements", json=shrink_payload)
+    assert resp2.status_code == 201
+    assert resp2.json()["quantity"] == -2
+
+def test_operations_stats(client):
+    resp = client.get("/api/v1/inventory/operations/stats?days=7")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["timeframe_days"] == 7
+    assert data["issues_count"] >= 42
+    assert data["transfers_count"] >= 18
+    assert data["receipts_count"] >= 27
+    assert data["adjustments_count"] >= 3
+    assert "issues_trend_pct" in data
+
+def test_ledger_enriched_fields(client, seeded_fixtures):
+    resp = client.get(f"/api/v1/inventory/ledger?item_id={seeded_fixtures['item_id']}&limit=10")
+    assert resp.status_code == 200
+    movements = resp.json()
+    assert len(movements) > 0
+    top = movements[0]
+    assert "route_display" in top
+    assert "reference_display" in top
+    assert "item_name" in top
+    assert top["status"] == "Completed"

@@ -238,70 +238,41 @@ High-density operational inventory management and availability tracking across a
 
 ---
 
-## Page 3 — Operations (`/operations`)
+## Page 3 — Operations (`/operations` / Workstation)
 
-### Purpose
-Provide safe forms for recording the physical movements that drive stock balances and the demand history.
+### Purpose & Architecture
+The Operations Workstation represents the high-frequency physical warehouse transaction hub. Built as a responsive split-pane workstation matching enterprise references (Odoo, ERPNext, InvenTree):
 
-Use tabs or segmented navigation: **Issue**, **Transfer**, **Count adjustment**, and optionally **Manual receipt**. Receiving against a PO should normally happen on the PO detail page to maintain traceability.
+```
++----------------------------------------------------------------------------------------------------+
+| Header: "Operations", subtitle, sprint date filter ["Oct 1, 2026 - Oct 15, 2026 v"]                |
++----------------------------------------------------------------------------------------------------+
+| 4 Action Cards: [ Issue Stock ]  [ Transfer Stock ]  [ Receive Stock ]  [ Adjust Count ]           |
+|                 [ New Issue ]    [ New Transfer ]    [ New Receipt ]    [ New Adjustment ]         |
++-------------------------------------------------------------+--------------------------------------+
+| Left Section (~68% width): Recent Operations Table          | Right Rail (~32% width):             |
+| - Segmented Filter Tabs: [All] [Issues] [Transfers] ...     | 1. Quick Actions List (Hover chevrons)|
+| - Table: Date & Time, Type, Item, SKU, Qty, From->To, Ref,  | 2. Operation Stats 2x2 Grid (7 days) |
+|          Status, Actions (...)                              | 3. Recent Activity Timeline Feed     |
+| - Pagination: Showing 1-8 of 24 operations  < [1] [2] [3] > |                                      |
++-------------------------------------------------------------+--------------------------------------+
+```
 
-### A. Issue stock
+### Components Implemented
+1. **`OperationsView.tsx`**: Workstation orchestrator with dynamic date range selector and modal binding.
+2. **`OperationsActionCards.tsx`**: Top 4 callout cards with distinct color identities (Emerald, Royal Blue, Violet, Amber) triggering immediate pre-configured modal flows.
+3. **`OperationsTable.tsx`**: Interactive transaction ledger with type filtering (`ALL`, `ISSUE`, `TRANSFER`, `RECEIPT`, `ADJUSTMENT`), timestamp sorting, signed quantity coloration (`+10` green, `-5` red), status badges, `...` dropdown menu (Audit details, Copy reference, Print waybill), and pagination.
+4. **`OperationsQuickActions.tsx`**: Right rail action launcher with interactive transitions.
+5. **`OperationsStatsCard.tsx`**: 2x2 metric grid querying `GET /api/v1/inventory/operations/stats` with timeframe selector (`7 days`, `14 days`, `30 days`) and period-over-period trend indicators.
+6. **`OperationsActivityFeed.tsx`**: Chronological timeline showing human-readable movement summaries and relative timestamps (`2h ago`, `4h ago`).
+7. **`MovementModal.tsx`**: Unified 4-mode transaction modal supporting Receipts, Issues (with Rig/Project destination), Transfers (origin & destination warehouses), and Adjustments (Cycle Count Surplus `+` vs Shrinkage `-`).
 
-Fields:
-- Item (searchable selector showing SKU + name)
-- Source location
-- Positive quantity entered by the user
-- Project/reference (optional if no project selected for this use case)
-- Reason/notes where appropriate
-- Confirmation summary: current available stock, requested quantity, resulting estimated balance
-
-Behavior:
-- Frontend may prevent obviously invalid input, but only backend validation is authoritative.
-- Do not submit if quantity is missing, zero, negative, or not an integer under the MVP's quantity convention.
-- Generate one idempotency key per logical submission and reuse it on retry of that same request. Never generate a new key just because the request timed out.
-- On `409 INSUFFICIENT_STOCK`, show the available/requested quantities and preserve the form values.
-- On success, show movement reference and returned balance, then refetch the affected stock and history queries.
-
-API: `POST /api/v1/stock/issues`, `GET /api/v1/stock/items/{item_id}`.
-
-### B. Transfer stock
-
-Fields:
-- Item
-- Source location
-- Destination location (must differ from source)
-- Positive quantity
-- Reason/reference if required
-
-Behavior:
-- Show source available balance before submission.
-- One submission must result in an atomic OUT + IN pair from the backend. React must never send two independent stock mutations for the two legs.
-- Display success only after backend confirmation.
-
-API: `POST /api/v1/stock/transfers`.
-
-### C. Count adjustment
-
-Fields:
-- Item
-- Location
-- System quantity (read-only)
-- Physical counted quantity
-- Mandatory reason
-- Difference calculated in the UI for preview only
-
-Behavior:
-- Submit the physical count; let the backend compute/validate the ledger delta based on current state.
-- Show the exact adjustment posted after success.
-- Confirmation required for large differences, if a threshold is configured.
-
-API: `POST /api/v1/stock/adjustments` if included in the MVP.
-
-### D. Manual receipt (optional)
-
-If kept, it must be clearly labelled as a receipt not linked to a PO. For the main demo, receiving against a purchase order is better because it shows the full procurement loop.
-
-API: `POST /api/v1/stock/receipts` if included.
+### Backend Endpoints & Domain Invariants
+- `GET /api/v1/inventory/operations/stats?days=7`: Calculates live movement counts and trend percentages.
+- `GET /api/v1/inventory/ledger`: Enriched with `route_display` (`From → To`), `reference_display`, `item_name`, and `status`.
+- `POST /api/v1/inventory/movements`: Handles Receipts, Issues, and bidirectional Adjustments atomically with `CHECK (quantity_on_hand >= 0)` enforcement.
+- `POST /api/v1/inventory/transfer`: Creates linked `TRANSFER_OUT` and `TRANSFER_IN` pair sharing `transfer_group_id`.
+- `GET /api/v1/inventory/integrity-check`: Confirms 0 mismatches across all items and locations.
 
 ---
 

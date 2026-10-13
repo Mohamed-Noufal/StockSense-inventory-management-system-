@@ -9,7 +9,7 @@ import {
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
 import { InventoryView } from './components/InventoryView';
-import { LedgerView } from './components/LedgerView';
+import { OperationsView } from './components/OperationsView';
 import { OverviewView } from './components/OverviewView';
 import { ProcurementView } from './components/ProcurementView';
 import { AIInsightsView } from './components/AIInsightsView';
@@ -59,7 +59,9 @@ const App: React.FC = () => {
 
   // Modals
   const [showModal, setShowModal] = useState<boolean>(false);
-  const [modalType, setModalType] = useState<'RECEIPT' | 'ISSUE' | 'TRANSFER'>('RECEIPT');
+  const [modalType, setModalType] = useState<'RECEIPT' | 'ISSUE' | 'TRANSFER' | 'ADJUSTMENT'>('RECEIPT');
+  const [adjDirection, setAdjDirection] = useState<'SURPLUS' | 'SHRINKAGE'>('SURPLUS');
+  const [destinationLabel, setDestinationLabel] = useState<string>('Rig-12');
   const [selectedItemId, setSelectedItemId] = useState<number>(0);
   const [selectedLocId, setSelectedLocId] = useState<number>(0);
   const [targetLocId, setTargetLocId] = useState<number>(0);
@@ -139,6 +141,8 @@ const App: React.FC = () => {
         const res = await api.postMovement({
           item_id: selectedItemId, location_id: selectedLocId,
           movement_type: modalType, quantity: txQty,
+          adjustment_direction: modalType === 'ADJUSTMENT' ? adjDirection : undefined,
+          destination_label: modalType === 'ISSUE' ? destinationLabel : undefined,
           reason: txReason || `Manual ${modalType.toLowerCase()}`,
           actor_label: actorLabel,
         });
@@ -353,7 +357,18 @@ const App: React.FC = () => {
               onNavigateTab={(tab) => setActiveTab(tab)}
             />
           )}
-          {activeTab === 'ledger' && <LedgerView ledger={ledger} onRefresh={fetchData} />}
+          {activeTab === 'ledger' && (
+            <OperationsView
+              ledger={ledger}
+              items={items}
+              locations={locations}
+              onRefresh={fetchData}
+              onOpenMovementModal={(type) => {
+                setModalType(type);
+                setShowModal(true);
+              }}
+            />
+          )}
           {activeTab === 'procurement' && (
             <ProcurementView
               orders={orders}
@@ -418,6 +433,10 @@ const App: React.FC = () => {
           setTxQty={setTxQty}
           txReason={txReason}
           setTxReason={setTxReason}
+          adjustmentDirection={adjDirection}
+          setAdjustmentDirection={setAdjDirection}
+          destinationLabel={destinationLabel}
+          setDestinationLabel={setDestinationLabel}
           onClose={() => setShowModal(false)}
           onSubmit={handleTransaction}
         />

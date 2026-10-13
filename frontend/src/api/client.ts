@@ -1,7 +1,7 @@
 import {
   HealthResponse, ReadyResponse, InventoryItem, InventoryLocation,
   StockBalance, StockMovement, MovementCreatePayload, TransferCreatePayload,
-  IntegrityCheckResponse, Supplier, PurchaseOrder, POCreatePayload, POReceivePayload,
+  OperationsStats, IntegrityCheckResponse, Supplier, PurchaseOrder, POCreatePayload, POReceivePayload,
   AIRun, AIRecommendation, AIRunTriggerPayload, User
 } from '../types';
 
@@ -56,6 +56,7 @@ export const api = {
     if (itemId) params.append('item_id', String(itemId));
     return request<StockMovement[]>(`/inventory/ledger?${params.toString()}`);
   },
+  getOperationsStats: (days = 7) => request<OperationsStats>(`/inventory/operations/stats?days=${days}`),
   postMovement: (payload: MovementCreatePayload) =>
     request<StockMovement>('/inventory/movements', {
       method: 'POST',

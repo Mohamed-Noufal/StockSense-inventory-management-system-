@@ -77,7 +77,11 @@ export interface StockMovement {
   actor_label: string;
   occurred_at: string;
   item_sku?: string;
+  item_name?: string;
   location_code?: string;
+  route_display?: string;
+  reference_display?: string;
+  status?: string;
 }
 
 export interface MovementCreatePayload {
@@ -85,9 +89,23 @@ export interface MovementCreatePayload {
   location_id: number;
   movement_type: 'RECEIPT' | 'ISSUE' | 'ADJUSTMENT';
   quantity: number;
+  adjustment_direction?: 'SURPLUS' | 'SHRINKAGE';
+  destination_label?: string;
   reason?: string;
   project_id?: number;
   actor_label?: string;
+}
+
+export interface OperationsStats {
+  timeframe_days: number;
+  issues_count: number;
+  issues_trend_pct: number;
+  transfers_count: number;
+  transfers_trend_pct: number;
+  receipts_count: number;
+  receipts_trend_pct: number;
+  adjustments_count: number;
+  adjustments_trend_pct: number;
 }
 
 export interface TransferCreatePayload {
