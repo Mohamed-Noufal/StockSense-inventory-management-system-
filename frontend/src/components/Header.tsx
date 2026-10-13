@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Plus, Bell,
-  ChevronDown, PanelLeft, PanelLeftClose,
+  ChevronDown, PanelLeft,
   CheckCircle2, AlertTriangle, Users, ShieldCheck
 } from 'lucide-react';
 import { IntegrityCheckResponse, User } from '../types';
@@ -102,20 +102,18 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="top-header">
-      {/* Left: Sidebar Toggle + Clean Vercel Breadcrumbs + Search */}
+      {/* Left: Sidebar Toggle (when collapsed) + Clean Vercel Breadcrumbs */}
       <div className="header-left-group">
-        <button
-          className="header-icon-btn"
-          onClick={onToggleCollapse}
-          title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-        >
-          {isCollapsed ? (
+        {isCollapsed && (
+          <button
+            className="header-icon-btn"
+            onClick={onToggleCollapse}
+            title="Expand sidebar (Ctrl+B)"
+            aria-label="Expand sidebar"
+          >
             <PanelLeft style={{ width: 16, height: 16 }} />
-          ) : (
-            <PanelLeftClose style={{ width: 16, height: 16 }} />
-          )}
-        </button>
+          </button>
+        )}
 
         <nav className="header-breadcrumbs" aria-label="Breadcrumb">
           <span className="breadcrumb-org">StockSense</span>

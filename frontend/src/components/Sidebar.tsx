@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   LayoutDashboard, Box, ArrowLeftRight, ShoppingBag, Sparkles,
-  Users, Flag, Cpu, ShieldCheck, PanelLeftClose, PanelLeftOpen
+  Users, Flag, Cpu, ShieldCheck, PanelLeftClose
 } from 'lucide-react';
 import { HealthResponse } from '../types';
 
@@ -34,27 +34,33 @@ export const Sidebar: React.FC<SidebarProps> = ({
     <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}>
       {/* Sidebar Header with Logo & Collapse Toggle */}
       <div className="sidebar-logo">
-        <div className="sidebar-logo-icon" title="StockSense Platform">
+        <div
+          className="sidebar-logo-icon"
+          title={isCollapsed ? 'Click to expand sidebar (Ctrl+B)' : 'StockSense Platform'}
+          onClick={isCollapsed ? onToggleCollapse : undefined}
+          style={{ cursor: isCollapsed ? 'pointer' : 'default' }}
+        >
           <Box style={{ width: 18, height: 18, color: '#ffffff' }} />
         </div>
         {!isCollapsed && (
           <div className="sidebar-logo-text">
-            <h1>StockSense</h1>
-            <span>Smarter Inventory, Lower Risk.</span>
+            <div className="sidebar-logo-title-row">
+              <h1>StockSense</h1>
+              <span className="sidebar-version-badge">POC</span>
+            </div>
+            <span className="sidebar-logo-sub">AI Inventory Engine</span>
           </div>
         )}
-        <button
-          className="sidebar-toggle-btn"
-          onClick={onToggleCollapse}
-          title={isCollapsed ? 'Expand sidebar (Ctrl+B)' : 'Collapse sidebar (Ctrl+B)'}
-          aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-        >
-          {isCollapsed ? (
-            <PanelLeftOpen style={{ width: 16, height: 16 }} />
-          ) : (
-            <PanelLeftClose style={{ width: 16, height: 16 }} />
-          )}
-        </button>
+        {!isCollapsed && (
+          <button
+            className="sidebar-toggle-btn"
+            onClick={onToggleCollapse}
+            title="Collapse sidebar (Ctrl+B)"
+            aria-label="Collapse sidebar"
+          >
+            <PanelLeftClose style={{ width: 15, height: 15 }} />
+          </button>
+        )}
       </div>
 
       <nav className="nav-menu">
