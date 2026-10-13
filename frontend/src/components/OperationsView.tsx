@@ -4,7 +4,6 @@ import { StockMovement, OperationsStats, InventoryItem, InventoryLocation } from
 import { api } from '../api/client';
 import { OperationsActionCards } from './OperationsActionCards';
 import { OperationsTable } from './OperationsTable';
-import { OperationsQuickActions } from './OperationsQuickActions';
 import { OperationsStatsCard } from './OperationsStatsCard';
 import { OperationsActivityFeed } from './OperationsActivityFeed';
 
@@ -45,18 +44,13 @@ export const OperationsView: React.FC<OperationsViewProps> = ({
 
   return (
     <div className="ops-view-container">
-      {/* 1. Header Bar with Title, Subtitle, and Date Range Picker */}
+      {/* 1. Header Bar with Title and Date Range Picker */}
       <div className="ops-header-bar">
         <div className="ops-header-title-box">
           <div className="ops-header-icon-square">
-            <Box style={{ width: 22, height: 22, color: '#ffffff' }} />
+            <Box style={{ width: 20, height: 20, color: '#ffffff' }} />
           </div>
-          <div>
-            <h1 className="ops-title">Operations</h1>
-            <p className="ops-subtitle">
-              Manage stock movements, issue items, transfer between locations, and adjust counts with full traceability.
-            </p>
-          </div>
+          <h1 className="ops-title">Operations</h1>
         </div>
 
         {/* Date Filter Picker */}
@@ -119,9 +113,8 @@ export const OperationsView: React.FC<OperationsViewProps> = ({
           />
         </div>
 
-        {/* Right Column: Quick Actions + Operation Stats + Recent Activity Feed */}
+        {/* Right Column: Operation Stats + Recent Activity Feed */}
         <div className="ops-right-column">
-          <OperationsQuickActions onOpenAction={onOpenMovementModal} />
           <OperationsStatsCard stats={stats} onTimeframeChange={(d) => fetchStats(d)} />
           <OperationsActivityFeed movements={ledger} />
         </div>
