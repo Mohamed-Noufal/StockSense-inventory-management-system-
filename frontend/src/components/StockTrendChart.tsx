@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Calendar, TrendingUp, TrendingDown } from 'lucide-react';
 
 export interface TrendDataPoint {
   date: string;
@@ -39,7 +40,13 @@ export const StockTrendChart: React.FC<StockTrendChartProps> = ({
   currentStock = 8,
   reorderPoint = 10,
 }) => {
-  const [hoveredPoint, setHoveredPoint] = useState<{ index: number; x: number; y: number; val: TrendDataPoint } | null>(null);
+  const [hoveredPoint, setHoveredPoint] = useState<{
+    index: number;
+    x: number;
+    y: number;
+    val: TrendDataPoint;
+    prevVal?: TrendDataPoint;
+  } | null>(null);
 
   // Fallback to dynamic trend derived from item properties if data not provided
   const chartData = data && data.length > 0 ? data : generateDynamicTrend(currentStock, reorderPoint);
@@ -98,6 +105,34 @@ export const StockTrendChart: React.FC<StockTrendChartProps> = ({
   // Reorder point line Y coordinate
   const ropY = paddingTop + innerHeight - (reorderPoint / yMax) * innerHeight;
 
+  // Handle smooth canvas hover tracking
+  const handleSvgMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
+    const svgRect = e.currentTarget.getBoundingClientRect();
+    if (!svgRect || svgRect.width <= 0) return;
+    const mouseX = e.clientX - svgRect.left;
+    const viewBoxX = (mouseX / svgRect.width) * width;
+
+    // Find closest data point
+    let closestIndex = 0;
+    let minDist = Infinity;
+    points.forEach((pt, idx) => {
+      const dist = Math.abs(pt.x - viewBoxX);
+      if (dist < minDist) {
+        minDist = dist;
+        closestIndex = idx;
+      }
+    });
+
+    const pt = points[closestIndex];
+    setHoveredPoint({
+      index: closestIndex,
+      x: pt.x,
+      y: pt.y,
+      val: pt.data,
+      prevVal: closestIndex > 0 ? points[closestIndex - 1].data : undefined,
+    });
+  };
+
   return (
     <div className="stock-trend-card" style={{ marginTop: '0.5rem', marginBottom: '0.75rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
@@ -110,11 +145,13 @@ export const StockTrendChart: React.FC<StockTrendChartProps> = ({
         </div>
       </div>
 
-      <div style={{ position: 'relative', width: '100%', overflow: 'hidden' }}>
+      <div style={{ position: 'relative', width: '100%', overflow: 'visible' }}>
         <svg
           viewBox={`0 0 ${width} ${height}`}
-          style={{ width: '100%', height: 'auto', display: 'block' }}
+          style={{ width: '100%', height: 'auto', display: 'block', cursor: 'crosshair' }}
           preserveAspectRatio="xMidYMid meet"
+          onMouseMove={handleSvgMouseMove}
+          onMouseLeave={() => setHoveredPoint(null)}
         >
           <defs>
             <linearGradient id="stockTrendGradient" x1="0" y1="0" x2="0" y2="1">
@@ -123,8 +160,8 @@ export const StockTrendChart: React.FC<StockTrendChartProps> = ({
               <stop offset="100%" stopColor="#ffffff" stopOpacity="0.0" />
             </linearGradient>
 
-            <filter id="pointGlow" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="2" result="blur" />
+            <filter id="pointGlow" x="-30%" y="-30%" width="160%" height="160%">
+              <feGaussianBlur stdDeviation="2.5" result="blur" />
               <feComposite in="SourceGraphic" in2="blur" operator="over" />
             </filter>
           </defs>
@@ -181,34 +218,62 @@ export const StockTrendChart: React.FC<StockTrendChartProps> = ({
             strokeLinejoin="round"
           />
 
-          {/* Key Data Markers */}
+          {/* Active Hover Crosshair Guideline */}
+          {hoveredPoint && (
+            <g pointerEvents="none">
+              <line
+                x1={hoveredPoint.x}
+                y1={paddingTop}
+                x2={hoveredPoint.x}
+                y2={paddingTop + innerHeight}
+                stroke="rgba(255, 255, 255, 0.28)"
+                strokeDasharray="3 3"
+                strokeWidth="1.2"
+              />
+              {/* Outer halo */}
+              <circle
+                cx={hoveredPoint.x}
+                cy={hoveredPoint.y}
+                r="6.5"
+                fill="none"
+                stroke="#ffffff"
+                strokeWidth="2"
+                strokeOpacity="0.85"
+                filter="url(#pointGlow)"
+              />
+              {/* Inner dot */}
+              <circle
+                cx={hoveredPoint.x}
+                cy={hoveredPoint.y}
+                r="3.5"
+                fill="#ffffff"
+              />
+            </g>
+          )}
+
+          {/* Baseline Markers */}
           {points.map((pt, i) => {
             const isHovered = hoveredPoint?.index === i;
-            // Render circle on key dates (every ~2nd point) or hovered
-            const showPoint = i === 0 || i === 2 || i === 4 || i === 6 || i === 8 || i === 10 || i === points.length - 1 || isHovered;
+            if (isHovered) return null; // Rendered via active crosshair above
+            const showPoint = i === 0 || i === 3 || i === 6 || i === 9 || i === points.length - 1;
             if (!showPoint) return null;
 
             return (
-              <g key={i}>
-                <circle
-                  cx={pt.x}
-                  cy={pt.y}
-                  r={isHovered ? 4.5 : 3}
-                  fill={isHovered ? '#ffffff' : '#a1a1aa'}
-                  stroke="#000000"
-                  strokeWidth={isHovered ? 2 : 1}
-                  filter="url(#pointGlow)"
-                  style={{ cursor: 'pointer', transition: 'all 0.15s ease' }}
-                  onMouseEnter={() => setHoveredPoint({ index: i, x: pt.x, y: pt.y, val: pt.data })}
-                  onMouseLeave={() => setHoveredPoint(null)}
-                />
-              </g>
+              <circle
+                key={i}
+                cx={pt.x}
+                cy={pt.y}
+                r={2.5}
+                fill="#a1a1aa"
+                stroke="#000000"
+                strokeWidth={1}
+                pointerEvents="none"
+              />
             );
           })}
 
           {/* X-Axis Date Labels with clean non-overlapping spacing */}
           {chartData.map((d, i) => {
-            // Evenly spaced key dates to prevent label collisions
             const tickIndices = [0, 3, 6, 9, chartData.length - 1];
             if (!tickIndices.includes(i)) return null;
             const x = paddingLeft + (i / (chartData.length - 1)) * innerWidth;
@@ -228,32 +293,169 @@ export const StockTrendChart: React.FC<StockTrendChartProps> = ({
           })}
         </svg>
 
-        {/* Hover Tooltip Overlay */}
-        {hoveredPoint && (
-          <div
-            style={{
-              position: 'absolute',
-              left: `${(hoveredPoint.x / width) * 100}%`,
-              top: `${(hoveredPoint.y / height) * 100}%`,
-              transform: 'translate(-50%, -120%)',
-              background: '#0a0a0c',
-              border: '1px solid var(--border-hover)',
-              borderRadius: '6px',
-              padding: '3px 7px',
-              color: '#ffffff',
-              fontSize: '0.68rem',
-              fontFamily: 'var(--font-mono)',
-              pointerEvents: 'none',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.6)',
-              whiteSpace: 'nowrap',
-              zIndex: 10,
-            }}
-          >
-            <span style={{ color: '#94a3b8' }}>{hoveredPoint.val.date}: </span>
-            <strong style={{ color: '#ffffff' }}>{hoveredPoint.val.stock} units</strong>
-          </div>
-        )}
+        {/* Ultra-Premium Glassmorphic Hover Window */}
+        {hoveredPoint && (() => {
+          const stock = hoveredPoint.val.stock;
+          const diff = stock - reorderPoint;
+          const isHealthy = stock > reorderPoint;
+          const isAtRop = stock === reorderPoint;
+          const prevStock = hoveredPoint.prevVal?.stock;
+          const weekDelta = prevStock !== undefined ? stock - prevStock : null;
+
+          // Clamp tooltip position near left/right borders
+          const clampTransform =
+            hoveredPoint.x < 95
+              ? 'translate(-15%, -118%)'
+              : hoveredPoint.x > width - 95
+              ? 'translate(-85%, -118%)'
+              : 'translate(-50%, -118%)';
+
+          return (
+            <div
+              className="chart-premium-tooltip"
+              style={{
+                position: 'absolute',
+                left: `${(hoveredPoint.x / width) * 100}%`,
+                top: `${(hoveredPoint.y / height) * 100}%`,
+                transform: clampTransform,
+              }}
+            >
+              {/* Header Bar */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '0.85rem',
+                  marginBottom: '0.35rem',
+                  borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                  paddingBottom: '0.35rem',
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: '0.68rem',
+                    color: '#94a3b8',
+                    fontFamily: 'var(--font-mono)',
+                    fontWeight: 500,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                  }}
+                >
+                  <Calendar style={{ width: 11, height: 11, color: '#64748b' }} />
+                  {hoveredPoint.val.date}
+                </span>
+                <span
+                  style={{
+                    fontSize: '0.64rem',
+                    color: '#888888',
+                    fontFamily: 'var(--font-mono)',
+                    background: 'rgba(255, 255, 255, 0.06)',
+                    padding: '0.1rem 0.35rem',
+                    borderRadius: '4px',
+                  }}
+                >
+                  Week {hoveredPoint.index + 1}
+                </span>
+              </div>
+
+              {/* Primary Value Display */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'baseline',
+                  gap: '0.35rem',
+                  marginBottom: '0.35rem',
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: '1.2rem',
+                    fontWeight: 700,
+                    color: '#ffffff',
+                    fontFamily: 'var(--font-mono)',
+                    letterSpacing: '-0.02em',
+                  }}
+                >
+                  {stock}
+                </span>
+                <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 500 }}>
+                  units on-hand
+                </span>
+                {weekDelta !== null && weekDelta !== 0 && (
+                  <span
+                    style={{
+                      marginLeft: 'auto',
+                      fontSize: '0.68rem',
+                      fontWeight: 600,
+                      color: weekDelta > 0 ? '#34d399' : '#f87171',
+                      fontFamily: 'var(--font-mono)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.15rem',
+                    }}
+                  >
+                    {weekDelta > 0 ? (
+                      <TrendingUp style={{ width: 10, height: 10 }} />
+                    ) : (
+                      <TrendingDown style={{ width: 10, height: 10 }} />
+                    )}
+                    {weekDelta > 0 ? `+${weekDelta}` : weekDelta}
+                  </span>
+                )}
+              </div>
+
+              {/* ROP Safety Status Badge */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  fontSize: '0.65rem',
+                  fontWeight: 600,
+                  padding: '0.2rem 0.45rem',
+                  borderRadius: '5px',
+                  background: isHealthy
+                    ? 'rgba(16, 185, 129, 0.12)'
+                    : isAtRop
+                    ? 'rgba(245, 158, 11, 0.12)'
+                    : 'rgba(239, 68, 68, 0.12)',
+                  border: `1px solid ${
+                    isHealthy
+                      ? 'rgba(16, 185, 129, 0.25)'
+                      : isAtRop
+                      ? 'rgba(245, 158, 11, 0.25)'
+                      : 'rgba(239, 68, 68, 0.25)'
+                  }`,
+                  color: isHealthy ? '#34d399' : isAtRop ? '#fbbf24' : '#f87171',
+                }}
+              >
+                <span
+                  style={{
+                    width: 5,
+                    height: 5,
+                    borderRadius: '50%',
+                    backgroundColor: isHealthy ? '#34d399' : isAtRop ? '#fbbf24' : '#f87171',
+                    boxShadow: `0 0 6px ${isHealthy ? '#34d399' : isAtRop ? '#fbbf24' : '#f87171'}`,
+                  }}
+                />
+                <span>
+                  {isHealthy
+                    ? `+${diff} above safety threshold (${reorderPoint})`
+                    : isAtRop
+                    ? `At reorder threshold (${reorderPoint})`
+                    : `${Math.abs(diff)} units below ROP (Reorder)`}
+                </span>
+              </div>
+
+              {/* Pointer Caret */}
+              <div className="tooltip-caret-down" />
+            </div>
+          );
+        })()}
       </div>
     </div>
   );
 };
+

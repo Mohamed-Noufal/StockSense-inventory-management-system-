@@ -41,7 +41,14 @@ const BAR_CHART_DATA: BarGroupData[] = [
 ];
 
 const StockLevelsBarChart: React.FC = () => {
-  const [hoveredBar, setHoveredBar] = useState<{ cat: string; loc: string; val: number } | null>(null);
+  const [hoveredBar, setHoveredBar] = useState<{
+    cat: string;
+    loc: string;
+    val: number;
+    x: number;
+    y: number;
+    color: string;
+  } | null>(null);
 
   const chartHeight = 180;
   const chartWidth = 540;
@@ -52,7 +59,7 @@ const StockLevelsBarChart: React.FC = () => {
   const groupSpacing = chartWidth / BAR_CHART_DATA.length;
 
   return (
-    <div className="svg-bar-chart-wrapper">
+    <div className="svg-bar-chart-wrapper" style={{ position: 'relative' }}>
       <svg viewBox={`0 0 ${chartWidth + 60} ${chartHeight + 50}`} preserveAspectRatio="xMidYMid meet">
         <defs>
           {/* Main Warehouse: Clean Monochrome Silver Gradient */}
@@ -122,7 +129,16 @@ const StockLevelsBarChart: React.FC = () => {
                 fill="url(#mainWarehouseGrad)"
                 style={{ cursor: 'pointer', transition: 'all 0.2s ease' }}
                 opacity={hoveredBar && hoveredBar.cat !== group.category ? 0.45 : 1}
-                onMouseEnter={() => setHoveredBar({ cat: group.category, loc: 'Main Warehouse', val: group.main })}
+                onMouseEnter={() =>
+                  setHoveredBar({
+                    cat: group.category,
+                    loc: 'Main Warehouse',
+                    val: group.main,
+                    x: startX + barWidth / 2,
+                    y: chartHeight - mainHeight + 10,
+                    color: '#ffffff',
+                  })
+                }
                 onMouseLeave={() => setHoveredBar(null)}
               />
 
@@ -136,7 +152,16 @@ const StockLevelsBarChart: React.FC = () => {
                 fill="url(#fieldWarehouseGrad)"
                 style={{ cursor: 'pointer', transition: 'all 0.2s ease' }}
                 opacity={hoveredBar && hoveredBar.cat !== group.category ? 0.45 : 1}
-                onMouseEnter={() => setHoveredBar({ cat: group.category, loc: 'Field Warehouse', val: group.field })}
+                onMouseEnter={() =>
+                  setHoveredBar({
+                    cat: group.category,
+                    loc: 'Field Warehouse',
+                    val: group.field,
+                    x: startX + barWidth + 4 + barWidth / 2,
+                    y: chartHeight - fieldHeight + 10,
+                    color: '#2dd4bf',
+                  })
+                }
                 onMouseLeave={() => setHoveredBar(null)}
               />
 
@@ -150,7 +175,16 @@ const StockLevelsBarChart: React.FC = () => {
                 fill="url(#remoteSiteGrad)"
                 style={{ cursor: 'pointer', transition: 'all 0.2s ease' }}
                 opacity={hoveredBar && hoveredBar.cat !== group.category ? 0.45 : 1}
-                onMouseEnter={() => setHoveredBar({ cat: group.category, loc: 'Remote Site', val: group.remote })}
+                onMouseEnter={() =>
+                  setHoveredBar({
+                    cat: group.category,
+                    loc: 'Remote Site',
+                    val: group.remote,
+                    x: startX + (barWidth + 4) * 2 + barWidth / 2,
+                    y: chartHeight - remoteHeight + 10,
+                    color: '#a855f7',
+                  })
+                }
                 onMouseLeave={() => setHoveredBar(null)}
               />
 
@@ -168,25 +202,75 @@ const StockLevelsBarChart: React.FC = () => {
             </g>
           );
         })}
-
-        {/* Hover Tooltip Overlay */}
-        {hoveredBar && (
-          <g transform={`translate(${chartWidth / 2 - 40}, 15)`}>
-            <rect
-              x="-60"
-              y="-12"
-              width="140"
-              height="24"
-              rx="4"
-              fill="#18181b"
-              stroke="rgba(255, 255, 255, 0.2)"
-            />
-            <text x="10" y="4" textAnchor="middle" fill="#ffffff" fontSize="10" fontFamily="var(--font-mono)">
-              {hoveredBar.loc}: <tspan fontWeight="700" fill="#ffffff">{hoveredBar.val}</tspan> pcs
-            </text>
-          </g>
-        )}
       </svg>
+
+      {/* Ultra-Premium Floating Hover Window */}
+      {hoveredBar && (
+        <div
+          className="chart-premium-tooltip"
+          style={{
+            position: 'absolute',
+            left: `${(hoveredBar.x / (chartWidth + 60)) * 100}%`,
+            top: `${(hoveredBar.y / (chartHeight + 50)) * 100}%`,
+            transform: 'translate(-50%, -122%)',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              marginBottom: '0.25rem',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+              paddingBottom: '0.25rem',
+            }}
+          >
+            <span
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: '50%',
+                backgroundColor: hoveredBar.color,
+                boxShadow: `0 0 6px ${hoveredBar.color}`,
+              }}
+            />
+            <span style={{ fontSize: '0.7rem', color: '#cbd5e1', fontWeight: 600 }}>
+              {hoveredBar.loc}
+            </span>
+            <span
+              style={{
+                fontSize: '0.64rem',
+                color: '#888888',
+                marginLeft: 'auto',
+                background: 'rgba(255, 255, 255, 0.06)',
+                padding: '0.1rem 0.35rem',
+                borderRadius: '4px',
+              }}
+            >
+              {hoveredBar.cat}
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.35rem' }}>
+            <span
+              style={{
+                fontSize: '1.2rem',
+                fontWeight: 700,
+                color: '#ffffff',
+                fontFamily: 'var(--font-mono)',
+                letterSpacing: '-0.02em',
+              }}
+            >
+              {hoveredBar.val}
+            </span>
+            <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+              units available
+            </span>
+          </div>
+
+          <div className="tooltip-caret-down" />
+        </div>
+      )}
     </div>
   );
 };
