@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Plus, Download, Search, X, ShoppingBag, Clock, Truck,
   AlertTriangle, CheckCircle, PackageCheck, Sparkles
@@ -20,6 +20,8 @@ interface ProcurementViewProps {
   onReceive: (poId: number, payload: POReceivePayload) => Promise<void>;
   onCancel: (poId: number) => Promise<void>;
   loading: boolean;
+  initialPoId?: number | null;
+  onClearInitialPoId?: () => void;
 }
 
 type CardFilterType = 'ALL' | 'OPEN' | 'AWAITING' | 'PARTIAL' | 'OVERDUE';
@@ -34,10 +36,20 @@ export const ProcurementView: React.FC<ProcurementViewProps> = ({
   onReceive,
   onCancel,
   loading,
+  initialPoId,
+  onClearInitialPoId,
 }) => {
   // Navigation Workstation Mode
   const [viewMode, setViewMode] = useState<'LIST' | 'CREATE' | 'DETAIL'>('LIST');
   const [selectedPoId, setSelectedPoId] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (initialPoId) {
+      setSelectedPoId(initialPoId);
+      setViewMode('DETAIL');
+      onClearInitialPoId?.();
+    }
+  }, [initialPoId, onClearInitialPoId]);
 
   // Filters
   const [searchQuery, setSearchQuery] = useState<string>('');

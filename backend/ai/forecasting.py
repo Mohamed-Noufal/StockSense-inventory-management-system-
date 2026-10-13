@@ -34,6 +34,28 @@ def sba_forecast(series: List[float], horizon: int = 4, alpha: float = 0.1) -> L
     correction = 1.0 - (alpha / 2.0)
     return [max(0.0, round(val * correction, 3)) for val in croston_vals]
 
+def tsb_forecast(series: List[float], horizon: int = 4, alpha: float = 0.1, beta: float = 0.1) -> List[float]:
+    """Teunter-Syntetos-Babai (TSB) method for intermittent and obsolescent demand."""
+    if not series:
+        return [0.0] * horizon
+    y = np.array(series, dtype=float)
+    nonzeros = np.where(y > 0)[0]
+    if len(nonzeros) == 0:
+        return [0.0] * horizon
+
+    p = 1.0 / (nonzeros[0] + 1)
+    z = float(y[nonzeros[0]])
+
+    for t in range(len(y)):
+        if y[t] > 0:
+            p = p + alpha * (1.0 - p)
+            z = z + beta * (y[t] - z)
+        else:
+            p = p + alpha * (0.0 - p)
+
+    mean_rate = float(p * z)
+    return [max(0.0, round(mean_rate, 3))] * horizon
+
 def moving_average_forecast(series: List[float], horizon: int = 4, window: int = 8) -> List[float]:
     """Simple Moving Average baseline."""
     if not series:
@@ -45,7 +67,9 @@ def moving_average_forecast(series: List[float], horizon: int = 4, window: int =
 def forecast_demand(series: List[float], method: str = "sba", horizon: int = 4) -> Dict[str, any]:
     """Dispatches forecasting based on chosen method."""
     method_normalized = method.lower().strip()
-    if method_normalized == "croston":
+    if method_normalized == "tsb":
+        forecast_vals = tsb_forecast(series, horizon=horizon)
+    elif method_normalized == "croston":
         forecast_vals = croston_forecast(series, horizon=horizon)
     elif method_normalized == "ma8":
         forecast_vals = moving_average_forecast(series, horizon=horizon, window=8)

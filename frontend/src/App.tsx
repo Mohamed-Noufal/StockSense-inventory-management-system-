@@ -4,7 +4,8 @@ import { api } from './api/client';
 import {
   HealthResponse, ReadyResponse, InventoryItem, InventoryLocation,
   StockMovement, IntegrityCheckResponse, Milestone, PurchaseOrder,
-  Supplier, POCreatePayload, POReceivePayload, AIRun, AIRecommendation, User
+  Supplier, POCreatePayload, POReceivePayload, AIRun, AIRecommendation, User,
+  AIRunTriggerPayload
 } from './types';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
@@ -71,6 +72,7 @@ const App: React.FC = () => {
   const [showPOCreateModal, setShowPOCreateModal] = useState<boolean>(false);
   const [receivingPO, setReceivingPO] = useState<PurchaseOrder | null>(null);
   const [inspectingRec, setInspectingRec] = useState<AIRecommendation | null>(null);
+  const [navPoId, setNavPoId] = useState<number | null>(null);
 
   const fetchData = async () => {
     setLoading(true);
@@ -203,11 +205,11 @@ const App: React.FC = () => {
     }
   };
 
-  const handleTriggerAIRun = async () => {
+  const handleTriggerAIRun = async (payload: AIRunTriggerPayload = { service_level: 0.95, default_method: 'tsb' }) => {
     setRunningAi(true);
     setError(null);
     try {
-      const run = await api.triggerAIRun({ service_level: 0.95, default_method: 'sba' });
+      const run = await api.triggerAIRun(payload);
       setSuccessMsg(`AI Run #${run.id} completed! Identified ${run.recommendations_count} replenishment proposals.`);
       await fetchData();
     } catch (err: any) {
@@ -217,15 +219,16 @@ const App: React.FC = () => {
     }
   };
 
-  const handleApproveRecommendation = async (recId: number) => {
+  const handleApproveRecommendation = async (recId: number): Promise<PurchaseOrder> => {
     setError(null);
     try {
       const po = await api.approveRecommendation(recId);
       setSuccessMsg(`Recommendation #${recId} APPROVED! Draft Purchase Order ${po.po_number} created.`);
       await fetchData();
-      setActiveTab('procurement');
+      return po;
     } catch (err: any) {
       setError(err.message || 'Failed to approve recommendation');
+      throw err;
     }
   };
 
@@ -381,15 +384,25 @@ const App: React.FC = () => {
               onReceive={handleReceivePOLine}
               onCancel={handleCancelPO}
               loading={loading}
+              initialPoId={navPoId}
+              onClearInitialPoId={() => setNavPoId(null)}
             />
           )}
           {activeTab === 'ai' && (
             <AIInsightsView
               recommendations={recommendations}
               runs={aiRuns}
+              items={items}
+              suppliers={suppliers}
+              locations={locations}
               onTriggerRun={handleTriggerAIRun}
               onInspectRec={(rec) => setInspectingRec(rec)}
               onQuickApprove={handleApproveRecommendation}
+              onDismissRec={handleDismissRecommendation}
+              onNavigateToPO={(poId) => {
+                setNavPoId(poId);
+                setActiveTab('procurement');
+              }}
               loading={loading}
               runningAi={runningAi}
             />
@@ -468,7 +481,7 @@ const App: React.FC = () => {
         <RecommendationModal
           rec={inspectingRec}
           onClose={() => setInspectingRec(null)}
-          onApprove={handleApproveRecommendation}
+          onApprove={async (id) => { await handleApproveRecommendation(id); }}
           onDismiss={handleDismissRecommendation}
         />
       )}

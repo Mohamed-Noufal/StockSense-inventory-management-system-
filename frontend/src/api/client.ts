@@ -107,5 +107,9 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ action: 'DISMISS', decision_note: decisionNote }),
     }),
+  getAIRun: (id: number) => request<AIRun>(`/ai/runs/${id}`),
+  getItemForecast: (itemId: number, horizon = 12) =>
+    request<any>(`/ai/forecasts?item_id=${itemId}&horizon=${horizon}`),
+  getModelReport: () => request<any>('/ai/model-report'),
 };
 
