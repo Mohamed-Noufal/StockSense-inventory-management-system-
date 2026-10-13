@@ -17,7 +17,7 @@ export interface OverviewViewProps {
   orders: PurchaseOrder[];
   recommendations: AIRecommendation[];
   currentUser?: User | null;
-  onNavigateTab: (tab: 'overview' | 'inventory' | 'ledger' | 'procurement' | 'ai' | 'sprint' | 'diagnostics' | 'users') => void;
+  onNavigateTab: (tab: 'overview' | 'inventory' | 'ledger' | 'procurement' | 'ai' | 'activity' | 'sprint' | 'diagnostics' | 'users') => void;
   onOpenMovementModal?: () => void;
   onInspectRec?: (rec: AIRecommendation) => void;
 }
