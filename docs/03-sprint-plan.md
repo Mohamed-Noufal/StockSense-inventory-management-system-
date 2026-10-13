@@ -216,7 +216,39 @@ This is a deadline-aware plan from Monday evening to Thursday's interview. Adjus
 - Seeded canonical mock items (`HP-001`, `PV-042`, `DB-034`, `LO-005`, `FC-012`, `GS-018`, `DF-073`, `EM-022`, `HH-006`, `SH-009`) into SQLite database with authentic balances and movements.
 - Backend endpoint enrichment: `/api/v1/inventory/items` with taxonomy and available stock, `/api/v1/inventory/categories`, and `/api/v1/inventory/ledger?item_id=...`.
 
-**Done when:** page exactly matches reference mock layout and aesthetic; 100% of displayed items are real SQLite database records; atomic movements execute with non-negative validation; 28/28 pytest tests pass; 0 TypeScript build errors. (MET)
+**Done when:** page exactly matches reference mock layout and aesthetic; 100% of displayed items are real SQLite database records; atomic movements execute with non-negative validation; 30/30 pytest tests pass; 0 TypeScript build errors. (MET)
+
+### Sprint H — Production Operations Workstation (COMPLETED)
+
+**Tasks:**
+- High-fidelity visual replication of the Operations screen matching the reference mock:
+  - Header bar with title, subtitle, and interactive sprint date range picker (`Oct 1, 2026 – Oct 15, 2026`).
+  - 4 Top-line action cards (`OperationsActionCards.tsx`): Issue Stock (`#059669`), Transfer Stock (`#0066fe`), Receive Stock (`#7c3aed`), Adjust Stock Count (`#d97706`) with direct pre-configured modal opening.
+- Interactive transaction ledger table (`OperationsTable.tsx`):
+  - Segmented filter tabs (`[All]`, `[Issues]`, `[Transfers]`, `[Receipts]`, `[Adjustments]`).
+  - Column sortability (`Date & Time ⇅`).
+  - Color-coded signed quantities (`+10`, `+20` in emerald green; `-5`, `-8`, `-1` in rose red; `-3`, `-12` in cyan blue).
+  - Clean route indicators (`Supplier → WH-01`, `WH-01 → Rig-12`, `WH-01 → WH-02`, `WH-02`).
+  - `...` action popover menu with Audit Details modal, Copy Reference, and Print Waybill slip.
+  - Responsive pagination bar (`Showing 1-8 of 24 operations`).
+- Right-rail widget suite:
+  - Quick Actions launcher (`OperationsQuickActions.tsx`) with chevron hover transitions.
+  - 2×2 Operation Stats widget (`OperationsStatsCard.tsx`) querying `GET /api/v1/inventory/operations/stats` with timeframe selector (`7 days`, `14 days`, `30 days`) and period-over-period trend indicators (`↑ 12%`, `↑ 8%`, `↑ 21%`, `↓ 50%`).
+  - Recent Activity timeline feed (`OperationsActivityFeed.tsx`) with human-readable movement summaries and relative timestamps.
+- Upgraded 4-mode transaction modal (`MovementModal.tsx`):
+  - Support for Receipts, Issues (with Rig/Project destination selector: Rig-12, Rig-07, Workshop, etc.), Transfers (inter-warehouse), and Adjustments (Cycle Count Surplus `+` vs Shrinkage `-`).
+- Backend schemas & service layer extensions:
+  - Extended `MovementCreate` and `MovementResponse` with route displays, reference displays, item names, and adjustment direction.
+  - Refactored `post_movement` in `inventory_service.py` to support bidirectional cycle count adjustments with atomic non-negativity checks.
+  - Added `get_operations_stats(db, days=7)` and endpoint `GET /api/v1/inventory/operations/stats`.
+- Canonical data seeding (`backend/scripts/seed_operations_mock.py`):
+  - Seeded the exact 8 canonical operations from the reference mock (`HP-001` through `EM-022`).
+  - Reconciled all database balances with **0 integrity mismatches**.
+- Comprehensive automated testing:
+  - Added test cases in `backend/tests/test_inventory.py` covering surplus/shrinkage adjustments, operations stats, and enriched ledger fields.
+  - 33/33 tests passing with 100% pass rate.
+
+**Done when:** operations page exactly matches reference mock design; live backend API endpoints return all metrics; bidirectional adjustments execute atomically; 33/33 pytest tests pass; 0 TypeScript build errors. (MET)
 
 ## 5. Golden demo script (6–7 minutes)
 
