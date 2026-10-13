@@ -275,7 +275,7 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
                               onAction(item.id, 'TRANSFER');
                             }}
                           >
-                            <ArrowLeftRight style={{ width: 12, height: 12, color: '#38bdf8' }} />
+                            <ArrowLeftRight style={{ width: 12, height: 12, color: 'var(--text-secondary)' }} />
                             <span>Transfer Stock</span>
                           </button>
                           <button

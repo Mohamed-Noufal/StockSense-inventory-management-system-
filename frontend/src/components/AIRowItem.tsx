@@ -27,7 +27,7 @@ export const AIRowItem: React.FC<AIRowItemProps> = ({
   const getPatternBadge = (pattern?: string) => {
     const p = (pattern || 'intermittent').toLowerCase();
     const colors: Record<string, string> = {
-      intermittent: '#38bdf8',
+      intermittent: '#a1a1aa',
       lumpy: '#fbbf24',
       erratic: '#f87171',
       smooth: '#34d399',

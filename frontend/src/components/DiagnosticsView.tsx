@@ -11,7 +11,7 @@ export const DiagnosticsView: React.FC<DiagnosticsViewProps> = ({ readiness }) =
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       <div className="card" style={{ padding: '0.85rem 1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Database style={{ width: 16, height: 16, color: '#38bdf8' }} />
+          <Database style={{ width: 16, height: 16, color: '#ffffff' }} />
           <h3 style={{ fontSize: '0.9rem', fontWeight: 600, color: '#ffffff' }}>Storage Engine & 17-Table Relational Schema</h3>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem', color: '#34d399' }}>

@@ -86,7 +86,7 @@ export const StockTrendChart: React.FC<StockTrendChartProps> = ({
           Stock Trend (Last 12 Weeks)
         </h4>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.68rem', color: '#94a3b8', fontFamily: 'var(--font-mono)' }}>
-          <span>Current: <strong style={{ color: '#38bdf8' }}>{currentStock}</strong></span>
+          <span>Current: <strong style={{ color: '#ffffff' }}>{currentStock}</strong></span>
           <span>ROP: <strong style={{ color: '#f59e0b' }}>{reorderPoint}</strong></span>
         </div>
       </div>
@@ -99,9 +99,9 @@ export const StockTrendChart: React.FC<StockTrendChartProps> = ({
         >
           <defs>
             <linearGradient id="stockTrendGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#0066fe" stopOpacity="0.45" />
-              <stop offset="70%" stopColor="#0284c7" stopOpacity="0.12" />
-              <stop offset="100%" stopColor="#0284c7" stopOpacity="0.0" />
+              <stop offset="0%" stopColor="#ffffff" stopOpacity="0.22" />
+              <stop offset="60%" stopColor="#ffffff" stopOpacity="0.04" />
+              <stop offset="100%" stopColor="#ffffff" stopOpacity="0.0" />
             </linearGradient>
 
             <filter id="pointGlow" x="-20%" y="-20%" width="140%" height="140%">
@@ -156,8 +156,8 @@ export const StockTrendChart: React.FC<StockTrendChartProps> = ({
           <path
             d={pathD}
             fill="none"
-            stroke="#0066fe"
-            strokeWidth="2.2"
+            stroke="#ffffff"
+            strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
@@ -174,10 +174,10 @@ export const StockTrendChart: React.FC<StockTrendChartProps> = ({
                 <circle
                   cx={pt.x}
                   cy={pt.y}
-                  r={isHovered ? 5 : 3.5}
-                  fill={isHovered ? '#38bdf8' : '#0066fe'}
-                  stroke="#ffffff"
-                  strokeWidth={isHovered ? 2 : 1.5}
+                  r={isHovered ? 4.5 : 3}
+                  fill={isHovered ? '#ffffff' : '#a1a1aa'}
+                  stroke="#000000"
+                  strokeWidth={isHovered ? 2 : 1}
                   filter="url(#pointGlow)"
                   style={{ cursor: 'pointer', transition: 'all 0.15s ease' }}
                   onMouseEnter={() => setHoveredPoint({ index: i, x: pt.x, y: pt.y, val: pt.data })}
@@ -216,8 +216,8 @@ export const StockTrendChart: React.FC<StockTrendChartProps> = ({
               left: `${(hoveredPoint.x / width) * 100}%`,
               top: `${(hoveredPoint.y / height) * 100}%`,
               transform: 'translate(-50%, -120%)',
-              background: '#090d16',
-              border: '1px solid rgba(56, 189, 248, 0.4)',
+              background: '#0a0a0c',
+              border: '1px solid var(--border-hover)',
               borderRadius: '6px',
               padding: '3px 7px',
               color: '#ffffff',
@@ -230,7 +230,7 @@ export const StockTrendChart: React.FC<StockTrendChartProps> = ({
             }}
           >
             <span style={{ color: '#94a3b8' }}>{hoveredPoint.val.date}: </span>
-            <strong style={{ color: '#38bdf8' }}>{hoveredPoint.val.stock} units</strong>
+            <strong style={{ color: '#ffffff' }}>{hoveredPoint.val.stock} units</strong>
           </div>
         )}
       </div>

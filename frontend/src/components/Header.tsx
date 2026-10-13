@@ -96,7 +96,7 @@ export const Header: React.FC<HeaderProps> = ({
       desc: 'Zero mismatch verified between movements & running balances',
       time: '5h ago',
       icon: ShieldCheck,
-      color: '#38bdf8',
+      color: '#10b981',
     },
   ];
 
@@ -266,7 +266,7 @@ export const Header: React.FC<HeaderProps> = ({
                           <div className="user-switch-name">{u.full_name}</div>
                           <div className="user-switch-role">{u.role}</div>
                         </div>
-                        {isSelected && <span style={{ color: '#38bdf8', fontSize: '0.75rem' }}>✓ Active</span>}
+                        {isSelected && <span style={{ color: '#10b981', fontSize: '0.75rem', fontWeight: 500 }}>✓ Active</span>}
                       </button>
                     );
                   })}

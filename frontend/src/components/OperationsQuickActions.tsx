@@ -10,7 +10,7 @@ export const OperationsQuickActions: React.FC<OperationsQuickActionsProps> = ({ 
     <div className="card ops-side-card">
       <div className="ops-card-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Zap style={{ width: 16, height: 16, color: '#38bdf8' }} />
+          <Zap style={{ width: 16, height: 16, color: '#ffffff' }} />
           <h3 style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
             Quick Actions
           </h3>

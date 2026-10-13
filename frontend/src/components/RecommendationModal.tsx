@@ -49,7 +49,7 @@ export const RecommendationModal: React.FC<RecommendationModalProps> = ({
       <div className="modal-card" style={{ maxWidth: '620px' }}>
         <div className="modal-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Sparkles style={{ width: 18, height: 18, color: '#38bdf8' }} />
+            <Sparkles style={{ width: 18, height: 18, color: '#ffffff' }} />
             <h3>AI Replenishment Recommendation #{rec.id}</h3>
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
@@ -58,8 +58,8 @@ export const RecommendationModal: React.FC<RecommendationModalProps> = ({
         </div>
 
         <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <div style={{ padding: '0.75rem 0.85rem', background: 'rgba(56, 189, 248, 0.05)', border: '1px solid rgba(56, 189, 248, 0.2)', borderRadius: '6px', fontSize: '0.8rem', lineHeight: '1.45', color: '#e0f2fe' }}>
-            <strong style={{ color: '#38bdf8' }}>AI Rationale:</strong> {rec.summary_text}
+          <div style={{ padding: '0.75rem 0.85rem', background: 'rgba(255, 255, 255, 0.04)', border: '1px solid var(--border-default)', borderRadius: '6px', fontSize: '0.8rem', lineHeight: '1.45', color: 'var(--text-primary)' }}>
+            <strong style={{ color: '#ffffff' }}>AI Rationale:</strong> {rec.summary_text}
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem', fontSize: '0.8rem' }}>

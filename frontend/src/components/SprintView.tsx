@@ -23,7 +23,7 @@ export const SprintView: React.FC<SprintViewProps> = ({ milestones }) => {
               key={m.id}
               className="card"
               style={{
-                borderLeft: `3px solid ${isDone ? '#10b981' : isActive ? '#38bdf8' : 'var(--border-subtle)'}`,
+                borderLeft: `3px solid ${isDone ? '#10b981' : isActive ? '#ffffff' : 'var(--border-subtle)'}`,
                 padding: '1.1rem 1.25rem',
               }}
             >
@@ -32,7 +32,7 @@ export const SprintView: React.FC<SprintViewProps> = ({ milestones }) => {
                   {isDone ? (
                     <CheckCircle2 style={{ width: 16, height: 16, color: '#10b981' }} />
                   ) : isActive ? (
-                    <Clock style={{ width: 16, height: 16, color: '#38bdf8' }} />
+                    <Clock style={{ width: 16, height: 16, color: '#ffffff' }} />
                   ) : (
                     <CircleDot style={{ width: 16, height: 16, color: 'var(--text-muted)' }} />
                   )}

@@ -35,7 +35,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Sidebar Header with Logo & Collapse Toggle */}
       <div className="sidebar-logo">
         <div className="sidebar-logo-icon" title="StockSense Platform">
-          <Box style={{ width: 18, height: 18, color: '#38bdf8' }} />
+          <Box style={{ width: 18, height: 18, color: '#ffffff' }} />
         </div>
         {!isCollapsed && (
           <div className="sidebar-logo-text">
@@ -112,7 +112,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <Sparkles className="nav-icon" />
           {!isCollapsed && <span>AI & Replenishment</span>}
           {aiCount > 0 && !isCollapsed && (
-            <span className="nav-badge ai-badge" style={{ color: '#38bdf8' }}>{aiCount}</span>
+            <span className="nav-badge ai-badge">{aiCount}</span>
           )}
         </button>
 

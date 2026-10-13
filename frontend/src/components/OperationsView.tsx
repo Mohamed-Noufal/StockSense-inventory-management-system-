@@ -49,7 +49,7 @@ export const OperationsView: React.FC<OperationsViewProps> = ({
       <div className="ops-header-bar">
         <div className="ops-header-title-box">
           <div className="ops-header-icon-square">
-            <Box style={{ width: 22, height: 22, color: '#38bdf8' }} />
+            <Box style={{ width: 22, height: 22, color: '#ffffff' }} />
           </div>
           <div>
             <h1 className="ops-title">Operations</h1>
@@ -66,7 +66,7 @@ export const OperationsView: React.FC<OperationsViewProps> = ({
             className="ops-date-picker-btn"
             onClick={() => setIsDatePickerOpen(!isDatePickerOpen)}
           >
-            <Calendar style={{ width: 14, height: 14, color: '#38bdf8' }} />
+            <Calendar style={{ width: 14, height: 14, color: 'var(--text-secondary)' }} />
             <span>{dateRangeText}</span>
             <ChevronDown style={{ width: 13, height: 13, color: 'var(--text-muted)' }} />
           </button>
@@ -133,7 +133,7 @@ export const OperationsView: React.FC<OperationsViewProps> = ({
           <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 520 }}>
             <div className="modal-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Box style={{ width: 18, height: 18, color: '#38bdf8' }} />
+                <Box style={{ width: 18, height: 18, color: '#ffffff' }} />
                 <h3>Movement Audit Ledger #{selectedMovement.id}</h3>
               </div>
               <button
@@ -149,7 +149,7 @@ export const OperationsView: React.FC<OperationsViewProps> = ({
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                 <div className="card" style={{ padding: '0.65rem 0.85rem' }}>
                   <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Item SKU & Name</div>
-                  <div style={{ fontWeight: 600, color: '#38bdf8', fontSize: '0.88rem', marginTop: 2 }}>
+                  <div style={{ fontWeight: 600, color: '#ffffff', fontSize: '0.88rem', marginTop: 2 }}>
                     {selectedMovement.item_sku || '—'}
                   </div>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>

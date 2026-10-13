@@ -72,7 +72,7 @@ export const ItemPartThumbnail: React.FC<ItemPartThumbnailProps> = ({
             <circle cx="16" cy="16" r="6" fill="#475569" stroke="#94a3b8" strokeWidth="1.5" />
             {/* Actuator Stem & Wheel */}
             <rect x="14.5" y="6" width="3" height="7" fill="#cbd5e1" />
-            <ellipse cx="16" cy="6" rx="7" ry="2.5" fill="#38bdf8" stroke="#0284c7" strokeWidth="1" />
+            <ellipse cx="16" cy="6" rx="7" ry="2.5" fill="#e2e8f0" stroke="#94a3b8" strokeWidth="1" />
           </g>
         );
 
@@ -89,9 +89,9 @@ export const ItemPartThumbnail: React.FC<ItemPartThumbnailProps> = ({
             </defs>
             {/* Spiral flutes */}
             <path d="M12 28 L14 4 L18 4 L20 28 Z" fill="url(#drillGrad-` + sku + `)" />
-            <path d="M14 6 L18 10 M14 12 L18 16 M14 18 L18 22 M14 24 L18 28" stroke="#38bdf8" strokeWidth="1.2" strokeLinecap="round" />
+            <path d="M14 6 L18 10 M14 12 L18 16 M14 18 L18 22 M14 24 L18 28" stroke="#cbd5e1" strokeWidth="1.2" strokeLinecap="round" />
             {/* Chisel Point */}
-            <polygon points="14,4 16,1 18,4" fill="#38bdf8" />
+            <polygon points="14,4 16,1 18,4" fill="#cbd5e1" />
             {/* Shank base */}
             <rect x="13" y="24" width="6" height="5" rx="1" fill="#475569" />
           </g>
@@ -103,8 +103,8 @@ export const ItemPartThumbnail: React.FC<ItemPartThumbnailProps> = ({
           <g transform="translate(4, 4)">
             <defs>
               <linearGradient id={`oilGrad-${sku}`} x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.9" />
-                <stop offset="100%" stopColor="#0369a1" stopOpacity="0.9" />
+                <stop offset="0%" stopColor="#cbd5e1" stopOpacity="0.9" />
+                <stop offset="100%" stopColor="#64748b" stopOpacity="0.9" />
               </linearGradient>
             </defs>
             {/* Canister Body */}
@@ -130,8 +130,8 @@ export const ItemPartThumbnail: React.FC<ItemPartThumbnailProps> = ({
             <line x1="9" y1="21" x2="23" y2="21" stroke="#94a3b8" strokeWidth="1" strokeDasharray="2,2" />
             <line x1="9" y1="25" x2="23" y2="25" stroke="#94a3b8" strokeWidth="1" strokeDasharray="2,2" />
             {/* End Caps */}
-            <rect x="7" y="3" width="18" height="3" rx="1" fill="#38bdf8" />
-            <rect x="7" y="26" width="18" height="3" rx="1" fill="#38bdf8" />
+            <rect x="7" y="3" width="18" height="3" rx="1" fill="#94a3b8" />
+            <rect x="7" y="26" width="18" height="3" rx="1" fill="#94a3b8" />
           </g>
         );
 
@@ -143,10 +143,10 @@ export const ItemPartThumbnail: React.FC<ItemPartThumbnailProps> = ({
             <circle cx="16" cy="16" r="12" fill="none" stroke="#94a3b8" strokeWidth="3" />
             <circle cx="16" cy="16" r="7" fill="#0b1320" stroke="#475569" strokeWidth="1.5" />
             {/* Bolt holes */}
-            <circle cx="16" cy="6" r="1.5" fill="#38bdf8" />
-            <circle cx="16" cy="26" r="1.5" fill="#38bdf8" />
-            <circle cx="6" cy="16" r="1.5" fill="#38bdf8" />
-            <circle cx="26" cy="16" r="1.5" fill="#38bdf8" />
+            <circle cx="16" cy="6" r="1.5" fill="#cbd5e1" />
+            <circle cx="16" cy="26" r="1.5" fill="#cbd5e1" />
+            <circle cx="6" cy="16" r="1.5" fill="#cbd5e1" />
+            <circle cx="26" cy="16" r="1.5" fill="#cbd5e1" />
           </g>
         );
 
@@ -156,12 +156,12 @@ export const ItemPartThumbnail: React.FC<ItemPartThumbnailProps> = ({
           <g transform="translate(4, 4)">
             <defs>
               <linearGradient id={`addGrad-${sku}`} x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#0ea5e9" />
-                <stop offset="100%" stopColor="#0369a1" />
+                <stop offset="0%" stopColor="#64748b" />
+                <stop offset="100%" stopColor="#334155" />
               </linearGradient>
             </defs>
             {/* Barrel Body */}
-            <rect x="8" y="6" width="16" height="20" rx="3" fill="url(#addGrad-` + sku + `)" stroke="#38bdf8" strokeWidth="1" />
+            <rect x="8" y="6" width="16" height="20" rx="3" fill="url(#addGrad-` + sku + `)" stroke="#94a3b8" strokeWidth="1" />
             <line x1="8" y1="12" x2="24" y2="12" stroke="#ffffff" strokeOpacity="0.4" strokeWidth="1.5" />
             <line x1="8" y1="19" x2="24" y2="19" stroke="#ffffff" strokeOpacity="0.4" strokeWidth="1.5" />
             {/* Hazardous / High-Grade Diamond */}
@@ -182,7 +182,7 @@ export const ItemPartThumbnail: React.FC<ItemPartThumbnailProps> = ({
             {/* Rotor shaft */}
             <rect x="22" y="14" width="6" height="4" rx="1" fill="#cbd5e1" stroke="#64748b" strokeWidth="0.8" />
             {/* Terminal box */}
-            <rect x="10" y="4" width="8" height="4" rx="1" fill="#0284c7" />
+            <rect x="10" y="4" width="8" height="4" rx="1" fill="#475569" />
           </g>
         );
 
@@ -228,10 +228,10 @@ export const ItemPartThumbnail: React.FC<ItemPartThumbnailProps> = ({
             <path d="M16 4 L27 10 L27 22 L16 28 L5 22 L5 10 Z" fill="url(#pumpGrad-` + sku + `)" stroke="#334155" strokeWidth="1" />
             {/* Top Cylinder / Manifold */}
             <ellipse cx="16" cy="11" rx="6" ry="3.5" fill="#cbd5e1" stroke="#64748b" strokeWidth="0.8" />
-            <circle cx="16" cy="11" r="2.5" fill="#0284c7" />
+            <circle cx="16" cy="11" r="2.5" fill="#475569" />
             {/* Port fittings */}
-            <rect x="3" y="13" width="3" height="5" rx="0.5" fill="#38bdf8" />
-            <rect x="26" y="13" width="3" height="5" rx="0.5" fill="#38bdf8" />
+            <rect x="3" y="13" width="3" height="5" rx="0.5" fill="#94a3b8" />
+            <rect x="26" y="13" width="3" height="5" rx="0.5" fill="#94a3b8" />
           </g>
         );
     }

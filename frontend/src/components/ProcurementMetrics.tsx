@@ -32,7 +32,7 @@ export const ProcurementMetrics: React.FC<ProcurementMetricsProps> = ({ orders }
       <div className="metric-card">
         <div className="metric-header">
           <span className="metric-title">Inbound Receiving</span>
-          <Truck className="metric-icon" style={{ color: '#38bdf8' }} />
+          <Truck className="metric-icon" style={{ color: '#ffffff' }} />
         </div>
         <div className="metric-value">{inFlightCount}</div>
         <div className="metric-sub">Pending dock delivery verification</div>

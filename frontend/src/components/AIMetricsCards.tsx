@@ -17,7 +17,7 @@ export const AIMetricsCards: React.FC<AIMetricsCardsProps> = ({ recommendations,
       <div className="metric-card">
         <div className="metric-header">
           <span className="metric-title">Open AI Proposals</span>
-          <Sparkles className="metric-icon" style={{ color: '#38bdf8' }} />
+          <Sparkles className="metric-icon" style={{ color: '#ffffff' }} />
         </div>
         <div className="metric-value">{openCount}</div>
         <div className="metric-sub">Advisory replenishment queue</div>

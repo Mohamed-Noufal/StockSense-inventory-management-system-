@@ -85,7 +85,7 @@ export const InventoryItemDetail: React.FC<InventoryItemDetailProps> = ({
             {/* Chips for Category and Warehouse */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.45rem', flexWrap: 'wrap' }}>
               <span className="detail-meta-chip">
-                <Layers style={{ width: 11, height: 11, color: '#38bdf8' }} />
+                <Layers style={{ width: 11, height: 11, color: 'var(--text-secondary)' }} />
                 <span>{item.category_name || 'Mechanical Parts'}</span>
               </span>
               <span className="detail-meta-chip">

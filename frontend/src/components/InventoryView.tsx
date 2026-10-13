@@ -361,7 +361,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
       {/* 1. Page Header Title */}
       <div className="inventory-page-header">
         <div className="inventory-header-icon-box">
-          <Box style={{ width: 22, height: 22, color: '#38bdf8' }} />
+          <Box style={{ width: 22, height: 22, color: '#ffffff' }} />
         </div>
         <div className="inventory-header-text">
           <h1>Inventory</h1>

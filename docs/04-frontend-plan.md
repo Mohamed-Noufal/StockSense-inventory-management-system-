@@ -670,3 +670,40 @@ A demo must never rely on manually altering SQLite or fabricating a success mess
 The observations in Section 1 are derived from public product documentation. The proposed StockSense page hierarchy, cut order, React stack, and simplified workflow are implementation recommendations for this assessment, not claims that the referenced products use this exact design.
 
 The goal is to borrow proven interaction patterns—actionable dashboards, filtered tables, explicit transaction workflows, traceable histories, and partial receiving—while keeping StockSense small enough to build, test, and explain.
+
+---
+
+## 12. Sprint I: Vercel Geist Monochrome Design System Architecture
+
+### 12.1 Refactoring & Consolidation Rationale
+As pages were iteratively added across Sprints A through H (Overview, Inventory Master, Operations Workstation, Procurement, AI & Replenishment), page-specific stylesheets appended redundant selectors, bloating `index.css` to 3,263 lines and introducing disparate electric/cyan blue accents (`#0066fe`, `#38bdf8`).
+
+In Sprint I, the frontend stylesheet was systematically refactored and consolidated down by ~40% (to 2,067 structured lines, compiled production bundle: 30.5 kB CSS) into a unified, token-driven Vercel Geist aesthetic.
+
+### 12.2 Design Token Specification (`:root`)
+- **Canvas & Surfaces:**
+  - Background Canvas: `#000000` (pitch black foundation)
+  - Surface Containers: `#0a0a0a` (cards, sidebar, panels)
+  - Elevated Surfaces: `#111111` / `#141416` (popovers, modals, inputs)
+  - Active Pills: `#171717` with hairline border `#27272a`
+- **Hairline Borders:**
+  - Border Subtle: `rgba(255, 255, 255, 0.08)` / `#222222`
+  - Border Hover: `#333333`
+  - Border Focus: `#52525b`
+- **Typography:**
+  - Font Families: `'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`
+  - Monospace Figures: `'Geist Mono', 'JetBrains Mono', monospace` with `font-variant-numeric: tabular-nums`
+  - Text Primary: `#ededed` (high-contrast white)
+  - Text Secondary: `#888888`
+  - Text Muted: `#52525b`
+- **Vercel Inverted Buttons:**
+  - Primary CTA (`.btn-primary`): Pure white background (`#ffffff`), solid black text (`#000000`), hover `#e5e5e5`
+  - Secondary CTA (`.btn-secondary`): Dark carbon background (`#121214`), white text (`#ededed`), border `#222222`
+- **Contained Semantic Accents:**
+  - Success / Normal / Receipts: `#10b981` (emerald)
+  - Warning / Low Stock / Discrepancies: `#f59e0b` (amber)
+  - Critical / Out of Stock / Stockouts: `#ef4444` (rose)
+  - Neutral / Transfers / Drafts: `#a1a1aa` (zinc/slate)
+- **Zero Aggressive Blues:**
+  - All scattered `#0066fe` and `#38bdf8` instances across all components, SVGs, and charts eliminated.
+

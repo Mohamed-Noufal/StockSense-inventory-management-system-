@@ -55,10 +55,10 @@ const StockLevelsBarChart: React.FC = () => {
     <div className="svg-bar-chart-wrapper">
       <svg viewBox={`0 0 ${chartWidth + 60} ${chartHeight + 50}`} preserveAspectRatio="xMidYMid meet">
         <defs>
-          {/* Main Warehouse: Clean Blue Gradient */}
+          {/* Main Warehouse: Clean Monochrome Silver Gradient */}
           <linearGradient id="mainWarehouseGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.95" />
-            <stop offset="100%" stopColor="#0284c7" stopOpacity="0.7" />
+            <stop offset="0%" stopColor="#ffffff" stopOpacity="0.95" />
+            <stop offset="100%" stopColor="#a1a1aa" stopOpacity="0.7" />
           </linearGradient>
 
           {/* Field Warehouse: Clean Emerald/Teal Gradient with Glass Depth */}
@@ -182,7 +182,7 @@ const StockLevelsBarChart: React.FC = () => {
               stroke="rgba(255, 255, 255, 0.2)"
             />
             <text x="10" y="4" textAnchor="middle" fill="#ffffff" fontSize="10" fontFamily="var(--font-mono)">
-              {hoveredBar.loc}: <tspan fontWeight="700" fill="#38bdf8">{hoveredBar.val}</tspan> pcs
+              {hoveredBar.loc}: <tspan fontWeight="700" fill="#ffffff">{hoveredBar.val}</tspan> pcs
             </text>
           </g>
         )}
@@ -201,7 +201,7 @@ interface DonutCategory {
 }
 
 const CATEGORIES_DATA: DonutCategory[] = [
-  { name: 'Mechanical Parts', pct: 35, color: '#38bdf8' },
+  { name: 'Mechanical Parts', pct: 35, color: '#ffffff' },
   { name: 'Pipes & Tubes', pct: 22, color: '#2dd4bf' },
   { name: 'Valves & Fittings', pct: 18, color: '#f59e0b' },
   { name: 'Chemicals', pct: 12, color: '#a855f7' },
@@ -349,8 +349,8 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
       title: 'Stock issued',
       sub: '5 units · Drill Bit 3/4"',
       time: '4h ago',
-      color: '#38bdf8',
-      bg: 'rgba(56, 189, 248, 0.12)',
+      color: '#ef4444',
+      bg: 'rgba(239, 68, 68, 0.12)',
       icon: ArrowRight,
     },
     {
@@ -395,8 +395,8 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                `Adjusted: ${m.item_sku || 'SKU'}`,
         sub: `${m.quantity} units · ${m.location_code || 'Warehouse'}${m.reason ? ` (${m.reason})` : ''}`,
         time: `${idx * 2 + 1}h ago`,
-        color: m.movement_type === 'RECEIPT' ? '#10b981' : m.movement_type === 'ISSUE' ? '#38bdf8' : '#a855f7',
-        bg: m.movement_type === 'RECEIPT' ? 'rgba(16, 185, 129, 0.12)' : m.movement_type === 'ISSUE' ? 'rgba(56, 189, 248, 0.12)' : 'rgba(168, 85, 247, 0.12)',
+        color: m.movement_type === 'RECEIPT' ? '#10b981' : m.movement_type === 'ISSUE' ? '#ef4444' : '#a855f7',
+        bg: m.movement_type === 'RECEIPT' ? 'rgba(16, 185, 129, 0.12)' : m.movement_type === 'ISSUE' ? 'rgba(239, 68, 68, 0.12)' : 'rgba(168, 85, 247, 0.12)',
         icon: m.movement_type === 'RECEIPT' ? CheckCircle2 : m.movement_type === 'ISSUE' ? ArrowRight : ArrowLeftRight,
       }))
     : fallbackActivities;
@@ -454,7 +454,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
         </div>
 
         <div className="overview-time-chip">
-          <Calendar style={{ width: 14, height: 14, color: '#38bdf8' }} />
+          <Calendar style={{ width: 14, height: 14, color: 'var(--text-secondary)' }} />
           <span>Thu, Oct 15, 2026</span>
           <span style={{ color: 'var(--border-hover)' }}>|</span>
           <Clock style={{ width: 14, height: 14, color: '#a1a1aa' }} />
@@ -466,7 +466,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
       <div className="overview-kpi-grid">
         {/* Total Items */}
         <div className="overview-kpi-card">
-          <div className="kpi-icon-bubble blue">
+          <div className="kpi-icon-bubble">
             <Package style={{ width: 22, height: 22 }} />
           </div>
           <div className="kpi-body">
@@ -541,7 +541,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
 
             <div className="chart-legend-inline">
               <div className="chart-legend-item">
-                <span className="legend-dot" style={{ backgroundColor: '#38bdf8' }} />
+                <span className="legend-dot" style={{ backgroundColor: '#ffffff' }} />
                 <span>{locLabels.main}</span>
               </div>
               <div className="chart-legend-item">
@@ -633,7 +633,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
           <div className="overview-card-header" style={{ marginBottom: '0.85rem' }}>
             <div className="overview-card-title-group">
               <h3 className="overview-card-title">
-                <Clock style={{ width: 16, height: 16, color: '#38bdf8' }} />
+                <Clock style={{ width: 16, height: 16, color: 'var(--text-secondary)' }} />
                 <span>Recent Activity</span>
               </h3>
             </div>

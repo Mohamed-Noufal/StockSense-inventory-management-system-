@@ -26,8 +26,8 @@ export const InventoryKpiCards: React.FC<InventoryKpiCardsProps> = ({
       {/* 1. Total Items */}
       <div className="inventory-kpi-card">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-          <div className="kpi-icon-badge kpi-icon-blue">
-            <Package style={{ width: 18, height: 18, color: '#38bdf8' }} />
+          <div className="kpi-icon-badge">
+            <Package style={{ width: 18, height: 18, color: '#ffffff' }} />
           </div>
           <div>
             <div className="kpi-label">Total Items</div>

@@ -59,7 +59,7 @@ export const MovementModal: React.FC<MovementModalProps> = ({
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
             {modalType === 'RECEIPT' && <PlusCircle style={{ width: 18, height: 18, color: '#34d399' }} />}
             {modalType === 'ISSUE' && <MinusCircle style={{ width: 18, height: 18, color: '#f87171' }} />}
-            {modalType === 'TRANSFER' && <ArrowRightLeft style={{ width: 18, height: 18, color: '#38bdf8' }} />}
+            {modalType === 'TRANSFER' && <ArrowRightLeft style={{ width: 18, height: 18, color: '#ffffff' }} />}
             {modalType === 'ADJUSTMENT' && <ShieldCheck style={{ width: 18, height: 18, color: '#fbbf24' }} />}
             <h3>Record {modalType.charAt(0) + modalType.slice(1).toLowerCase()} Transaction</h3>
           </div>

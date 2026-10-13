@@ -98,7 +98,7 @@ export const OperationsTable: React.FC<OperationsTableProps> = ({
     } else if (mov.movement_type === 'ISSUE') {
       return <span style={{ color: '#f87171', fontWeight: 600 }}>-{Math.abs(qty)}</span>;
     } else if (mov.movement_type === 'TRANSFER_OUT' || mov.movement_type === 'TRANSFER_IN') {
-      return <span style={{ color: '#38bdf8', fontWeight: 600 }}>-{Math.abs(qty)}</span>;
+      return <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{qty > 0 ? `+${qty}` : qty}</span>;
     } else if (mov.movement_type === 'ADJUSTMENT') {
       const isPositive = qty >= 0;
       return (
@@ -115,7 +115,7 @@ export const OperationsTable: React.FC<OperationsTableProps> = ({
       {/* Table Header Section */}
       <div className="ops-table-header-row">
         <div className="ops-table-title-area">
-          <Activity style={{ width: 17, height: 17, color: '#38bdf8' }} />
+          <Activity style={{ width: 17, height: 17, color: '#ffffff' }} />
           <h2 className="ops-table-title">Recent Operations</h2>
         </div>
 

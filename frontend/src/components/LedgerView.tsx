@@ -20,7 +20,7 @@ export const LedgerView: React.FC<LedgerViewProps> = ({ ledger, onRefresh }) => 
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       <div className="card" style={{ padding: '0.85rem 1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <History style={{ width: 16, height: 16, color: '#38bdf8' }} />
+          <History style={{ width: 16, height: 16, color: '#ffffff' }} />
           <span style={{ fontWeight: 600, fontSize: '0.875rem' }}>Audit Ledger: Append-Only Immutable Records</span>
         </div>
 

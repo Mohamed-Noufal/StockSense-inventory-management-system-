@@ -53,7 +53,7 @@ export const UsersView: React.FC<UsersViewProps> = ({
         <div className="metric-card">
           <div className="metric-header">
             <span className="metric-title">Active Personnel</span>
-            <Users className="metric-icon" style={{ color: '#38bdf8' }} />
+            <Users className="metric-icon" style={{ color: '#ffffff' }} />
           </div>
           <div className="metric-value">{users.length}</div>
           <div className="metric-sub">Authenticated personnel in SQLite database</div>
@@ -136,7 +136,7 @@ export const UsersView: React.FC<UsersViewProps> = ({
                             width: 34,
                             height: 34,
                             borderRadius: '50%',
-                            background: isSelected ? '#38bdf8' : '#27272a',
+                            background: isSelected ? '#ffffff' : '#27272a',
                             color: isSelected ? '#000000' : '#ffffff',
                             fontWeight: 700,
                             fontSize: '0.78rem',
@@ -206,11 +206,8 @@ export const UsersView: React.FC<UsersViewProps> = ({
                     <td style={{ textAlign: 'right' }}>
                       {isSelected ? (
                         <span
-                          className="badge"
+                          className="badge badge-success"
                           style={{
-                            background: 'rgba(56, 189, 248, 0.15)',
-                            color: '#38bdf8',
-                            borderColor: 'rgba(56, 189, 248, 0.3)',
                             fontSize: '0.72rem',
                           }}
                         >

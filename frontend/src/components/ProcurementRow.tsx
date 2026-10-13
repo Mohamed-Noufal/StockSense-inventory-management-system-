@@ -40,7 +40,7 @@ export const ProcurementRow: React.FC<ProcurementRowProps> = ({
         <td>
           <span className="sku-cell">{po.po_number}</span>
           {po.source_recommendation_id && (
-            <span style={{ marginLeft: '0.35rem', fontSize: '0.68rem', color: '#38bdf8' }}>AI Rec #{po.source_recommendation_id}</span>
+            <span style={{ marginLeft: '0.35rem', fontSize: '0.68rem', color: 'var(--text-muted)' }}>AI Rec #{po.source_recommendation_id}</span>
           )}
         </td>
         <td style={{ fontWeight: 500, color: '#f4f4f5' }}>{po.supplier_name || `Supplier #${po.supplier_id}`}</td>
