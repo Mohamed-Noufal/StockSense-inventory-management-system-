@@ -283,5 +283,19 @@ export interface AlertResolvePayload {
   resolution_notes?: string;
 }
 
+export interface DocumentAttachment {
+  id: number;
+  entity_type: 'MOVEMENT' | 'PURCHASE_ORDER';
+  entity_id: number;
+  filename: string;
+  file_type: string;
+  file_size_bytes: number;
+  description?: string | null;
+  uploaded_by_user_id?: number | null;
+  uploaded_by_name?: string | null;
+  created_at: string;
+  download_url?: string;
+}
+
 
 

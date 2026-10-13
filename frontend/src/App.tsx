@@ -70,6 +70,7 @@ const App: React.FC = () => {
   const [targetLocId, setTargetLocId] = useState<number>(0);
   const [txQty, setTxQty] = useState<number>(5);
   const [txReason, setTxReason] = useState<string>('');
+  const [attachedFile, setAttachedFile] = useState<File | null>(null);
 
   const [showPOCreateModal, setShowPOCreateModal] = useState<boolean>(false);
   const [receivingPO, setReceivingPO] = useState<PurchaseOrder | null>(null);
@@ -153,15 +154,24 @@ const App: React.FC = () => {
           actor_label: actorLabel,
         });
         setSuccessMsg(`Movement #${res.id} (${res.movement_type} ${res.quantity} units) recorded by ${currentUser?.full_name || 'Storekeeper'}!`);
+        if (attachedFile && res?.id) {
+          try {
+            await api.uploadAttachment(attachedFile, 'MOVEMENT', res.id, txReason || 'Physical Delivery Slip / Waybill', actorLabel);
+          } catch (attErr) {
+            console.warn('Failed to upload movement document attachment:', attErr);
+          }
+        }
       }
       setShowModal(false);
       setTxQty(5);
       setTxReason('');
+      setAttachedFile(null);
       fetchData();
     } catch (err: any) {
       setError(err.message || 'Transaction failed');
     }
   };
+
 
   const handleCreatePO = async (payload: POCreatePayload): Promise<PurchaseOrder> => {
     setError(null);
@@ -470,10 +480,13 @@ const App: React.FC = () => {
           setAdjustmentDirection={setAdjDirection}
           destinationLabel={destinationLabel}
           setDestinationLabel={setDestinationLabel}
-          onClose={() => setShowModal(false)}
+          attachedFile={attachedFile}
+          setAttachedFile={setAttachedFile}
+          onClose={() => { setShowModal(false); setAttachedFile(null); }}
           onSubmit={handleTransaction}
         />
       )}
+
 
       {showPOCreateModal && (
         <POCreateModal

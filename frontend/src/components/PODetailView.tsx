@@ -1,6 +1,7 @@
-import React from 'react';
-import { ArrowLeft, CheckCircle, PackageCheck, Ban, Sparkles } from 'lucide-react';
-import { PurchaseOrder, InventoryLocation } from '../types';
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, CheckCircle, PackageCheck, Ban, Sparkles, Paperclip, Download, FileText, Image as ImageIcon } from 'lucide-react';
+import { PurchaseOrder, InventoryLocation, DocumentAttachment } from '../types';
+import { api } from '../api/client';
 
 interface PODetailViewProps {
   po: PurchaseOrder;
@@ -19,6 +20,27 @@ export const PODetailView: React.FC<PODetailViewProps> = ({
   onOpenReceiveModal,
   onOpenCancelModal,
 }) => {
+  const [attachments, setAttachments] = useState<DocumentAttachment[]>([]);
+  const [loadingAttachments, setLoadingAttachments] = useState<boolean>(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    setLoadingAttachments(true);
+    api.getAttachments('PURCHASE_ORDER', po.id)
+      .then((data) => {
+        if (isMounted) setAttachments(data);
+      })
+      .catch(() => {
+        if (isMounted) setAttachments([]);
+      })
+      .finally(() => {
+        if (isMounted) setLoadingAttachments(false);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [po.id]);
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'DRAFT':
@@ -254,6 +276,69 @@ export const PODetailView: React.FC<PODetailViewProps> = ({
           </table>
         </div>
       </div>
+
+      {/* Supporting Documents & Vendor Delivery Slips */}
+      <div className="po-section-card">
+        <div className="po-section-card-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+            <Paperclip style={{ width: 14, height: 14, color: 'var(--text-secondary)' }} />
+            <span>Vendor Documentation & Delivery Slips</span>
+          </div>
+          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+            {attachments.length} attached document{attachments.length === 1 ? '' : 's'}
+          </span>
+        </div>
+
+        {loadingAttachments ? (
+          <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', fontStyle: 'italic', padding: '0.5rem 0' }}>
+            Scanning delivery attachments repository...
+          </div>
+        ) : attachments.length > 0 ? (
+          <div className="attachment-list">
+            {attachments.map((att) => {
+              const isPdf = att.file_type.includes('pdf') || att.filename.endsWith('.pdf');
+              return (
+                <div key={att.id} className="attachment-card">
+                  <div className="attachment-card-info">
+                    <div className={`attachment-icon-box ${isPdf ? 'pdf' : 'image'}`}>
+                      {isPdf ? <FileText style={{ width: 14, height: 14 }} /> : <ImageIcon style={{ width: 14, height: 14 }} />}
+                    </div>
+                    <div className="attachment-meta">
+                      <span className="attachment-filename" title={att.filename}>
+                        {att.filename}
+                      </span>
+                      <span className="attachment-subtext">
+                        <span>{(att.file_size_bytes / 1024).toFixed(1)} KB</span>
+                        <span>•</span>
+                        <span>{att.description || 'Vendor Packing Slip'}</span>
+                        <span>•</span>
+                        <span>Uploaded by {att.uploaded_by_name || 'Storekeeper'}</span>
+                      </span>
+                    </div>
+                  </div>
+                  <div className="attachment-actions">
+                    <a
+                      href={att.download_url || `/api/v1/attachments/${att.id}/file`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="attachment-action-btn"
+                      title="Open or download document"
+                    >
+                      <Download style={{ width: 12, height: 12 }} />
+                      <span>View</span>
+                    </a>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', fontStyle: 'italic', padding: '0.5rem 0' }}>
+            No vendor delivery documents attached yet. Attach delivery slips using the Receive Goods modal.
+          </div>
+        )}
+      </div>
     </div>
   );
 };
+

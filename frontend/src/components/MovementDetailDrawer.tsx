@@ -1,24 +1,51 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   X, ArrowUpRight, ArrowDownLeft, ArrowLeftRight, Sliders,
-  Clock, ShieldCheck, Box, User, FileText, ArrowRight
+  Clock, ShieldCheck, Box, User, FileText, ArrowRight,
+  Paperclip, Download, Printer, Image as ImageIcon
 } from 'lucide-react';
-import { StockMovement } from '../types';
+import { StockMovement, DocumentAttachment } from '../types';
+import { api } from '../api/client';
 
 interface MovementDetailDrawerProps {
   movement: StockMovement;
   allMovements: StockMovement[];
   onClose: () => void;
   onSelectMovement: (mov: StockMovement) => void;
+  onPrintWaybill?: (mov: StockMovement) => void;
 }
+
 
 export const MovementDetailDrawer: React.FC<MovementDetailDrawerProps> = ({
   movement,
   allMovements,
   onClose,
   onSelectMovement,
+  onPrintWaybill,
 }) => {
+  const [attachments, setAttachments] = useState<DocumentAttachment[]>([]);
+  const [loadingAttachments, setLoadingAttachments] = useState<boolean>(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    setLoadingAttachments(true);
+    api.getAttachments('MOVEMENT', movement.id)
+      .then((data) => {
+        if (isMounted) setAttachments(data);
+      })
+      .catch(() => {
+        if (isMounted) setAttachments([]);
+      })
+      .finally(() => {
+        if (isMounted) setLoadingAttachments(false);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [movement.id]);
+
   // Determine signed quantity and badge style
+
   const isPositive = ['RECEIPT', 'TRANSFER_IN'].includes(movement.movement_type);
   const isNegative = ['ISSUE', 'TRANSFER_OUT'].includes(movement.movement_type);
   const deltaPrefix = isPositive ? '+' : isNegative ? '-' : '';
@@ -266,8 +293,77 @@ export const MovementDetailDrawer: React.FC<MovementDetailDrawerProps> = ({
               </div>
             </div>
           </div>
+
+          {/* Document Attachments & Physical Proof */}
+          <div className="movement-drawer-section">
+            <div className="movement-drawer-section-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <Paperclip style={{ width: 14, height: 14, color: 'var(--text-secondary)' }} />
+                <span>Supporting Documents & Slips</span>
+              </div>
+              {onPrintWaybill && (
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => onPrintWaybill(movement)}
+                  style={{ padding: '0.25rem 0.55rem', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                >
+                  <Printer style={{ width: 12, height: 12 }} />
+                  <span>Print Waybill</span>
+                </button>
+              )}
+            </div>
+
+            {loadingAttachments ? (
+              <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', fontStyle: 'italic', padding: '0.4rem 0' }}>
+                Scanning repository for physical audit documents...
+              </div>
+            ) : attachments.length > 0 ? (
+              <div className="attachment-list">
+                {attachments.map((att) => {
+                  const isPdf = att.file_type.includes('pdf') || att.filename.endsWith('.pdf');
+                  return (
+                    <div key={att.id} className="attachment-card">
+                      <div className="attachment-card-info">
+                        <div className={`attachment-icon-box ${isPdf ? 'pdf' : 'image'}`}>
+                          {isPdf ? <FileText style={{ width: 14, height: 14 }} /> : <ImageIcon style={{ width: 14, height: 14 }} />}
+                        </div>
+                        <div className="attachment-meta">
+                          <span className="attachment-filename" title={att.filename}>
+                            {att.filename}
+                          </span>
+                          <span className="attachment-subtext">
+                            <span>{(att.file_size_bytes / 1024).toFixed(1)} KB</span>
+                            <span>•</span>
+                            <span>{att.description || 'Audit Slip'}</span>
+                          </span>
+                        </div>
+                      </div>
+                      <div className="attachment-actions">
+                        <a
+                          href={att.download_url || `/api/v1/attachments/${att.id}/file`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="attachment-action-btn"
+                          title="Open or download document"
+                        >
+                          <Download style={{ width: 12, height: 12 }} />
+                          <span>View</span>
+                        </a>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', fontStyle: 'italic', padding: '0.4rem 0' }}>
+                No physical slips attached. Use the Movement modal to attach delivery dockets during posting.
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
   );
 };
+

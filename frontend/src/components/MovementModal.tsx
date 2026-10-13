@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   PlusCircle, MinusCircle, ArrowRightLeft, ShieldCheck, X,
-  TrendingUp, TrendingDown
+  TrendingUp, TrendingDown, Paperclip, UploadCloud, FileText, Trash2
 } from 'lucide-react';
 import { InventoryItem, InventoryLocation } from '../types';
 
@@ -24,9 +24,12 @@ interface MovementModalProps {
   setAdjustmentDirection?: (dir: 'SURPLUS' | 'SHRINKAGE') => void;
   destinationLabel?: string;
   setDestinationLabel?: (label: string) => void;
+  attachedFile?: File | null;
+  setAttachedFile?: (file: File | null) => void;
   onClose: () => void;
   onSubmit: (e: React.FormEvent) => void;
 }
+
 
 export const MovementModal: React.FC<MovementModalProps> = ({
   modalType,
@@ -47,10 +50,13 @@ export const MovementModal: React.FC<MovementModalProps> = ({
   setAdjustmentDirection,
   destinationLabel = 'Rig-12',
   setDestinationLabel,
+  attachedFile,
+  setAttachedFile,
   onClose,
   onSubmit,
 }) => {
   const selectedItem = items.find((i) => i.id === selectedItemId);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -234,7 +240,73 @@ export const MovementModal: React.FC<MovementModalProps> = ({
                 onChange={(e) => setTxReason(e.target.value)}
               />
             </div>
+
+            {/* Document Attachment Dropzone */}
+            <div className="form-group">
+              <label className="form-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <Paperclip style={{ width: 13, height: 13, color: 'var(--text-muted)' }} />
+                  Physical Document Proof (PDF / Images)
+                </span>
+                <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Optional • Audit Verification</span>
+              </label>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.png,.jpg,.jpeg,.txt"
+                style={{ display: 'none' }}
+                onChange={(e) => {
+                  if (e.target.files && e.target.files[0] && setAttachedFile) {
+                    setAttachedFile(e.target.files[0]);
+                  }
+                }}
+              />
+
+              {attachedFile ? (
+                <div className="attachment-file-chip" style={{ justifyContent: 'space-between', width: '100%' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', minWidth: 0 }}>
+                    <FileText style={{ width: 14, height: 14, color: '#34d399', flexShrink: 0 }} />
+                    <span className="attachment-file-chip-name">{attachedFile.name}</span>
+                    <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
+                      ({(attachedFile.size / 1024).toFixed(1)} KB)
+                    </span>
+                  </div>
+                  {setAttachedFile && (
+                    <button
+                      type="button"
+                      className="attachment-file-chip-remove"
+                      onClick={() => setAttachedFile(null)}
+                      title="Remove file"
+                    >
+                      <Trash2 style={{ width: 13, height: 13 }} />
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div
+                  className="attachment-dropzone"
+                  onClick={() => fileInputRef.current?.click()}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    if (e.dataTransfer.files && e.dataTransfer.files[0] && setAttachedFile) {
+                      setAttachedFile(e.dataTransfer.files[0]);
+                    }
+                  }}
+                >
+                  <UploadCloud className="attachment-dropzone-icon" />
+                  <div className="attachment-dropzone-text">
+                    Click or drop physical delivery docket, bill of lading, or inspection photo
+                  </div>
+                  <div className="attachment-dropzone-hint">
+                    Supports PDF, PNG, JPG up to 15MB
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
+
 
           <div className="modal-footer">
             <button type="button" className="btn btn-secondary" onClick={onClose}>

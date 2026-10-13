@@ -323,35 +323,47 @@ This is a deadline-aware plan from Monday evening to Thursday's interview. Adjus
 
 ---
 
-### Sprint M — Storekeeper Document Attachments & Printable Waybills (IN PROGRESS)
+### Sprint M — Core Physical Warehouse Operations (3-Task Senior Execution)
 
-**Objective:** Fulfill real-world storekeeper compliance: every physical stock transaction and PO receipt can have supporting delivery documentation (PDF, images) attached, stored, and printed as formal warehouse waybills/dockets.
+**Objective:** Fulfill real-world storekeeper compliance and warehouse mobility: every physical stock transaction and PO receipt can have supporting delivery documentation (PDF, images) attached, stored, and printed as formal warehouse waybills/dockets, accompanied by thermal bin labels and barcode/QR scanning.
 
-**Scope & Deliverables:**
-- **Backend Document Attachment Engine:**
-  - `DocumentAttachment` model in `backend/app/models/attachments.py` linked to movements and POs.
-  - Pydantic schemas in `backend/app/schemas/attachments.py`.
-  - API endpoints in `backend/app/api/v1/endpoints/attachments.py`: file upload (`POST /upload`), list attachments (`GET /attachments`), and secure file streaming (`GET /attachments/{id}/file`).
-  - Automated tests in `backend/tests/test_attachments.py`.
-- **Printable Warehouse Delivery Docket / Waybill (`WaybillModal.tsx`):**
-  - Executive layout with Waybill number, carrier details, vehicle license plate, origin/destination warehouse, manifest table, and dual signature sign-off boxes (Dispatcher Storekeeper & Receiving Inspector).
-  - Print-optimized CSS (`@media print`) enabling 1-click clean paper printout or "Save as PDF".
-- **Storekeeper Upload Dropzones:**
-  - Drag-and-drop / file picker in `MovementModal.tsx` (Issues, Receipts, Transfers).
-  - Vendor delivery docket upload in `POReceiveModal.tsx`.
-- **Drawer Attachment Explorer:**
-  - Document attachments list with badge icons, download/view triggers, and "Print Waybill" button in `MovementDetailDrawer.tsx` and `PODetailView.tsx`.
+#### Task 1: Storekeeper Document Attachments & Audit Proof Engine (IN PROGRESS)
+- **Data Engineering & Models:**
+  - `document_attachments` table in `backend/app/models/attachments.py`:
+    - Columns: `id` (PK), `entity_type` ('MOVEMENT' | 'PURCHASE_ORDER'), `entity_id` (FK), `filename`, `file_type` (MIME), `file_size_bytes`, `file_path`, `description`, `uploaded_by_user_id` (FK to users), `uploaded_by_name`, `created_at`.
+    - Composite index: `idx_entity_attachment (entity_type, entity_id)`.
+- **Backend & Schemas:**
+  - Pydantic v2 schemas in `backend/app/schemas/attachments.py`: `AttachmentResponse`, `AttachmentCreate`.
+  - API endpoints in `backend/app/api/v1/endpoints/attachments.py`:
+    - `GET /api/v1/attachments?entity_type=...&entity_id=...` (lists documents; seeds sample files on first access).
+    - `POST /api/v1/attachments/upload` (multipart file upload with UUID disk storage in `data/attachments/`).
+    - `GET /api/v1/attachments/{id}/file` (secure `FileResponse` preview/download).
+- **Frontend Dropzones & Inspection:**
+  - Upload dropzone in `MovementModal.tsx` and `POReceiveModal.tsx` for immediate file attachment during transactions.
+  - Attachment list with file-type badges (PDF, image, doc) and preview links in `MovementDetailDrawer.tsx` and `PODetailView.tsx`.
+- **Verification:** Unit and integration tests in `backend/tests/test_attachments.py`.
 
----
+#### Task 2: Printable Warehouse Delivery Docket / Waybill System
+- **System Design & Libraries:**
+  - Zero heavy server-side PDF compilers (e.g. Weasyprint/ReportLab which require native Cairo C-extensions).
+  - Client-side print architecture via React + `@media print` CSS and standard browser `window.print()`. Enables instant, pixel-perfect physical printouts and native "Save as PDF" with 0ms server latency.
+- **Component Design (`WaybillModal.tsx`):**
+  - Company Header: "Apex Oilfield Logistics — Material Delivery Docket / Transit Waybill".
+  - Transit Metadata: Waybill #, Carrier Name, Vehicle Plate Number, Dispatch Date, Origin Warehouse, Destination Site/Rig.
+  - Material Manifest Table: SKU, Item Description, Category, Quantity Dispatched, UOM, Unit Cost, and Handling Remarks.
+  - Dual Sign-Off Blocks: "Dispatcher Storekeeper Sign & Stamp" and "Receiving Inspector Sign & Date".
+- **Launch Points:**
+  - Direct "Print Waybill" button on Operations table rows (`OperationsTable.tsx`).
+  - Action button inside Movement Detail Drawer (`MovementDetailDrawer.tsx`).
 
-### Sprint N — Barcode & QR Code Warehouse Scanning & Label Printing (PLANNED)
+#### Task 3: Physical Warehouse Mobility — Barcode/QR Bin Labels & Interactive Scanner
+- **Data Architecture & Libraries:**
+  - Vector SVG Code128 Barcode & QR Code renderer (pure client-side SVG generation, zero external binary dependencies).
+  - High-contrast black/white thermal label geometry.
+- **Component Design:**
+  - **Thermal Shelf Bin Label (`BinLabelModal.tsx`):** Formatted for 4x2" and 2x1" industrial adhesive labels: Part SKU, Name, Criticality Badge, Code128 barcode, QR code (encoding `ITEM:{sku}`), and Warehouse Bin Coordinates (`LOC-WH01-BAY-04`).
+  - **Interactive Barcode Scanner (`BarcodeScannerModal.tsx`):** Quick-scan overlay accessible via a barcode icon in Operations and Inventory top bars. Supports camera scanning, manual keyboard wedge, and quick-picker simulation to immediately select parts for stock movements.
 
-**Objective:** Enable physical warehouse mobility and barcode-driven execution.
-
-**Scope & Deliverables:**
-- Code128 and QR code vector generation for part SKUs and warehouse bin locations (`LOC-MAIN-A01`, etc.).
-- Printable multi-label sheet modal (`LabelPrintModal.tsx`) formatted for thermal label printers (4x2" and 2x1" formats).
-- Interactive Barcode Scanner modal (`BarcodeScannerModal.tsx`) supporting camera scan and USB HID hardware wedge scanners for instantaneous item selection and fast-path receiving.
 
 ---
 

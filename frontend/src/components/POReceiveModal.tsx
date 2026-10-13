@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
-import { PackageCheck, X } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { PackageCheck, X, Paperclip, UploadCloud, FileText, Trash2 } from 'lucide-react';
 import { PurchaseOrder, PurchaseOrderLine, POReceivePayload, InventoryLocation } from '../types';
+import { api } from '../api/client';
+
 
 interface POReceiveModalProps {
   po: PurchaseOrder;
@@ -21,6 +23,8 @@ export const POReceiveModal: React.FC<POReceiveModalProps> = ({
     activeLine?.destination_location_id || locations[0]?.id || 1
   );
   const [actorLabel, setActorLabel] = useState<string>('Dock Inspector');
+  const [attachedFile, setAttachedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -53,6 +57,13 @@ export const POReceiveModal: React.FC<POReceiveModalProps> = ({
         actor_label: actorLabel.trim() || 'Dock Inspector',
         idempotency_key: `rcv-${po.id}-${selectedLineId}-${Date.now()}`,
       });
+      if (attachedFile) {
+        try {
+          await api.uploadAttachment(attachedFile, 'PURCHASE_ORDER', po.id, 'Vendor Delivery Note / Packing Slip', actorLabel.trim() || 'Dock Inspector');
+        } catch (attErr) {
+          console.warn('Failed to upload PO attachment:', attErr);
+        }
+      }
       onClose();
     } catch (err: any) {
       setError(err?.message || 'Failed to record receipt in stock ledger');
@@ -60,6 +71,7 @@ export const POReceiveModal: React.FC<POReceiveModalProps> = ({
       setSubmitting(false);
     }
   };
+
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -173,8 +185,72 @@ export const POReceiveModal: React.FC<POReceiveModalProps> = ({
               />
             </div>
 
+            {/* Document Attachment Dropzone */}
+            <div className="form-group">
+              <label className="form-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <Paperclip style={{ width: 13, height: 13, color: 'var(--text-muted)' }} />
+                  Vendor Delivery Note / Slip (PDF / Photo)
+                </span>
+                <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Optional • Audit Verification</span>
+              </label>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.png,.jpg,.jpeg,.txt"
+                style={{ display: 'none' }}
+                onChange={(e) => {
+                  if (e.target.files && e.target.files[0]) {
+                    setAttachedFile(e.target.files[0]);
+                  }
+                }}
+              />
+
+              {attachedFile ? (
+                <div className="attachment-file-chip" style={{ justifyContent: 'space-between', width: '100%' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', minWidth: 0 }}>
+                    <FileText style={{ width: 14, height: 14, color: '#34d399', flexShrink: 0 }} />
+                    <span className="attachment-file-chip-name">{attachedFile.name}</span>
+                    <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
+                      ({(attachedFile.size / 1024).toFixed(1)} KB)
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    className="attachment-file-chip-remove"
+                    onClick={() => setAttachedFile(null)}
+                    title="Remove file"
+                  >
+                    <Trash2 style={{ width: 13, height: 13 }} />
+                  </button>
+                </div>
+              ) : (
+                <div
+                  className="attachment-dropzone"
+                  onClick={() => fileInputRef.current?.click()}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                      setAttachedFile(e.dataTransfer.files[0]);
+                    }
+                  }}
+                >
+                  <UploadCloud className="attachment-dropzone-icon" />
+                  <div className="attachment-dropzone-text">
+                    Attach signed vendor packing slip or condition photo
+                  </div>
+                  <div className="attachment-dropzone-hint">
+                    Supports PDF, PNG, JPG up to 15MB
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Inbound Review Summary Card */}
             <div className="po-modal-review-summary">
+
               <div style={{ fontWeight: 600, color: '#ffffff', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                 <PackageCheck style={{ width: 14, height: 14, color: '#10b981' }} />
                 <span>Delivery Transaction Review</span>

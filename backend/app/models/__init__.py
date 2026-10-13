@@ -10,6 +10,7 @@ from backend.app.models.stock_movements import StockMovement
 from backend.app.models.stock_balances import StockBalance
 from backend.app.models.purchase_orders import PurchaseOrder, PurchaseOrderLine
 from backend.app.models.alerts import Alert
+from backend.app.models.attachments import DocumentAttachment
 
 # Import AI models from unified backend.ai package
 from backend.ai.models import (
@@ -34,9 +35,11 @@ __all__ = [
     "PurchaseOrder",
     "PurchaseOrderLine",
     "Alert",
+    "DocumentAttachment",
     "AIRun",
     "Forecast",
     "BacktestResult",
     "ItemPolicy",
     "Recommendation",
 ]
+

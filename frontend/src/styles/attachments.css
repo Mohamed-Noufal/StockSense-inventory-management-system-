@@ -1,0 +1,188 @@
+/* ==========================================================================
+   StockSense — Document Attachments & Physical Slips Stylesheet
+   Adheres to Vercel Geist Monochromatic Dark Zinc Design System
+   ========================================================================== */
+
+.attachment-dropzone {
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 0.85rem;
+  background: rgba(255, 255, 255, 0.02);
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.attachment-dropzone:hover {
+  border-color: var(--border-hover);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.attachment-dropzone.has-file {
+  border-style: solid;
+  border-color: rgba(16, 185, 129, 0.4);
+  background: rgba(16, 185, 129, 0.04);
+}
+
+.attachment-dropzone-icon {
+  width: 22px;
+  height: 22px;
+  color: var(--text-muted);
+}
+
+.attachment-dropzone.has-file .attachment-dropzone-icon {
+  color: #10b981;
+}
+
+.attachment-dropzone-text {
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+}
+
+.attachment-dropzone-hint {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+
+/* File chip in forms */
+.attachment-file-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.65rem;
+  background: #141416;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  font-size: 0.74rem;
+  color: var(--text-primary);
+  max-width: 100%;
+}
+
+.attachment-file-chip-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 240px;
+}
+
+.attachment-file-chip-remove {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+
+.attachment-file-chip-remove:hover {
+  color: #ef4444;
+}
+
+/* Attachment cards inside detail drawers */
+.attachment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.attachment-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.55rem 0.75rem;
+  background: #0f0f11;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  transition: border-color 0.15s ease;
+}
+
+.attachment-card:hover {
+  border-color: var(--border-hover);
+}
+
+.attachment-card-info {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.attachment-icon-box {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--text-secondary);
+}
+
+.attachment-icon-box.pdf {
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.attachment-icon-box.image {
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.1);
+}
+
+.attachment-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.attachment-filename {
+  font-size: 0.76rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.attachment-subtext {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.attachment-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.attachment-action-btn {
+  background: #18181b;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  padding: 0.3rem 0.5rem;
+  font-size: 0.7rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.attachment-action-btn:hover {
+  color: #ffffff;
+  border-color: var(--border-hover);
+  background: #27272a;
+}

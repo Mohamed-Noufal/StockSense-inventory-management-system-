@@ -2,7 +2,8 @@ import {
   HealthResponse, ReadyResponse, InventoryItem, InventoryLocation,
   StockBalance, StockMovement, MovementCreatePayload, TransferCreatePayload,
   OperationsStats, IntegrityCheckResponse, Supplier, PurchaseOrder, POCreatePayload, POReceivePayload,
-  AIRun, AIRecommendation, AIRunTriggerPayload, User, AlertItem, AlertAcknowledgePayload, AlertResolvePayload
+  AIRun, AIRecommendation, AIRunTriggerPayload, User, AlertItem, AlertAcknowledgePayload, AlertResolvePayload,
+  DocumentAttachment
 } from '../types';
 
 const API_BASE = '/api/v1';
@@ -128,5 +129,41 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
+  getAttachments: (entityType?: string, entityId?: number) => {
+    const params = new URLSearchParams();
+    if (entityType) params.append('entity_type', entityType);
+    if (entityId !== undefined) params.append('entity_id', entityId.toString());
+    const qs = params.toString();
+    return request<DocumentAttachment[]>(`/attachments${qs ? `?${qs}` : ''}`);
+  },
+  uploadAttachment: async (
+    file: File,
+    entityType: 'MOVEMENT' | 'PURCHASE_ORDER',
+    entityId: number,
+    description?: string,
+    uploadedByName?: string
+  ): Promise<DocumentAttachment> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('entity_type', entityType);
+    formData.append('entity_id', entityId.toString());
+    if (description) formData.append('description', description);
+    if (uploadedByName) formData.append('uploaded_by_name', uploadedByName);
+
+    const res = await fetch(`${API_BASE}/attachments/upload`, {
+      method: 'POST',
+      body: formData,
+    });
+    if (!res.ok) {
+      let errMsg = `Upload failed with status ${res.status}`;
+      try {
+        const errData = await res.json();
+        if (errData.detail) errMsg = typeof errData.detail === 'string' ? errData.detail : JSON.stringify(errData.detail);
+      } catch {}
+      throw new ApiError(res.status, errMsg);
+    }
+    return res.json();
+  },
 };
+
 
