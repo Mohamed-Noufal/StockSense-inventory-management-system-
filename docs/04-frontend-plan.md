@@ -707,3 +707,69 @@ In Sprint I, the frontend stylesheet was systematically refactored and consolida
 - **Zero Aggressive Blues:**
   - All scattered `#0066fe` and `#38bdf8` instances across all components, SVGs, and charts eliminated.
 
+---
+
+## 13. Sprint J: Modular CSS Architecture & Directory Structure
+
+### 13.1 Deconstruction of Monolithic Stylesheet
+To prevent CSS bloat and maintain a production-grade codebase, the 3,435-line monolithic `frontend/src/index.css` was decomposed into 7 isolated domain modules under `frontend/src/styles/`:
+
+| Module | File Path | Focus & Component Domain |
+|---|---|---|
+| **Design Tokens** | `frontend/src/styles/tokens.css` | Global `:root` variables, surface grays, dark zinc colors, semantic status shades, typography tokens. |
+| **Base & Reset** | `frontend/src/styles/base.css` | Box sizing reset, root body rules, smooth scrollbars, live pulse keyframe animations. |
+| **Shell & Layout** | `frontend/src/styles/layout.css` | Persistent collapsible sidebar, top bar header, quick search, global notification banners, promo cards. |
+| **Components** | `frontend/src/styles/components.css` | Reusable UI primitives: `.btn`, `.btn-primary`, `.btn-secondary`, form controls, inputs, selects, modals, badges. |
+| **Overview** | `frontend/src/styles/overview.css` | Executive dashboard KPI cards, triad layout, SVG donut allocation charts, weekly throughput bars. |
+| **Inventory** | `frontend/src/styles/inventory.css` | Inventory split-pane table, inspection drawer, AI intelligence card, responsive 12-week stock trend SVG. |
+| **Operations** | `frontend/src/styles/operations.css` | 4-card action grid, Recent Operations data table, borderless pills, status indicators, 2x2 stats card, activity feed. |
+
+### 13.2 Manifest Import Pattern
+`frontend/src/index.css` now serves strictly as a lightweight entry manifest:
+```css
+@import './styles/tokens.css';
+@import './styles/base.css';
+@import './styles/layout.css';
+@import './styles/components.css';
+@import './styles/overview.css';
+@import './styles/inventory.css';
+@import './styles/operations.css';
+```
+
+---
+
+## 14. Operations Workstation Architecture & Database Integration
+
+### 14.1 View Topology & Information Density
+The Operations Workstation (`/operations`, rendered via `OperationsView.tsx`) matches enterprise warehouse and storekeeper reference designs with a high-density, multi-panel layout:
+1. **Header Bar**:
+   - Workspace title with icon badge.
+   - Interactive date range selector dropdown with presets (`Current Sprint`, `Last 7 Days`, `Last 30 Days`, `All Operations`).
+2. **Top 4 Direct Action Cards (`OperationsActionCards.tsx`)**:
+   - **Issue Stock** (`New Issue` button): Dispatches `MovementModal` preset to `ISSUE` mode with destination routing (Rig-12, Workshop, etc.).
+   - **Transfer Stock** (`New Transfer` button): Dispatches `MovementModal` preset to `TRANSFER` mode with source-to-target location validation.
+   - **Receive Stock** (`New Receipt` button): Dispatches `MovementModal` preset to `RECEIPT` mode for incoming delivery ledger recording.
+   - **Adjust Stock Count** (`New Adjustment` button): Dispatches `MovementModal` preset to `ADJUSTMENT` mode with Surplus (+) / Shrinkage (-) directional toggles.
+3. **Recent Operations Table (`OperationsTable.tsx`)**:
+   - **Live Data Source**: Backed by `stock_movements` from `/api/v1/inventory/ledger` with enriched item SKU, location code, route display, and reference strings.
+   - **Tabbed Filter Buttons**: Instant client-side filtering by operation category: `All`, `Issues`, `Transfers`, `Receipts`, `Adjustments`.
+   - **Date & Time Column Sorter**: Ascending / descending toggle sorting by `occurred_at`.
+   - **Status & Type Indicators**: Borderless transparent pills with 6px luminous colored indicator dots.
+   - **Row Action Menu Popover (`...`)**:
+     - *Audit Details*: Opens dedicated inspection modal with full transaction payload, actor label, timestamp, and signed deltas.
+     - *Copy Reference*: Copies tracking reference (`PO-0123`, `REQ-0034`, etc.) to clipboard with interactive checkmark feedback.
+     - *Print Waybill*: Triggers browser print preview for physical warehouse transit documents.
+   - **Pagination Bar**: Dynamic page counter (`Showing 1–8 of N`) with previous/next chevron buttons and direct page number jumps.
+4. **Operations Stats Widget (`OperationsStatsCard.tsx`)**:
+   - Real-time aggregation via `/api/v1/inventory/operations/stats?days={n}`.
+   - Timeframe dropdown selector: `Last 7 days`, `Last 14 days`, `Last 30 days`.
+   - 2x2 grid displaying counts and trend percentage deltas for Issues, Transfers, Receipts, and Adjustments.
+5. **Recent Activity Feed (`OperationsActivityFeed.tsx`)**:
+   - Chronological stream of recent ledger entries showing relative time, actor attribution, signed quantities, and warehouse locations.
+
+### 14.2 Database Connectivity & Atomic Transactions
+- **Atomic WAL Transactions**: Form submissions inside `MovementModal` route through `App.tsx` directly to the FastAPI endpoints `/api/v1/inventory/movements` and `/api/v1/inventory/transfers`.
+- **Integrity Guarantee**: Stock balances and ledger rows update atomically in SQLite WAL. Over-issues and invalid transfers are validated and rejected server-side with rollback safety.
+- **Auto-Reconciliation**: Upon transaction commit, `fetchData()` re-queries the database, automatically syncing the Operations table, metric cards, inventory balances, and Overview dashboards.
+
+
