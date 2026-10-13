@@ -59,7 +59,7 @@ export const Header: React.FC<HeaderProps> = ({
     overview: 'Overview',
     inventory: 'Inventory',
     operations: 'Operations',
-    ledger: 'Stock Ledger',
+    ledger: 'Operations',
     procurement: 'Procurement',
     ai: 'AI & Replenishment',
     users: 'Users & Roles',

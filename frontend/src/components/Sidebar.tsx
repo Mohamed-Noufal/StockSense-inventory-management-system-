@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   LayoutDashboard, Box, ArrowLeftRight, ShoppingBag, Sparkles,
-  History, Users, Flag, Cpu, ShieldCheck, PanelLeftClose, PanelLeftOpen
+  Users, Flag, Cpu, ShieldCheck, PanelLeftClose, PanelLeftOpen
 } from 'lucide-react';
 import { HealthResponse } from '../types';
 
@@ -114,15 +114,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {aiCount > 0 && !isCollapsed && (
             <span className="nav-badge ai-badge">{aiCount}</span>
           )}
-        </button>
-
-        <button
-          className={`nav-item ${activeTab === 'ledger' ? 'active' : ''}`}
-          onClick={() => setActiveTab('ledger')}
-          title="Activity & Audit Logs"
-        >
-          <History className="nav-icon" />
-          {!isCollapsed && <span>Activity & Logs</span>}
         </button>
 
         {/* Secondary Admin/Audit items */}
