@@ -278,76 +278,53 @@ The Operations Workstation represents the high-frequency physical warehouse tran
 
 ## Page 4 — Purchase Orders (`/purchase-orders`)
 
-### List view
+### Architecture & Workstation Overview
+Page 4 is implemented as an industrial procurement workstation managed by [`ProcurementView.tsx`](../frontend/src/components/ProcurementView.tsx) with three seamless view modes (`LIST`, `CREATE`, `DETAIL`), client-side RFC 4180 CSV export, and full SQLite WAL backend transactional synchronization.
 
-Columns:
-- PO number
-- Supplier
-- Creation/order date
-- Expected date
-- Total line count / quantity (if the API supplies these values)
-- Destination warehouse
-- Status
-- Source: Manual or AI recommendation
-- Row action: Open
+```text
+/purchase-orders (ProcurementView.tsx)
+├── 4 KPI Summary Cards (Click-to-Filter Binding)
+│   ├── Open Purchase Orders (DRAFT, APPROVED, PARTIALLY_RECEIVED)
+│   ├── Awaiting Approval (DRAFT)
+│   ├── Partially Received (PARTIALLY_RECEIVED)
+│   └── Overdue Deliveries (expected_date < today AND status in open states)
+├── Filter Toolbar & Actions
+│   ├── Search Input (PO number or supplier name)
+│   ├── Status Pill Bar (All, Draft, Approved, Partial, Received, Cancelled)
+│   ├── Supplier Dropdown Selector
+│   ├── Clear Filters Action
+│   ├── Export CSV Button
+│   └── + Create Purchase Order CTA
+├── Main Purchase-Order Table (Click row → Navigates to Detail Workstation)
+├── Dedicated Creation Workstation (POCreateView.tsx at /purchase-orders/new)
+│   ├── Section 1: Order Information (Supplier, Warehouse, Expected Date, Ref, Notes)
+│   ├── Section 2: Lines Table (SKU, Qty, Unit Cost, Subtotal, Add/Remove Line)
+│   └── Order Total & Action Bar (Cancel, Save Draft PO)
+├── Dedicated Details Workstation (PODetailView.tsx at /purchase-orders/:poId)
+│   ├── Header Card: PO number, status badge, vendor, warehouse, AI Rec link
+│   ├── Metadata Grid: Total value, expected arrival, fulfillment percentage
+│   ├── Line Fulfillment Table: Ordered, Received, Remaining, Progress Bar
+│   └── Status-Gated Actions: Approve, Receive Goods, Cancel PO
+└── Modals Suite
+    ├── Window C (POApprovalModal.tsx): Confirmation prompt with committed total & warning
+    ├── Window D (POReceiveModal.tsx): Dock receiving dialog with partial delivery review
+    └── Window E (POCancelModal.tsx): Invariant enforcement (rejects cancellation if goods received)
+```
 
-Filters: status, supplier, and date/status where supported. Use clear badges for `DRAFT`, `APPROVED`, `PARTIALLY_RECEIVED`, `RECEIVED`, and `CANCELLED`.
+### Backend Endpoints & Domain Invariants
+- `GET /api/v1/po`: Lists purchase orders with line counts, status, and supplier names.
+- `GET /api/v1/po/suppliers`: Fetches approved active suppliers.
+- `GET /api/v1/po/{id}`: Returns authoritative PO detail with line-by-line `remaining_quantity = max(0, qty_ordered - qty_received)`.
+- `POST /api/v1/po`: Creates a draft purchase order in `DRAFT` status with line items.
+- `POST /api/v1/po/{id}/approve`: Moves PO to `APPROVED` workflow with timestamp and user attribution.
+- `POST /api/v1/po/{id}/receive`: Commits atomic receipt movements to `stock_movements`, increments `qty_received` on PO lines, transitions PO to `PARTIALLY_RECEIVED` or `RECEIVED`, and updates `stock_balances`. Rejects over-receipt with HTTP 400.
+- `POST /api/v1/po/{id}/cancel`: Sets PO to `CANCELLED`. Rejects cancellation with HTTP 400 if any goods have already been received.
 
-Primary action: **Create draft PO**.
-
-### Create draft PO (`/purchase-orders/new`)
-
-Fields:
-- Supplier
-- Destination warehouse
-- Expected delivery date (optional)
-- Notes/reference
-- One or more lines: item, quantity, unit price
-
-Behavior:
-- Validate positive quantities, known items, supplier selection, and destination before submit.
-- Do not mark a newly created manual PO as approved.
-- On successful create, navigate to PO detail and show the server-assigned PO number and status.
-
-API: `POST /api/v1/purchase-orders`.
-
-### PO detail (`/purchase-orders/:poId`)
-
-Header:
-- PO number, supplier, status, destination, created/order date, expected date, creator, approver (where available), source recommendation.
-
-Lines table:
-- SKU/item
-- Ordered quantity
-- Received quantity
-- Remaining quantity (ordered minus received)
-- Unit price
-- Destination
-- Receive action
-
-Actions:
-- Approve draft PO.
-- Receive part/all of a line with quantity and actual receiving location.
-- Cancel only if backend says cancellation is allowed.
-
-Partial receipt workflow:
-1. User enters a received quantity for each line being received.
-2. UI shows remaining quantity and prevents obvious over-entry.
-3. Backend revalidates line/PO status and quantities atomically.
-4. Backend records receipt stock movements and updates PO status.
-5. UI shows resulting status and movement references and refetches PO detail, stock, and recent activity.
-
-Never update stock quantity directly from the frontend. A “Received” label by itself must not change inventory; only the successful receiving API should do so.
-
-API:
-- `GET /api/v1/purchase-orders`
-- `POST /api/v1/purchase-orders`
-- `GET /api/v1/purchase-orders/{id}`
-- `POST /api/v1/purchase-orders/{id}/approve`
-- `POST /api/v1/purchase-orders/{id}/receive`
-- `POST /api/v1/purchase-orders/{id}/cancel`
+### Styling & Tokens
+All procurement styles are modularly scoped to [`frontend/src/styles/procurement.css`](../frontend/src/styles/procurement.css) adhering strictly to the Vercel Geist Monochromatic Dark Zinc design system (`#000000` canvas, `#09090b` card surfaces, `#141416` inputs, `#222222` hairline borders).
 
 ---
+
 
 ## Page 5 — AI & Replenishment (`/ai`)
 

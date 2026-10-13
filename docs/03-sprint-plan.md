@@ -250,6 +250,37 @@ This is a deadline-aware plan from Monday evening to Thursday's interview. Adjus
 
 **Done when:** operations page exactly matches reference mock design; live backend API endpoints return all metrics; bidirectional adjustments execute atomically; 33/33 pytest tests pass; 0 TypeScript build errors. (MET)
 
+### Sprint I — Vercel Monochromatic Dark Zinc Hardening & Modular CSS Architecture (COMPLETED)
+
+**Tasks:**
+- Modularized monolithic 3,435-line `index.css` into 7 scoped stylesheets under `frontend/src/styles/`: `tokens.css`, `base.css`, `layout.css`, `components.css`, `overview.css`, `inventory.css`, and `operations.css`.
+- Replaced all legacy `#0b1320` and navy accents with Vercel Geist Monochromatic Dark Zinc design tokens (`#000000` canvas, `#09090b` elevated card surface, `#141416` containers, `#222222` hairline borders).
+- Built responsive 12-week time-series SVG inventory stock trend with automatic Y-axis bounding from SQLite balances and ledger movements.
+- Borderless status pill indicators with luminous pulse dots and clean typography.
+- Maintained 0 TypeScript build errors and 33/33 passing tests. (MET)
+
+### Sprint J — Page 4: Purchase Orders & Dock Receiving Workstation (COMPLETED)
+
+**Tasks:**
+- Reconstructed Page 4 (`/purchase-orders`) as an industrial procurement workstation:
+  - 4 KPI summary cards with click-to-filter binding: *Open Purchase Orders*, *Awaiting Approval*, *Partially Received*, and *Overdue Deliveries*.
+  - Full-featured filter toolbar: search by PO number / supplier name, status pills, supplier dropdown, and one-click clear filters.
+  - Client-side RFC 4180 CSV export of purchase order records.
+- Dedicated draft purchase order creation workstation (`POCreateView.tsx` at `/purchase-orders/new`):
+  - Section 1 (Order Information): Supplier partner, destination warehouse, expected delivery date, internal reference, and procurement notes.
+  - Section 2 (Purchase-Order Lines): Item selector with live stock on-hand and standard unit cost preview, positive quantity inputs, line subtotals, and Add/Remove line actions.
+  - Real-time order line and financial total estimations; atomic draft creation committing to `POST /api/v1/po` and navigating immediately to details.
+- Dedicated purchase order details view (`PODetailView.tsx` at `/purchase-orders/:poId`):
+  - Header with PO number, status badge, supplier information, destination warehouse, and AI recommendation linkage badge.
+  - Line-by-line fulfillment tracking: `Ordered`, `Received`, `Remaining` (`ordered - received`), and dynamic visual progress bars.
+  - Status-gated action controls: Draft orders permit Approve and Cancel; Approved/Partially Received orders permit Receive Goods and Cancel; Received/Cancelled orders display a read-only audit banner.
+- Modal & dialog suite:
+  - **Window C (`POApprovalModal.tsx`)**: Confirmation dialog displaying order lines, committed value, and warning banner before activating draft orders.
+  - **Window D (`POReceiveModal.tsx`)**: Dock delivery receiving dialog supporting partial shipments, line selection, remaining quantity enforcement, receiving location bin, and delivery transaction review before atomically logging receipt movements to the SQLite WAL ledger.
+  - **Window E (`POCancelModal.tsx`)**: Cancellation confirmation dialog enforcing business rules (rejects cancellation if physical goods have already been received).
+- Modular stylesheet `frontend/src/styles/procurement.css` registered in `index.css`.
+- 100% test pass rate (33/33 tests) and 0 TypeScript build errors. (MET)
+
 ## 5. Golden demo script (6–7 minutes)
 
 ### 0:00–0:40 — Problem and architecture
