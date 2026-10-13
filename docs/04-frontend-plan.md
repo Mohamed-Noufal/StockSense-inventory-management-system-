@@ -796,5 +796,28 @@ The Operations Workstation (`/operations`, rendered via `OperationsView.tsx`) ma
   - **Paired Transfer Navigation**: Discovers `transfer_group_id` on transfer records and provides a one-click button to jump directly to the complementary transfer leg (`TRANSFER_OUT` ↔ `TRANSFER_IN`).
 - **Scoped Stylesheet**: `frontend/src/styles/activity.css`.
 
+---
+
+## 16. Upcoming Workstation Modules (Roadmap)
+
+### 16.1 Storekeeper Document Attachments & Printable Waybills (`WaybillModal.tsx`)
+- **Drag-and-Drop Dropzones**: Integrated into `MovementModal.tsx` and `POReceiveModal.tsx` allowing storekeepers to upload signed physical dockets, inspection reports, or defect photos (PDF/PNG/JPEG).
+- **Printable Warehouse Waybill / Delivery Docket (`WaybillModal.tsx`)**:
+  - Full oilfield transit docket layout with company header, Waybill reference, carrier name, vehicle license plate, origin/destination warehouse, manifest lines with quantities, notes, and dual sign-off blocks (Storekeeper Dispatcher & Material Inspector).
+  - Print-ready stylesheet `@media print` providing clean black-and-white paper printouts and instant "Save as PDF" capability.
+- **Drawer Attachment Explorer**: Embedded in `MovementDetailDrawer.tsx` and `PODetailView.tsx` with file type badges, preview links, and download triggers.
+
+### 16.2 Warehouse Mobility: Barcode & QR Label Printing (`LabelPrintModal.tsx` & `BarcodeScannerModal.tsx`)
+- **Thermal Label Generator**: 4x2" and 2x1" printable part labels featuring Code128 barcode, SKU, Part Name, Criticality badge, and Warehouse Bin coordinates (`LOC-MAIN-A01`).
+- **Rapid Scanner Interface**: Modal supporting camera scan and USB HID barcode gun input for instantaneous stock lookups, rapid cycle counts, and fast-path receiving.
+
+### 16.3 Production Authentication & Role-Based Navigation
+- **Login / Session Shell**: Dedicated login modal and token management.
+- **Role-Scoped Interfaces**:
+  - Storekeeper persona: Restricted to physical inventory, movement modals, and waybill printing.
+  - Procurement persona: Focused on purchase orders, supplier management, and receiving.
+  - Operations Manager persona: Comprehensive access including AI policy adjustments, exception resolutions, and system health.
+
+
 
 

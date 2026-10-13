@@ -321,6 +321,81 @@ This is a deadline-aware plan from Monday evening to Thursday's interview. Adjus
 - Modular stylesheet `frontend/src/styles/activity.css` registered in `index.css`.
 - Complete verification: 35/35 pytest tests pass; 0 TypeScript build errors. (MET)
 
+---
+
+### Sprint M — Storekeeper Document Attachments & Printable Waybills (IN PROGRESS)
+
+**Objective:** Fulfill real-world storekeeper compliance: every physical stock transaction and PO receipt can have supporting delivery documentation (PDF, images) attached, stored, and printed as formal warehouse waybills/dockets.
+
+**Scope & Deliverables:**
+- **Backend Document Attachment Engine:**
+  - `DocumentAttachment` model in `backend/app/models/attachments.py` linked to movements and POs.
+  - Pydantic schemas in `backend/app/schemas/attachments.py`.
+  - API endpoints in `backend/app/api/v1/endpoints/attachments.py`: file upload (`POST /upload`), list attachments (`GET /attachments`), and secure file streaming (`GET /attachments/{id}/file`).
+  - Automated tests in `backend/tests/test_attachments.py`.
+- **Printable Warehouse Delivery Docket / Waybill (`WaybillModal.tsx`):**
+  - Executive layout with Waybill number, carrier details, vehicle license plate, origin/destination warehouse, manifest table, and dual signature sign-off boxes (Dispatcher Storekeeper & Receiving Inspector).
+  - Print-optimized CSS (`@media print`) enabling 1-click clean paper printout or "Save as PDF".
+- **Storekeeper Upload Dropzones:**
+  - Drag-and-drop / file picker in `MovementModal.tsx` (Issues, Receipts, Transfers).
+  - Vendor delivery docket upload in `POReceiveModal.tsx`.
+- **Drawer Attachment Explorer:**
+  - Document attachments list with badge icons, download/view triggers, and "Print Waybill" button in `MovementDetailDrawer.tsx` and `PODetailView.tsx`.
+
+---
+
+### Sprint N — Barcode & QR Code Warehouse Scanning & Label Printing (PLANNED)
+
+**Objective:** Enable physical warehouse mobility and barcode-driven execution.
+
+**Scope & Deliverables:**
+- Code128 and QR code vector generation for part SKUs and warehouse bin locations (`LOC-MAIN-A01`, etc.).
+- Printable multi-label sheet modal (`LabelPrintModal.tsx`) formatted for thermal label printers (4x2" and 2x1" formats).
+- Interactive Barcode Scanner modal (`BarcodeScannerModal.tsx`) supporting camera scan and USB HID hardware wedge scanners for instantaneous item selection and fast-path receiving.
+
+---
+
+### Sprint O — Production JWT Authentication & Granular RBAC (PLANNED)
+
+**Objective:** Secure all API surfaces with cryptographic tokens and role-based permissions.
+
+**Scope & Deliverables:**
+- OAuth2 password/bearer token flow with JWT in `backend/app/core/auth.py`.
+- Password hashing with `bcrypt` in `backend/app/models/users.py`.
+- Granular permission decorators:
+  - `STOREKEEPER`: Authorized for stock issues, receipts, transfers, and docket printing.
+  - `PROCUREMENT_OFFICER`: Authorized for PO creation, approval, and supplier interactions.
+  - `OPERATIONS_MANAGER` / `ADMIN`: Authorized for policy configuration, AI run triggers, and audit resolution.
+- Frontend Auth Context, login/logout screens, and role-scoped navigation/action guards.
+
+---
+
+### Sprint P — Cryptographic Tamper-Evident Ledger Integrity & Compliance Export (PLANNED)
+
+**Objective:** Provide mathematical non-repudiation for financial and safety regulatory compliance.
+
+**Scope & Deliverables:**
+- SHA-256 Merkle / hash-chaining on `stock_movements`: each transaction hashes the prior transaction's hash + current payload, rendering retro-active tampering computationally detectable.
+- Automated ledger verification route `GET /api/v1/integrity/verify-chain`.
+- Historical snapshot re-calculation: query inventory balance at any arbitrary historical timestamp $t$.
+- 1-click comprehensive Audit Export ZIP package (signed CSV ledger, alert resolution log, attachment manifest, and hash chain proof).
+
+---
+
+### Sprint Q — Enterprise Scaling: PostgreSQL 16 & Background Workers (PLANNED)
+
+**Objective:** Transition from single-node SQLite to high-concurrency cloud infrastructure.
+
+**Scope & Deliverables:**
+- PostgreSQL 16 database driver (`asyncpg` / `psycopg3`) with connection pooling (`pgbouncer`).
+- Alembic migration scripts for versioned, non-destructive schema evolution.
+- Celery / Redis asynchronous task queue offloading batch Croston/SBA forecasting and Monte Carlo simulations.
+- Multi-stage Docker containers and Docker Compose setup for local orchestration.
+
+---
+
+
+
 ## 5. Golden demo script (6–7 minutes)
 
 ### 0:00–0:40 — Problem and architecture

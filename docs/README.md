@@ -44,3 +44,20 @@ Refer to [`03-sprint-plan.md`](./03-sprint-plan.md) for granular task tracking:
 - **Sprint 11 (Page 5: AI & Replenishment Intelligence Workstation)**: ✅ **COMPLETED & MET** (Delivered unified replenishment intelligence workstation at `/ai`: 4 KPI summary cards with click-to-filter binding, status strip with active TSB engine badge and synthetic ledger disclaimer; 3 Workstation Tabs: Recommendations table with urgency badges and confidence ribbons, Forecasts tab with 52-week observed demand SVG timeline and P50/P90 ribbons, Model Report tab with holdout RMSSE/MASE metrics and policy simulation; Explainability Drawer `AIDrawer.tsx` with 6 sections; Window A Approval modal with MOQ/multiple enforcement; Window B Dismiss modal with audit reason; Window C Run Analysis modal; modular `ai.css`; 35/35 backend tests passing, 0 TypeScript errors).
 - **Sprint 12 (Page 6: Activity & Integrity Center)**: ✅ **COMPLETED & MET** (Delivered unified audit and system integrity center at `/activity`: 4 KPI summary cards; 3 Workstation Tabs: Stock Ledger with signed deltas `+` green / `-` red and time window filters, Alerts & Exceptions with CRITICAL/WARNING/INFO badges and interactive Acknowledge/Resolve actions, Integrity Diagnostic with 100% Consistency Certificate and SQLite WAL invariant breakdown; Movement Details Side Drawer `MovementDetailDrawer.tsx` with paired transfer navigation jumping between `TRANSFER_OUT` and `TRANSFER_IN`; RFC 4180 CSV export; modular `activity.css`; 35/35 backend tests passing, 0 TypeScript errors).
 
+---
+
+## 📋 Remaining Work & Feature Roadmap: What Still Needs to be Built
+
+All 6 primary application workstations (Overview, Inventory, Operations, Purchase Orders, AI Replenishment, Activity & Integrity) are completely built, styled with the Vercel Dark Zinc design system, connected to SQLite WAL, and passing all 35 test suites.
+
+To elevate StockSense from an advanced working prototype to a fully hardened, enterprise-grade warehouse management system, the following items represent the remaining features to be built:
+
+| Priority | Feature / Work Item | Description & Scope | Status |
+|---|---|---|---|
+| **P1 (Next)** | **Storekeeper Document Attachments & Printable Waybills** | **Storekeeper Physical Audit Trail**: File upload engine (PDF/images) for attaching vendor delivery dockets, inspection certificates, and damage photos to Stock Movements and Purchase Orders. Printable Warehouse Delivery Docket / Waybill modal (`WaybillModal.tsx`) with `@media print` styling, carrier metadata, and dual storekeeper/inspector sign-off boxes. | 🔄 **In Progress** (Model drafted; API & UI ready to implement) |
+| **P2** | **Barcode & QR Code Scanning & Label Printing** | **Physical Warehouse Mobility**: Barcode (Code128) and QR code generation for SKU items and storage bin locations. Printable shelf/bin barcode labels. Mobile camera/handheld scanner input modal for quick scan-to-issue and scan-to-receive workflows. | ⏳ **Planned** |
+| **P3** | **Production JWT Authentication & Granular RBAC** | **Security & Access Control**: Formal JWT authentication endpoints (`/login`, `/refresh`), encrypted password hashing (`bcrypt`), and role decorators (`Storekeeper`, `Procurement Officer`, `Manager`). Frontend route guards and permission-scoped button visibility. | ⏳ **Planned** |
+| **P4** | **Tamper-Evident Ledger Integrity & Cryptographic Audit** | **Regulatory Compliance**: SHA-256 hash chaining across `stock_movements` rows guaranteeing tamper-evident immutability. Historical ledger state replay at any arbitrary timestamp $t$. Zip package export for formal regulatory audits. | ⏳ **Planned** |
+| **P5** | **PostgreSQL 16 Migration & Background Worker Queue** | **Enterprise Scale**: Port database layer to PostgreSQL 16 with `asyncpg`/`pgbouncer` and Alembic schema migrations. Move weekly batch AI forecasting and Monte Carlo policy simulations to asynchronous Celery/Redis workers. | ⏳ **Planned** |
+
+
