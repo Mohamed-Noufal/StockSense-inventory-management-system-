@@ -281,6 +281,46 @@ This is a deadline-aware plan from Monday evening to Thursday's interview. Adjus
 - Modular stylesheet `frontend/src/styles/procurement.css` registered in `index.css`.
 - 100% test pass rate (33/33 tests) and 0 TypeScript build errors. (MET)
 
+### Sprint K — Page 5: AI & Replenishment Intelligence Workstation (COMPLETED)
+
+**Tasks:**
+- Reconstructed Page 5 (`/ai`) as a high-density replenishment intelligence workstation:
+  - Header bar with model status strip (TSB Engine Active / Running pulse, synthetic dataset disclaimer badge, latest run indicator).
+  - 4 KPI summary cards with click-to-filter binding: *Open Recommendations*, *Critical Replenishment Risks*, *Items Below Reorder Point*, and *Low-Confidence Forecasts*.
+  - 3 Workstation Tabs:
+    - **Tab 1 (Recommendations)**: Urgency pills (Critical, High, Normal), search bar, review status filters, rich data table with position vs ROP progress indicators, confidence score ribbons, and click-to-inspect explainability.
+    - **Tab 2 (Forecasts & Observed Demand)**: 52-week historical issues SVG timeline extracted with zero-leakage, P50/P90 probabilistic quantile ribbons, horizon selector, and plain-English methodology rationale.
+    - **Tab 3 (AI Model Backtest Report)**: Empirical holdout evaluation metrics (RMSSE, MASE, Forecast Bias %), baseline naive comparison table, and StockSense order-up-to policy simulation report.
+- Full modal and drawer explainability suite:
+  - **Explainability Drawer (`AIDrawer.tsx`)**: 6-section "Why this item?" audit drawer detailing recommendation summary, stock position, forecast evidence, safety stock policy, supplier constraints (MOQ/Order Multiple), and model assumptions/limitations.
+  - **Window A (`AIApproveModal.tsx`)**: Replenishment approval dialog with MOQ/order multiple validation, generating an atomic Draft PO and routing directly to the Procurement workstation.
+  - **Window B (`AIDismissModal.tsx`)**: Recommendation dismissal dialog requiring mandatory operational reason for full audit logging.
+  - **Window C (`AIRunModal.tsx`)**: Forecast execution dialog with service level slider (0.90 to 0.99), default method selection (TSB/SBA/Croston), and random seed configuration.
+- Backend additions: `GET /api/v1/ai/runs/{id}`, `GET /api/v1/ai/forecasts`, `GET /api/v1/ai/model-report`, and Teunter-Syntetos-Babai (TSB) algorithm implementation.
+- Modular stylesheet `frontend/src/styles/ai.css` registered in `index.css`.
+- 100% test pass rate (35/35 tests) and 0 TypeScript build errors. (MET)
+
+### Sprint L — Page 6: Activity & Integrity Center (COMPLETED)
+
+**Tasks:**
+- Implemented Page 6 (`/activity`) as an authoritative audit and system integrity center:
+  - Header bar with title, subtitle, RFC 4180 CSV export action, and manual refresh trigger.
+  - 4 KPI summary cards: *Total Ledger Events*, *Active System Exceptions*, *Critical Risk Alerts*, and *Ledger Consistency Status (100% PASS)*.
+  - 3 Workstation Tabs:
+    - **Tab 1 (Stock Ledger)**: Full immutable ledger table with signed deltas (`+` in emerald green, `-` in rose red), movement type badges (Receipt, Issue, Transfer In/Out, Adjustment), location route indicators, reference codes, actor non-repudiation attribution, and time window filters (Today, 7D, 30D, 90D, All).
+    - **Tab 2 (Alerts & Exceptions)**: Operational exception monitoring surface with severity badges (CRITICAL, WARNING, INFO), status filters (Open, Acknowledged, Resolved), and interactive Acknowledge & Resolve actions with user identity tracking.
+    - **Tab 3 (Integrity Diagnostic)**: Real-time balance verification workstation displaying 100% Consistency Certificate, invariant status indicators (SQLite WAL Isolation, Foreign Key Constraints, Non-Negative Checks, Atomic Paired Transfers), and "Run Deep Audit Reconciliation Now" CTA.
+- Dedicated **Movement Details Side Drawer (`MovementDetailDrawer.tsx`)**:
+  - Full movement event metadata, hero signed delta box, item/location identifiers, reference notes, and non-repudiable actor stamps.
+  - **Paired Transfer Navigation**: Detects `transfer_group_id` on transfer records and provides one-click button to jump directly to the complementary transfer leg (`TRANSFER_OUT` ↔ `TRANSFER_IN`).
+- Backend additions:
+  - Database schema & model `Alert` registered in `backend/app/models/alerts.py`.
+  - Pydantic v2 schemas `AlertResponse`, `AlertAcknowledgeRequest`, `AlertResolveRequest` in `backend/app/schemas/alerts.py`.
+  - Endpoint suite `backend/app/api/v1/endpoints/alerts.py` (`GET /alerts`, `POST /alerts/{id}/acknowledge`, `POST /alerts/{id}/resolve`, automatic operational seed hydration).
+  - Automated tests `backend/tests/test_alerts.py` passing 100%.
+- Modular stylesheet `frontend/src/styles/activity.css` registered in `index.css`.
+- Complete verification: 35/35 pytest tests pass; 0 TypeScript build errors. (MET)
+
 ## 5. Golden demo script (6–7 minutes)
 
 ### 0:00–0:40 — Problem and architecture

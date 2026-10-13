@@ -89,8 +89,8 @@ inventory-poc-project/
 ├── frontend/                     # React 18 + TypeScript + Vite SPA
 │   ├── src/
 │   │   ├── api/                  # Central typed API client (`client.ts`)
-│   │   ├── components/           # Concise UI modules (Sidebar, Header, InventoryView, ProcurementView, POCreateView, PODetailView, etc.)
-│   │   ├── styles/               # Modular CSS tokens & stylesheets (tokens, base, layout, components, overview, inventory, operations, procurement)
+│   │   ├── components/           # Concise UI modules (Sidebar, Header, InventoryView, ProcurementView, AIInsightsView, ActivityView, etc.)
+│   │   ├── styles/               # Modular CSS tokens & stylesheets (tokens, base, layout, components, overview, inventory, operations, procurement, ai, activity)
 │   │   ├── types/                # TypeScript interfaces matching backend DTOs (`index.ts`)
 │   │   ├── App.tsx               # Modular layout coordinator
 │   │   ├── index.css             # Design tokens & modular stylesheet manifest

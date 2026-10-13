@@ -1,17 +1,18 @@
 import React from 'react';
 import {
   LayoutDashboard, Box, ArrowLeftRight, ShoppingBag, Sparkles,
-  Users, Flag, Cpu, ShieldCheck, PanelLeftClose
+  Users, Flag, Cpu, ShieldCheck, PanelLeftClose, Activity
 } from 'lucide-react';
 import { HealthResponse } from '../types';
 
 interface SidebarProps {
-  activeTab: 'overview' | 'inventory' | 'ledger' | 'procurement' | 'ai' | 'sprint' | 'diagnostics' | 'users';
-  setActiveTab: (tab: 'overview' | 'inventory' | 'ledger' | 'procurement' | 'ai' | 'sprint' | 'diagnostics' | 'users') => void;
+  activeTab: 'overview' | 'inventory' | 'ledger' | 'procurement' | 'ai' | 'activity' | 'sprint' | 'diagnostics' | 'users';
+  setActiveTab: (tab: 'overview' | 'inventory' | 'ledger' | 'procurement' | 'ai' | 'activity' | 'sprint' | 'diagnostics' | 'users') => void;
   itemsCount: number;
   ledgerCount: number;
   poCount: number;
   aiCount: number;
+  activityCount?: number;
   usersCount?: number;
   health: HealthResponse | null;
   isCollapsed: boolean;
@@ -25,6 +26,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   ledgerCount,
   poCount,
   aiCount,
+  activityCount = 0,
   usersCount = 0,
   health,
   isCollapsed,
@@ -119,6 +121,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {!isCollapsed && <span>AI & Replenishment</span>}
           {aiCount > 0 && !isCollapsed && (
             <span className="nav-badge ai-badge">{aiCount}</span>
+          )}
+        </button>
+
+        <button
+          className={`nav-item ${activeTab === 'activity' ? 'active' : ''}`}
+          onClick={() => setActiveTab('activity')}
+          title="Activity & Integrity Center"
+        >
+          <Activity className="nav-icon" />
+          {!isCollapsed && <span>Activity & Integrity</span>}
+          {activityCount !== undefined && activityCount > 0 && !isCollapsed && (
+            <span className="nav-badge" style={{ background: '#f59e0b', color: '#000000' }}>{activityCount}</span>
           )}
         </button>
 

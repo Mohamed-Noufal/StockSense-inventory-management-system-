@@ -250,4 +250,38 @@ export interface AIRunTriggerPayload {
   default_method?: string;
 }
 
+export interface AlertItem {
+  id: number;
+  alert_type: string;
+  severity: 'INFO' | 'WARNING' | 'CRITICAL';
+  item_id?: number | null;
+  item_sku?: string | null;
+  item_name?: string | null;
+  location_id?: number | null;
+  location_code?: string | null;
+  movement_id?: number | null;
+  source_run_id?: number | null;
+  message: string;
+  details_json?: string | null;
+  status: 'OPEN' | 'ACKNOWLEDGED' | 'RESOLVED';
+  created_at: string;
+  acknowledged_by_user_id?: number | null;
+  acknowledged_by_name?: string | null;
+  acknowledged_at?: string | null;
+  resolved_by_user_id?: number | null;
+  resolved_by_name?: string | null;
+  resolved_at?: string | null;
+}
+
+export interface AlertAcknowledgePayload {
+  user_id?: number;
+  notes?: string;
+}
+
+export interface AlertResolvePayload {
+  user_id?: number;
+  resolution_notes?: string;
+}
+
+
 

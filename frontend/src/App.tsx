@@ -5,7 +5,7 @@ import {
   HealthResponse, ReadyResponse, InventoryItem, InventoryLocation,
   StockMovement, IntegrityCheckResponse, Milestone, PurchaseOrder,
   Supplier, POCreatePayload, POReceivePayload, AIRun, AIRecommendation, User,
-  AIRunTriggerPayload
+  AIRunTriggerPayload, AlertItem
 } from './types';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
@@ -14,6 +14,7 @@ import { OperationsView } from './components/OperationsView';
 import { OverviewView } from './components/OverviewView';
 import { ProcurementView } from './components/ProcurementView';
 import { AIInsightsView } from './components/AIInsightsView';
+import { ActivityView } from './components/ActivityView';
 import { UsersView } from './components/UsersView';
 import { SprintView } from './components/SprintView';
 import { DiagnosticsView } from './components/DiagnosticsView';
@@ -23,7 +24,7 @@ import { POReceiveModal } from './components/POReceiveModal';
 import { RecommendationModal } from './components/RecommendationModal';
 
 const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'inventory' | 'ledger' | 'procurement' | 'ai' | 'sprint' | 'diagnostics' | 'users'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'inventory' | 'ledger' | 'procurement' | 'ai' | 'activity' | 'sprint' | 'diagnostics' | 'users'>('overview');
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [readiness, setReadiness] = useState<ReadyResponse | null>(null);
   const [items, setItems] = useState<InventoryItem[]>([]);
@@ -36,6 +37,7 @@ const App: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [integrity, setIntegrity] = useState<IntegrityCheckResponse | null>(null);
+  const [alerts, setAlerts] = useState<AlertItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [runningAi, setRunningAi] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -78,7 +80,7 @@ const App: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const [hData, rData, itmData, locData, ledgData, integData, poData, supData, recData, runData, usersData] = await Promise.all([
+      const [hData, rData, itmData, locData, ledgData, integData, poData, supData, recData, runData, usersData, alertsData] = await Promise.all([
         api.getHealth().catch(() => null),
         api.getReadiness().catch(() => null),
         api.getItems().catch(() => []),
@@ -90,6 +92,7 @@ const App: React.FC = () => {
         api.getAIRecommendations().catch(() => []),
         api.getAIRuns().catch(() => []),
         api.getUsers().catch(() => []),
+        api.getAlerts().catch(() => []),
       ]);
       setHealth(hData);
       setReadiness(rData);
@@ -102,6 +105,7 @@ const App: React.FC = () => {
       setRecommendations(recData);
       setAiRuns(runData);
       setUsers(usersData);
+      setAlerts(alertsData);
 
       if (usersData && usersData.length > 0) {
         const savedUserId = localStorage.getItem('stocksense_current_user_id');
@@ -313,6 +317,7 @@ const App: React.FC = () => {
         ledgerCount={ledger.length}
         poCount={orders.length}
         aiCount={recommendations.filter((r) => r.status === 'OPEN').length}
+        activityCount={alerts.filter((a) => a.status !== 'RESOLVED').length}
         usersCount={users.length}
         health={health}
         isCollapsed={isCollapsed}
@@ -405,6 +410,17 @@ const App: React.FC = () => {
               }}
               loading={loading}
               runningAi={runningAi}
+            />
+          )}
+          {activeTab === 'activity' && (
+            <ActivityView
+              ledger={ledger}
+              items={items}
+              locations={locations}
+              integrity={integrity}
+              currentUser={currentUser}
+              onRefresh={fetchData}
+              onIntegrityUpdated={(rep) => setIntegrity(rep)}
             />
           )}
           {activeTab === 'users' && (

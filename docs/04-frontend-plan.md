@@ -749,4 +749,52 @@ The Operations Workstation (`/operations`, rendered via `OperationsView.tsx`) ma
 - **Integrity Guarantee**: Stock balances and ledger rows update atomically in SQLite WAL. Over-issues and invalid transfers are validated and rejected server-side with rollback safety.
 - **Auto-Reconciliation**: Upon transaction commit, `fetchData()` re-queries the database, automatically syncing the Operations table, metric cards, inventory balances, and Overview dashboards.
 
+---
+
+## 15. Pages 4, 5 & 6 Production Workstations Specification (COMPLETED)
+
+### 15.1 Page 4: Purchase Orders & Dock Receiving Workstation (`/purchase-orders`)
+- **Main View (`ProcurementView.tsx`)**:
+  - 4 KPI summary cards with click-to-filter binding: *Open Orders*, *Awaiting Approval*, *Partially Received*, *Overdue Deliveries*.
+  - Search by PO / supplier, status pills, supplier dropdown, and RFC 4180 CSV export.
+- **Dedicated Creation Workstation (`POCreateView.tsx` at `/purchase-orders/new`)**:
+  - Live stock on-hand & cost preview, multi-line order construction, real-time totals calculation.
+- **Dedicated Order Details Workstation (`PODetailView.tsx` at `/purchase-orders/:poId`)**:
+  - Line-by-line fulfillment tracking: `Ordered`, `Received`, `Remaining`, and progress bars.
+  - Lifecycle state machine controls: Approve, Receive Goods, and Cancel.
+- **Dialogs**:
+  - Window C (`POApprovalModal.tsx`): Approval confirmation with committed value review.
+  - Window D (`POReceiveModal.tsx`): Dock receiving with partial delivery and over-receipt prevention.
+  - Window E (`POCancelModal.tsx`): Cancellation confirmation respecting physical receipt restrictions.
+- **Scoped Stylesheet**: `frontend/src/styles/procurement.css`.
+
+### 15.2 Page 5: AI & Replenishment Intelligence Workstation (`/ai`)
+- **Main View (`AIInsightsView.tsx`)**:
+  - Top status strip with TSB algorithm active badge, synthetic ledger disclaimer, and last run metadata.
+  - 4 Summary KPI cards with click-to-filter: *Open Recommendations*, *Critical Replenishment Risks*, *Items Below Reorder Point*, *Low-Confidence Forecasts*.
+  - 3 Workstation Tabs:
+    - **Tab 1 (Recommendations)**: Urgency pills, position vs ROP indicators, confidence ribbons, click-to-inspect drawer.
+    - **Tab 2 (Forecasts & Observed Demand)** (`AIForecastsTab.tsx`): 52-week historical issues SVG timeline, P50/P90 probabilistic quantile ribbons, horizon selector.
+    - **Tab 3 (AI Model Backtest Report)** (`AIModelReportTab.tsx`): Holdout backtest evaluation (RMSSE, MASE, Forecast Bias %), naive comparison, and policy simulation.
+- **Drawer & Modals**:
+  - Explainability Drawer (`AIDrawer.tsx`): 6-section "Why this item?" audit drawer.
+  - Window A (`AIApproveModal.tsx`): Order review dialog enforcing MOQ & order multiples, generating draft PO and routing to Procurement.
+  - Window B (`AIDismissModal.tsx`): Recommendation dismissal dialog requiring audit reason.
+  - Window C (`AIRunModal.tsx`): Forecast run dialog with service level slider and method selection.
+- **Scoped Stylesheet**: `frontend/src/styles/ai.css`.
+
+### 15.3 Page 6: Activity & Integrity Center (`/activity`)
+- **Main View (`ActivityView.tsx`)**:
+  - Header with title, subtitle, RFC 4180 CSV export, and manual refresh.
+  - 4 Summary KPI cards: *Total Ledger Events*, *Active System Exceptions*, *Critical Risk Alerts*, *Ledger Consistency (100% PASS)*.
+  - 3 Workstation Tabs:
+    - **Tab 1 (Stock Ledger)**: Immutable table with signed deltas (`+` in green, `-` in red), movement type badges, routes, reference codes, actor attribution, and time window filters.
+    - **Tab 2 (Alerts & Exceptions)** (`AlertsTab.tsx`): System alerts stream with CRITICAL / WARNING / INFO badges, status filters, and interactive Acknowledge & Resolve actions.
+    - **Tab 3 (Integrity Diagnostic)** (`IntegrityTab.tsx`): 100% consistency certificate, SQLite WAL isolation status, foreign keys enforcement, non-negative checks, and deep audit CTA.
+- **Side Drawer (`MovementDetailDrawer.tsx`)**:
+  - Full movement event metadata, hero signed delta box, item/location identifiers, reference notes, and non-repudiable actor stamps.
+  - **Paired Transfer Navigation**: Discovers `transfer_group_id` on transfer records and provides a one-click button to jump directly to the complementary transfer leg (`TRANSFER_OUT` ↔ `TRANSFER_IN`).
+- **Scoped Stylesheet**: `frontend/src/styles/activity.css`.
+
+
 

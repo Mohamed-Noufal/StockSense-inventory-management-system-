@@ -2,7 +2,7 @@ import {
   HealthResponse, ReadyResponse, InventoryItem, InventoryLocation,
   StockBalance, StockMovement, MovementCreatePayload, TransferCreatePayload,
   OperationsStats, IntegrityCheckResponse, Supplier, PurchaseOrder, POCreatePayload, POReceivePayload,
-  AIRun, AIRecommendation, AIRunTriggerPayload, User
+  AIRun, AIRecommendation, AIRunTriggerPayload, User, AlertItem, AlertAcknowledgePayload, AlertResolvePayload
 } from '../types';
 
 const API_BASE = '/api/v1';
@@ -111,5 +111,22 @@ export const api = {
   getItemForecast: (itemId: number, horizon = 12) =>
     request<any>(`/ai/forecasts?item_id=${itemId}&horizon=${horizon}`),
   getModelReport: () => request<any>('/ai/model-report'),
+  getAlerts: (severity?: string, status?: string) => {
+    const params = new URLSearchParams();
+    if (severity && severity !== 'ALL') params.append('severity', severity);
+    if (status && status !== 'ALL') params.append('status', status);
+    const qs = params.toString();
+    return request<AlertItem[]>(`/alerts${qs ? `?${qs}` : ''}`);
+  },
+  acknowledgeAlert: (id: number, payload: AlertAcknowledgePayload = {}) =>
+    request<AlertItem>(`/alerts/${id}/acknowledge`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  resolveAlert: (id: number, payload: AlertResolvePayload = {}) =>
+    request<AlertItem>(`/alerts/${id}/resolve`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
 };
 
