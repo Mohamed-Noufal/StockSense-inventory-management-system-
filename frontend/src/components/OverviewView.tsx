@@ -3,7 +3,7 @@ import {
   Package, DollarSign, AlertTriangle, ClipboardList,
   ArrowUpRight, ArrowDownRight, ArrowRight, ArrowLeftRight,
   CheckCircle2, FileText, SlidersHorizontal, Lightbulb,
-  ChevronRight, Calendar, Clock, Wrench, Droplet, Disc, Filter
+  ChevronRight, Clock, Wrench, Droplet, Disc, Filter
 } from 'lucide-react';
 import {
   InventoryItem, InventoryLocation, StockMovement,
@@ -295,7 +295,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   ledger,
   orders,
   recommendations,
-  currentUser,
+  currentUser: _currentUser,
   onNavigateTab,
   onOpenMovementModal,
   onInspectRec,
@@ -437,29 +437,12 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
     },
   ];
 
-  const greetingFirstName = currentUser?.full_name ? currentUser.full_name.split(' ')[0] : 'John';
-
   return (
     <div className="overview-container">
-      {/* 1. Greeting & Shift Context Banner */}
-      <div className="overview-greeting-banner">
-        <div>
-          <h2 className="overview-greeting-title">
-            <span>Good morning, {greetingFirstName}</span>
-            <span>👋</span>
-          </h2>
-          <p className="overview-greeting-sub">
-            Here's what's happening with your inventory today.
-          </p>
-        </div>
-
-        <div className="overview-time-chip">
-          <Calendar style={{ width: 14, height: 14, color: 'var(--text-secondary)' }} />
-          <span>Thu, Oct 15, 2026</span>
-          <span style={{ color: 'var(--border-hover)' }}>|</span>
-          <Clock style={{ width: 14, height: 14, color: '#a1a1aa' }} />
-          <span className="time-highlight">10:24 AM</span>
-        </div>
+      {/* 1. Clean Vercel Page Header */}
+      <div className="overview-header-bar">
+        <h1 className="overview-heading">Executive Overview</h1>
+        <p className="overview-subheading">Real-time inventory levels, stock valuations, and warehouse operational metrics.</p>
       </div>
 
       {/* 2. KPI Metrics 4-Column Grid */}
@@ -467,7 +450,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
         {/* Total Items */}
         <div className="overview-kpi-card">
           <div className="kpi-icon-bubble">
-            <Package style={{ width: 22, height: 22 }} />
+            <Package style={{ width: 20, height: 20 }} />
           </div>
           <div className="kpi-body">
             <span className="kpi-label">Total Items</span>
@@ -482,8 +465,8 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
 
         {/* Total Stock Value */}
         <div className="overview-kpi-card">
-          <div className="kpi-icon-bubble green">
-            <DollarSign style={{ width: 22, height: 22 }} />
+          <div className="kpi-icon-bubble">
+            <DollarSign style={{ width: 20, height: 20 }} />
           </div>
           <div className="kpi-body">
             <span className="kpi-label">Total Stock Value</span>
@@ -498,8 +481,8 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
 
         {/* Low Stock Items */}
         <div className="overview-kpi-card">
-          <div className="kpi-icon-bubble amber">
-            <AlertTriangle style={{ width: 22, height: 22 }} />
+          <div className="kpi-icon-bubble">
+            <AlertTriangle style={{ width: 20, height: 20 }} />
           </div>
           <div className="kpi-body">
             <span className="kpi-label">Low Stock Items</span>
@@ -514,8 +497,8 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
 
         {/* Open POs */}
         <div className="overview-kpi-card">
-          <div className="kpi-icon-bubble purple">
-            <ClipboardList style={{ width: 22, height: 22 }} />
+          <div className="kpi-icon-bubble">
+            <ClipboardList style={{ width: 20, height: 20 }} />
           </div>
           <div className="kpi-body">
             <span className="kpi-label">Open POs</span>
@@ -651,8 +634,8 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
               const Icon = act.icon;
               return (
                 <div key={act.id} className="activity-item">
-                  <div className="activity-icon-bubble" style={{ backgroundColor: act.bg, color: act.color }}>
-                    <Icon style={{ width: 15, height: 15 }} />
+                  <div className="activity-icon-bubble">
+                    <Icon style={{ width: 14, height: 14 }} />
                   </div>
                   <div className="activity-content">
                     <div className="activity-title">{act.title}</div>
@@ -670,7 +653,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
           <div className="overview-card-header" style={{ marginBottom: '0.85rem' }}>
             <div className="overview-card-title-group">
               <h3 className="overview-card-title">
-                <Lightbulb style={{ width: 16, height: 16, color: '#f59e0b' }} />
+                <Lightbulb style={{ width: 16, height: 16, color: 'var(--text-secondary)' }} />
                 <span>AI Recommendations</span>
               </h3>
             </div>
@@ -692,8 +675,8 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                   onClick={() => onInspectRec ? onInspectRec(rec) : onNavigateTab('ai')}
                 >
                   <div className="ai-rec-card-left">
-                    <div className="ai-rec-icon-bubble" style={{ backgroundColor: 'rgba(245, 158, 11, 0.12)', color: '#f59e0b' }}>
-                      <Package style={{ width: 16, height: 16 }} />
+                    <div className="ai-rec-icon-bubble">
+                      <Package style={{ width: 15, height: 15 }} />
                     </div>
                     <div className="ai-rec-content">
                       <div className="ai-rec-headline">Reorder {rec.suggested_qty} units</div>
@@ -713,8 +696,8 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                     onClick={() => onNavigateTab('ai')}
                   >
                     <div className="ai-rec-card-left">
-                      <div className="ai-rec-icon-bubble" style={{ backgroundColor: rec.bg, color: rec.color }}>
-                        <Icon style={{ width: 16, height: 16 }} />
+                      <div className="ai-rec-icon-bubble">
+                        <Icon style={{ width: 15, height: 15 }} />
                       </div>
                       <div className="ai-rec-content">
                         <div className="ai-rec-headline">{rec.title}</div>

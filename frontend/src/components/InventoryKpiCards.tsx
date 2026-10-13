@@ -27,7 +27,7 @@ export const InventoryKpiCards: React.FC<InventoryKpiCardsProps> = ({
       <div className="inventory-kpi-card">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
           <div className="kpi-icon-badge">
-            <Package style={{ width: 18, height: 18, color: '#ffffff' }} />
+            <Package style={{ width: 18, height: 18, color: '#ededed' }} />
           </div>
           <div>
             <div className="kpi-label">Total Items</div>
@@ -44,8 +44,8 @@ export const InventoryKpiCards: React.FC<InventoryKpiCardsProps> = ({
       {/* 2. Total Stock Value */}
       <div className="inventory-kpi-card">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-          <div className="kpi-icon-badge kpi-icon-green">
-            <Layers style={{ width: 18, height: 18, color: '#34d399' }} />
+          <div className="kpi-icon-badge">
+            <Layers style={{ width: 18, height: 18, color: '#ededed' }} />
           </div>
           <div>
             <div className="kpi-label">Total Stock Value</div>
@@ -62,8 +62,8 @@ export const InventoryKpiCards: React.FC<InventoryKpiCardsProps> = ({
       {/* 3. Low Stock Items */}
       <div className="inventory-kpi-card">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-          <div className="kpi-icon-badge kpi-icon-amber">
-            <AlertTriangle style={{ width: 18, height: 18, color: '#fbbf24' }} />
+          <div className="kpi-icon-badge">
+            <AlertTriangle style={{ width: 18, height: 18, color: '#ededed' }} />
           </div>
           <div>
             <div className="kpi-label">Low Stock Items</div>
@@ -80,8 +80,8 @@ export const InventoryKpiCards: React.FC<InventoryKpiCardsProps> = ({
       {/* 4. Open POs */}
       <div className="inventory-kpi-card">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-          <div className="kpi-icon-badge kpi-icon-purple">
-            <ClipboardList style={{ width: 18, height: 18, color: '#c084fc' }} />
+          <div className="kpi-icon-badge">
+            <ClipboardList style={{ width: 18, height: 18, color: '#ededed' }} />
           </div>
           <div>
             <div className="kpi-label">Open POs</div>

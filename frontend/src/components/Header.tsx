@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
-  ShieldCheck, RefreshCw, Plus, Search, Bell,
+  Plus, Search, Bell,
   ChevronDown, PanelLeft, PanelLeftClose,
-  CheckCircle2, AlertTriangle, Users
+  CheckCircle2, AlertTriangle, Users, ShieldCheck
 } from 'lucide-react';
 import { IntegrityCheckResponse, User } from '../types';
 
@@ -23,10 +23,10 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({
   activeTab,
-  integrity,
-  loading,
-  onRefresh,
-  onRunAudit,
+  integrity: _integrity,
+  loading: _loading,
+  onRefresh: _onRefresh,
+  onRunAudit: _onRunAudit,
   onOpenModal,
   isCollapsed,
   onToggleCollapse,
@@ -56,15 +56,16 @@ export const Header: React.FC<HeaderProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const titles: Record<string, string> = {
-    overview: 'Executive Overview & Operational Metrics',
-    inventory: 'Master Inventory & Running Balances',
-    ledger: 'Append-Only Stock Ledger Audit Trail',
-    procurement: 'Procurement & Purchase Order Lifecycle',
-    ai: 'AI Intermittent Replenishment & Decision Queue',
-    users: 'Employee Directory & Audit Roles',
-    sprint: 'Sprint Milestone Delivery Roadmap',
-    diagnostics: 'System Health & Storage Diagnostics',
+  const tabLabels: Record<string, string> = {
+    overview: 'Overview',
+    inventory: 'Inventory',
+    operations: 'Operations',
+    ledger: 'Stock Ledger',
+    procurement: 'Procurement',
+    ai: 'AI & Replenishment',
+    users: 'Users & Roles',
+    sprint: 'Roadmap',
+    diagnostics: 'Diagnostics',
   };
 
   const getInitials = (name: string) => {
@@ -102,7 +103,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="top-header">
-      {/* Left: Sidebar Toggle + Title / Search */}
+      {/* Left: Sidebar Toggle + Clean Vercel Breadcrumbs + Search */}
       <div className="header-left-group">
         <button
           className="header-icon-btn"
@@ -111,61 +112,34 @@ export const Header: React.FC<HeaderProps> = ({
           aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           {isCollapsed ? (
-            <PanelLeft style={{ width: 18, height: 18 }} />
+            <PanelLeft style={{ width: 16, height: 16 }} />
           ) : (
-            <PanelLeftClose style={{ width: 18, height: 18 }} />
+            <PanelLeftClose style={{ width: 16, height: 16 }} />
           )}
         </button>
 
-        <div className="header-title-container">
-          <h2>{titles[activeTab] || 'StockSense Platform'}</h2>
-          <div className="header-breadcrumbs">
-            <span>StockSense</span> / <span className="current">{activeTab.toUpperCase()}</span>
-          </div>
-        </div>
+        <nav className="header-breadcrumbs" aria-label="Breadcrumb">
+          <span className="breadcrumb-org">StockSense</span>
+          <span className="breadcrumb-separator">/</span>
+          <span className="breadcrumb-active">{tabLabels[activeTab] || 'Overview'}</span>
+        </nav>
 
-        {/* Global Search Input Bar matching reference mock */}
+        {/* Global Search Input Bar */}
         <div className="header-search-bar">
           <Search style={{ width: 14, height: 14, color: 'var(--text-muted)' }} />
           <input
             type="text"
-            placeholder="Search items, SKUs, categories, suppliers..."
+            placeholder="Search..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="header-search-input"
           />
-          <span className="search-shortcut-badge" style={{ fontSize: '0.66rem', padding: '0.15rem 0.45rem' }}>Ctrl + K</span>
+          <span className="search-shortcut-badge">Ctrl K</span>
         </div>
       </div>
 
-      {/* Right: Actions, Invariant Badge, Notifications, User Pill */}
+      {/* Right: Primary Action + Notifications + User Profile */}
       <div className="header-actions">
-        {integrity && (
-          <div
-            className="badge"
-            style={{
-              padding: '0.35rem 0.65rem',
-              fontSize: '0.72rem',
-              color: integrity.mismatches_count === 0 ? '#34d399' : '#f87171',
-              backgroundColor: integrity.mismatches_count === 0 ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.08)',
-              borderColor: integrity.mismatches_count === 0 ? 'rgba(16, 185, 129, 0.25)' : 'rgba(239, 68, 68, 0.25)',
-            }}
-          >
-            <ShieldCheck style={{ width: 14, height: 14 }} />
-            <span>Invariant: {integrity.mismatches_count === 0 ? '0 Mismatches' : 'Audit Failure!'}</span>
-          </div>
-        )}
-
-        <button className="btn btn-secondary" onClick={onRefresh} disabled={loading} title="Synchronize state">
-          <RefreshCw style={{ width: 13, height: 13 }} className={loading ? 'animate-spin' : ''} />
-          <span>Sync</span>
-        </button>
-
-        <button className="btn btn-secondary" onClick={onRunAudit} title="Reconcile ledger against running balances">
-          <ShieldCheck style={{ width: 13, height: 13 }} />
-          <span>Audit</span>
-        </button>
-
         <button className="btn btn-primary" onClick={onOpenModal}>
           <Plus style={{ width: 14, height: 14 }} />
           <span>Record Movement</span>
@@ -176,9 +150,9 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             className="header-icon-btn notif-btn"
             onClick={() => setShowNotifications(!showNotifications)}
-            title="System notifications & audit alerts"
+            title="Notifications"
           >
-            <Bell style={{ width: 16, height: 16 }} />
+            <Bell style={{ width: 15, height: 15 }} />
             <span className="notif-badge-dot" />
           </button>
 
@@ -217,26 +191,26 @@ export const Header: React.FC<HeaderProps> = ({
             title="Active employee identity for ledger auditing"
           >
             <div className="user-avatar-circle">
-              {currentUser ? getInitials(currentUser.full_name) : 'JD'}
+              {currentUser ? getInitials(currentUser.full_name) : 'AF'}
             </div>
             <div className="user-pill-text">
-              <span className="user-pill-name">{currentUser ? currentUser.full_name : 'John Doe'}</span>
+              <span className="user-pill-name">{currentUser ? currentUser.full_name : 'Ahmed Fawzy'}</span>
               <span className="user-pill-role">
                 {currentUser ? currentUser.role.replace('_', ' ').toLowerCase() : 'storekeeper'}
               </span>
             </div>
-            <ChevronDown style={{ width: 14, height: 14, color: 'var(--text-muted)' }} />
+            <ChevronDown style={{ width: 13, height: 13, color: 'var(--text-muted)' }} />
           </button>
 
           {showUserMenu && (
             <div className="header-popover-menu user-popover">
               <div className="popover-header user-card-header">
                 <div className="user-avatar-circle large">
-                  {currentUser ? getInitials(currentUser.full_name) : 'JD'}
+                  {currentUser ? getInitials(currentUser.full_name) : 'AF'}
                 </div>
                 <div style={{ minWidth: 0, flex: 1 }}>
-                  <div className="user-card-name">{currentUser?.full_name || 'John Doe'}</div>
-                  <div className="user-card-email">{currentUser?.email || 'john.doe@stocksense.oilfield'}</div>
+                  <div className="user-card-name">{currentUser?.full_name || 'Ahmed Fawzy'}</div>
+                  <div className="user-card-email">{currentUser?.email || 'ahmed.fawzy@stocksense.oilfield'}</div>
                   <span className="badge badge-info" style={{ marginTop: '0.35rem', display: 'inline-block', fontSize: '0.68rem' }}>
                     {currentUser?.role || 'STOREKEEPER'}
                   </span>
