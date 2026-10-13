@@ -20,8 +20,8 @@ stop_services() {
 check_status() {
     local b_up=false
     local f_up=false
-    curl -s http://127.0.0.1:8000/api/v1/health > /dev/null 2>&1 && b_up=true
-    curl -s http://127.0.0.1:5173 > /dev/null 2>&1 && f_up=true
+    curl --connect-timeout 2 --max-time 3 -s http://127.0.0.1:8000/api/v1/health > /dev/null 2>&1 && b_up=true
+    curl --connect-timeout 2 --max-time 3 -s http://127.0.0.1:5173 > /dev/null 2>&1 && f_up=true
 
     echo "=========================================================="
     echo "  StockSense Service Status Diagnostic                   "
@@ -98,7 +98,7 @@ cleanup() {
 trap cleanup SIGINT SIGTERM
 
 # 4. Check & Start FastAPI backend server
-if curl -s http://127.0.0.1:8000/api/v1/health > /dev/null 2>&1; then
+if curl --connect-timeout 2 --max-time 3 -s http://127.0.0.1:8000/api/v1/health > /dev/null 2>&1; then
     echo "  ✓ Backend API is already RUNNING on http://127.0.0.1:8000"
 else
     echo "  → Starting FastAPI backend on http://127.0.0.1:8000 ..."
@@ -108,7 +108,7 @@ else
 fi
 
 # 5. Check & Start Vite frontend dev server
-if curl -s http://127.0.0.1:5173 > /dev/null 2>&1; then
+if curl --connect-timeout 2 --max-time 3 -s http://127.0.0.1:5173 > /dev/null 2>&1; then
     echo "  ✓ Frontend Dev Server is already RUNNING on http://127.0.0.1:5173"
 else
     echo "  → Starting Vite frontend on http://127.0.0.1:5173 ..."
