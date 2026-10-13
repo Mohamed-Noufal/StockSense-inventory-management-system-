@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
-  Plus, Search, Bell,
+  Plus, Bell,
   ChevronDown, PanelLeft, PanelLeftClose,
   CheckCircle2, AlertTriangle, Users, ShieldCheck
 } from 'lucide-react';
@@ -37,7 +37,6 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
 
   const userMenuRef = useRef<HTMLDivElement>(null);
   const notifMenuRef = useRef<HTMLDivElement>(null);
@@ -123,19 +122,6 @@ export const Header: React.FC<HeaderProps> = ({
           <span className="breadcrumb-separator">/</span>
           <span className="breadcrumb-active">{tabLabels[activeTab] || 'Overview'}</span>
         </nav>
-
-        {/* Global Search Input Bar */}
-        <div className="header-search-bar">
-          <Search style={{ width: 14, height: 14, color: 'var(--text-muted)' }} />
-          <input
-            type="text"
-            placeholder="Search..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="header-search-input"
-          />
-          <span className="search-shortcut-badge">Ctrl K</span>
-        </div>
       </div>
 
       {/* Right: Primary Action + Notifications + User Profile */}

@@ -439,13 +439,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
 
   return (
     <div className="overview-container">
-      {/* 1. Clean Vercel Page Header */}
-      <div className="overview-header-bar">
-        <h1 className="overview-heading">Executive Overview</h1>
-        <p className="overview-subheading">Real-time inventory levels, stock valuations, and warehouse operational metrics.</p>
-      </div>
-
-      {/* 2. KPI Metrics 4-Column Grid */}
+      {/* KPI Metrics 4-Column Grid */}
       <div className="overview-kpi-grid">
         {/* Total Items */}
         <div className="overview-kpi-card">
