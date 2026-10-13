@@ -157,11 +157,12 @@ const App: React.FC = () => {
     }
   };
 
-  const handleCreatePO = async (payload: POCreatePayload) => {
+  const handleCreatePO = async (payload: POCreatePayload): Promise<PurchaseOrder> => {
     setError(null);
     const po = await api.createPurchaseOrder(payload);
-    setSuccessMsg(`Purchase Order ${po.po_number} created in DRAFT!`);
-    fetchData();
+    setSuccessMsg(`Purchase Order ${po.po_number} created successfully.`);
+    await fetchData();
+    return po;
   };
 
   const handleApprovePO = async (poId: number) => {
@@ -372,9 +373,12 @@ const App: React.FC = () => {
           {activeTab === 'procurement' && (
             <ProcurementView
               orders={orders}
-              onOpenCreateModal={() => setShowPOCreateModal(true)}
-              onOpenReceiveModal={(po) => setReceivingPO(po)}
+              suppliers={suppliers}
+              items={items}
+              locations={locations}
+              onCreatePO={handleCreatePO}
               onApprove={handleApprovePO}
+              onReceive={handleReceivePOLine}
               onCancel={handleCancelPO}
               loading={loading}
             />
@@ -448,7 +452,7 @@ const App: React.FC = () => {
           items={items}
           locations={locations}
           onClose={() => setShowPOCreateModal(false)}
-          onSubmit={handleCreatePO}
+          onSubmit={async (payload) => { await handleCreatePO(payload); }}
         />
       )}
 
