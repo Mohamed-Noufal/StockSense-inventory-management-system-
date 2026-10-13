@@ -327,7 +327,7 @@ This is a deadline-aware plan from Monday evening to Thursday's interview. Adjus
 
 **Objective:** Fulfill real-world storekeeper compliance and warehouse mobility: every physical stock transaction and PO receipt can have supporting delivery documentation (PDF, images) attached, stored, and printed as formal warehouse waybills/dockets, accompanied by thermal bin labels and barcode/QR scanning.
 
-#### Task 1: Storekeeper Document Attachments & Audit Proof Engine (IN PROGRESS)
+#### Task 1: Storekeeper Document Attachments & Audit Proof Engine (COMPLETED)
 - **Data Engineering & Models:**
   - `document_attachments` table in `backend/app/models/attachments.py`:
     - Columns: `id` (PK), `entity_type` ('MOVEMENT' | 'PURCHASE_ORDER'), `entity_id` (FK), `filename`, `file_type` (MIME), `file_size_bytes`, `file_path`, `description`, `uploaded_by_user_id` (FK to users), `uploaded_by_name`, `created_at`.
@@ -341,12 +341,13 @@ This is a deadline-aware plan from Monday evening to Thursday's interview. Adjus
 - **Frontend Dropzones & Inspection:**
   - Upload dropzone in `MovementModal.tsx` and `POReceiveModal.tsx` for immediate file attachment during transactions.
   - Attachment list with file-type badges (PDF, image, doc) and preview links in `MovementDetailDrawer.tsx` and `PODetailView.tsx`.
-- **Verification:** Unit and integration tests in `backend/tests/test_attachments.py`.
+- **Verification:** Unit and integration tests in `backend/tests/test_attachments.py` (4 tests passing; full suite 39/39 verified).
 
-#### Task 2: Printable Warehouse Delivery Docket / Waybill System
+#### Task 2: Printable Warehouse Delivery Docket / Waybill System (COMPLETED)
 - **System Design & Libraries:**
   - Zero heavy server-side PDF compilers (e.g. Weasyprint/ReportLab which require native Cairo C-extensions).
   - Client-side print architecture via React + `@media print` CSS and standard browser `window.print()`. Enables instant, pixel-perfect physical printouts and native "Save as PDF" with 0ms server latency.
+  - Dynamically derived from `stock_movements`, `items`, and `locations` with zero schema migrations.
 - **Component Design (`WaybillModal.tsx`):**
   - Company Header: "Apex Oilfield Logistics — Material Delivery Docket / Transit Waybill".
   - Transit Metadata: Waybill #, Carrier Name, Vehicle Plate Number, Dispatch Date, Origin Warehouse, Destination Site/Rig.
@@ -354,15 +355,16 @@ This is a deadline-aware plan from Monday evening to Thursday's interview. Adjus
   - Dual Sign-Off Blocks: "Dispatcher Storekeeper Sign & Stamp" and "Receiving Inspector Sign & Date".
 - **Launch Points:**
   - Direct "Print Waybill" button on Operations table rows (`OperationsTable.tsx`).
-  - Action button inside Movement Detail Drawer (`MovementDetailDrawer.tsx`).
+  - Action button inside Movement Detail Drawer (`MovementDetailDrawer.tsx`) and Activity View (`ActivityView.tsx`).
 
-#### Task 3: Physical Warehouse Mobility — Barcode/QR Bin Labels & Interactive Scanner
+#### Task 3: Physical Warehouse Mobility — Barcode/QR Bin Labels & Interactive Scanner (COMPLETED)
 - **Data Architecture & Libraries:**
-  - Vector SVG Code128 Barcode & QR Code renderer (pure client-side SVG generation, zero external binary dependencies).
-  - High-contrast black/white thermal label geometry.
+  - Pure mathematical vector SVG Code 128 (Subset B) Barcode & 2D QR Code generator (`frontend/src/utils/barcode.ts`), zero external binary or npm dependencies. Guaranteed 100% crisp vector output on thermal print heads without anti-aliasing raster blur.
+  - Web Audio API synthesizer (`frontend/src/utils/audio.ts`) providing 800Hz positive chime and 220Hz alert buzz.
+  - Global USB scanner wedge hook (`frontend/src/hooks/useBarcodeScanner.ts`) distinguishing hardware bursts (<50ms keystrokes) from manual typing, with 1,500ms debounce gate.
 - **Component Design:**
-  - **Thermal Shelf Bin Label (`BinLabelModal.tsx`):** Formatted for 4x2" and 2x1" industrial adhesive labels: Part SKU, Name, Criticality Badge, Code128 barcode, QR code (encoding `ITEM:{sku}`), and Warehouse Bin Coordinates (`LOC-WH01-BAY-04`).
-  - **Interactive Barcode Scanner (`BarcodeScannerModal.tsx`):** Quick-scan overlay accessible via a barcode icon in Operations and Inventory top bars. Supports camera scanning, manual keyboard wedge, and quick-picker simulation to immediately select parts for stock movements.
+  - **Thermal Shelf Bin Label (`BinLabelModal.tsx`):** Formatted for Zebra 4"×2" and 2"×1" industrial adhesive labels with `@page { size: 4in 2in; margin: 0; }`: Part SKU, Name, Criticality Badge, Code128 barcode, QR code, and Warehouse Bin Coordinates (`LOC-MAIN-A01-B03`). Includes Download SVG action.
+  - **Interactive Barcode Scanner (`BarcodeScannerModal.tsx`):** High-contrast HUD overlay accessible via global `F2` hotkey and top bar `Scan SKU` buttons. Real-time USB gun listener, demo quick-test chips (`HVAC-FLT-001`, `VALV-CHK-002`, `ELEC-MOD-005`), and 1-click transaction routing (Issue, Receive, Print Tag, Inspect).
 
 
 ---
