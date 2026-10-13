@@ -124,17 +124,17 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Global Search Input Bar */}
+        {/* Global Search Input Bar matching reference mock */}
         <div className="header-search-bar">
           <Search style={{ width: 14, height: 14, color: 'var(--text-muted)' }} />
           <input
             type="text"
-            placeholder="Search items, SKUs, suppliers..."
+            placeholder="Search items, SKUs, categories, suppliers..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="header-search-input"
           />
-          <span className="search-shortcut-badge">/</span>
+          <span className="search-shortcut-badge" style={{ fontSize: '0.66rem', padding: '0.15rem 0.45rem' }}>Ctrl + K</span>
         </div>
       </div>
 

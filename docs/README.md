@@ -37,3 +37,4 @@ Refer to [`03-sprint-plan.md`](./03-sprint-plan.md) for granular task tracking:
 - **Sprint 4 (AI Replenishment Engine)**: ✅ **COMPLETED & MET** (Time-safe demand extraction, Croston/SBA, recommendation-to-PO conversion, AI Insights UI, 26/26 tests passing).
 - **Sprint 5 (Verification & Golden Demo)**: ✅ **COMPLETED & MET** (End-to-end golden flow automated test suite, zero-leakage verification, 100% pass rate).
 - **Sprint 6 (Ergonomics, Users & Audit)**: ✅ **COMPLETED & MET** (Collapsible rail sidebar, streamlined top bar with search/notifications, database users directory, and non-repudiable ledger audit attribution).
+- **Sprint 7 (Production Inventory Workstation)**: ✅ **COMPLETED & MET** (High-precision split-pane Inventory workspace, 4 KPI metric cards, interactive 12-week SVG stock trend chart, deterministic vector part thumbnails, CSV export, live SQLite WAL database integration, 28/28 tests passing).

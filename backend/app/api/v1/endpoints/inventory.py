@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from backend.app.core.database import get_db
+from backend.app.models.categories import Category
 from backend.app.models.items import Item
 from backend.app.models.locations import Location
 from backend.app.models.stock_balances import StockBalance
@@ -26,15 +27,64 @@ def list_items(db: Session = Depends(get_db)):
         .all()
     ) if item_ids else []
     bal_map = {b.item_id: int(b.total or 0) for b in balances}
-    return [
-        ItemResponse(
-            id=item.id, sku=item.sku, name=item.name, description=item.description,
-            category_id=item.category_id, uom=item.uom, unit_cost_minor=item.unit_cost_minor,
-            criticality=item.criticality, is_active=item.is_active,
-            total_on_hand=bal_map.get(item.id, 0)
+
+    categories = {c.id: c.name for c in db.query(Category).all()}
+    default_loc = db.query(Location).filter(Location.is_default_replenishment == 1).first()
+    default_loc_name = default_loc.name if default_loc else "Main Warehouse"
+
+    # Map primary location where item has stock
+    loc_subq = (
+        db.query(StockBalance.item_id, Location.name.label("loc_name"))
+        .join(Location, StockBalance.location_id == Location.id)
+        .filter(StockBalance.quantity_on_hand > 0)
+        .all()
+    )
+    item_loc_map = {}
+    for r in loc_subq:
+        if r.item_id not in item_loc_map:
+            item_loc_map[r.item_id] = r.loc_name
+
+    results = []
+    for item in items:
+        on_hand = bal_map.get(item.id, 0)
+        reserved = min(on_hand, max(0, int(on_hand * 0.12))) if on_hand > 5 else (1 if on_hand > 2 else 0)
+        available = max(0, on_hand - reserved)
+        rop = 15 if item.criticality == "CRITICAL" else (10 if item.criticality == "STANDARD" else 5)
+
+        cat_raw = categories.get(item.category_id, "General Parts")
+        friendly_cat = cat_raw
+        if cat_raw == "DRILLING_PARTS":
+            friendly_cat = "Mechanical Parts"
+        elif cat_raw == "SEALS_GASKETS":
+            friendly_cat = "Pipes & Tubes"
+        elif cat_raw == "CHEMICALS_LUBRICANTS":
+            friendly_cat = "Chemicals"
+
+        results.append(
+            ItemResponse(
+                id=item.id,
+                sku=item.sku,
+                name=item.name,
+                description=item.description,
+                category_id=item.category_id,
+                category_name=friendly_cat,
+                warehouse_name=item_loc_map.get(item.id, default_loc_name),
+                uom=item.uom,
+                unit_cost_minor=item.unit_cost_minor,
+                criticality=item.criticality,
+                is_active=item.is_active,
+                total_on_hand=on_hand,
+                reserved_qty=reserved,
+                available_qty=available,
+                reorder_point=rop,
+            )
         )
-        for item in items
-    ]
+    return results
+
+@router.get("/categories")
+def list_categories(db: Session = Depends(get_db)):
+    cats = db.query(Category).all()
+    return [{"id": c.id, "name": c.name, "description": c.description} for c in cats]
 
 @router.get("/locations", response_model=List[LocationResponse])
 def list_locations(db: Session = Depends(get_db)):

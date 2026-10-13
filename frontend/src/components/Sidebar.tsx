@@ -1,7 +1,7 @@
 import React from 'react';
 import {
-  Layers, History, ShoppingBag, Sparkles, LayoutDashboard, Flag, Cpu,
-  Users, PanelLeftClose, PanelLeftOpen
+  LayoutDashboard, Box, ArrowLeftRight, ShoppingBag, Sparkles,
+  History, Users, Flag, Cpu, ShieldCheck, PanelLeftClose, PanelLeftOpen
 } from 'lucide-react';
 import { HealthResponse } from '../types';
 
@@ -35,12 +35,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Sidebar Header with Logo & Collapse Toggle */}
       <div className="sidebar-logo">
         <div className="sidebar-logo-icon" title="StockSense Platform">
-          <Layers style={{ width: 18, height: 18 }} />
+          <Box style={{ width: 18, height: 18, color: '#38bdf8' }} />
         </div>
         {!isCollapsed && (
           <div className="sidebar-logo-text">
             <h1>StockSense</h1>
-            <span>Oilfield Inventory AI</span>
+            <span>Smarter Inventory, Lower Risk.</span>
           </div>
         )}
         <button
@@ -58,98 +58,92 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       <nav className="nav-menu">
-        {!isCollapsed && <div className="nav-section-label">Operations</div>}
-
+        {/* Core Operations matching reference mock */}
         <button
           className={`nav-item ${activeTab === 'overview' ? 'active' : ''}`}
           onClick={() => setActiveTab('overview')}
-          title="Executive Overview & Operational Metrics"
+          title="Overview Dashboard"
         >
           <LayoutDashboard className="nav-icon" />
-          {!isCollapsed && <span>Executive Overview</span>}
+          {!isCollapsed && <span>Overview</span>}
         </button>
 
         <button
           className={`nav-item ${activeTab === 'inventory' ? 'active' : ''}`}
           onClick={() => setActiveTab('inventory')}
-          title="Inventory Master & Running Balances"
+          title="Inventory Master & Availability"
         >
-          <Layers className="nav-icon" />
-          {!isCollapsed && <span>Inventory Master</span>}
-          {itemsCount > 0 && (
-            <span className={isCollapsed ? 'nav-dot-badge' : 'nav-badge'}>
-              {isCollapsed ? '' : itemsCount}
-            </span>
+          <Box className="nav-icon" />
+          {!isCollapsed && <span>Inventory</span>}
+          {itemsCount > 0 && !isCollapsed && (
+            <span className="nav-badge">{itemsCount}</span>
           )}
         </button>
 
         <button
           className={`nav-item ${activeTab === 'ledger' ? 'active' : ''}`}
           onClick={() => setActiveTab('ledger')}
-          title="Append-Only Stock Ledger Audit Trail"
+          title="Stock Operations & Movement Ledger"
         >
-          <History className="nav-icon" />
-          {!isCollapsed && <span>Movement Ledger</span>}
-          {ledgerCount > 0 && (
-            <span className={isCollapsed ? 'nav-dot-badge' : 'nav-badge'}>
-              {isCollapsed ? '' : ledgerCount}
-            </span>
+          <ArrowLeftRight className="nav-icon" />
+          {!isCollapsed && <span>Operations</span>}
+          {ledgerCount > 0 && !isCollapsed && (
+            <span className="nav-badge">{ledgerCount}</span>
           )}
         </button>
 
         <button
           className={`nav-item ${activeTab === 'procurement' ? 'active' : ''}`}
           onClick={() => setActiveTab('procurement')}
-          title="Procurement & Purchase Order Lifecycle"
+          title="Purchase Orders & Procurement"
         >
           <ShoppingBag className="nav-icon" />
           {!isCollapsed && <span>Purchase Orders</span>}
-          {poCount > 0 && (
-            <span className={isCollapsed ? 'nav-dot-badge' : 'nav-badge'}>
-              {isCollapsed ? '' : poCount}
-            </span>
+          {poCount > 0 && !isCollapsed && (
+            <span className="nav-badge">{poCount}</span>
           )}
         </button>
-
-        {!isCollapsed && <div className="nav-section-label" style={{ marginTop: '0.85rem' }}>Intelligence</div>}
 
         <button
           className={`nav-item ${activeTab === 'ai' ? 'active' : ''}`}
           onClick={() => setActiveTab('ai')}
-          title="AI Intermittent Replenishment & Decision Queue"
+          title="AI & Replenishment Intelligence"
         >
           <Sparkles className="nav-icon" />
-          {!isCollapsed && <span>AI Replenishment</span>}
-          {aiCount > 0 && (
-            <span
-              className={isCollapsed ? 'nav-dot-badge ai-badge' : 'nav-badge'}
-              style={{ color: '#38bdf8', borderColor: 'rgba(56, 189, 248, 0.3)' }}
-            >
-              {isCollapsed ? '' : aiCount}
-            </span>
+          {!isCollapsed && <span>AI & Replenishment</span>}
+          {aiCount > 0 && !isCollapsed && (
+            <span className="nav-badge ai-badge" style={{ color: '#38bdf8' }}>{aiCount}</span>
           )}
         </button>
 
-        {!isCollapsed && <div className="nav-section-label" style={{ marginTop: '0.85rem' }}>Engineering & Audit</div>}
+        <button
+          className={`nav-item ${activeTab === 'ledger' ? 'active' : ''}`}
+          onClick={() => setActiveTab('ledger')}
+          title="Activity & Audit Logs"
+        >
+          <History className="nav-icon" />
+          {!isCollapsed && <span>Activity & Logs</span>}
+        </button>
+
+        {/* Secondary Admin/Audit items */}
+        {!isCollapsed && <div className="nav-section-label" style={{ marginTop: '0.85rem' }}>Management & Health</div>}
 
         <button
           className={`nav-item ${activeTab === 'users' ? 'active' : ''}`}
           onClick={() => setActiveTab('users')}
-          title="Employee Directory & Audit Roles"
+          title="Team & Audit Roles"
         >
           <Users className="nav-icon" />
-          {!isCollapsed && <span>Team & Audit Roles</span>}
-          {usersCount > 0 && (
-            <span className={isCollapsed ? 'nav-dot-badge' : 'nav-badge'}>
-              {isCollapsed ? '' : usersCount}
-            </span>
+          {!isCollapsed && <span>Team & Roles</span>}
+          {usersCount > 0 && !isCollapsed && (
+            <span className="nav-badge">{usersCount}</span>
           )}
         </button>
 
         <button
           className={`nav-item ${activeTab === 'sprint' ? 'active' : ''}`}
           onClick={() => setActiveTab('sprint')}
-          title="Sprint Milestone Delivery Roadmap"
+          title="Sprint Delivery Roadmap"
         >
           <Flag className="nav-icon" />
           {!isCollapsed && <span>Sprint Roadmap</span>}
@@ -158,12 +152,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <button
           className={`nav-item ${activeTab === 'diagnostics' ? 'active' : ''}`}
           onClick={() => setActiveTab('diagnostics')}
-          title="System Health & Storage Diagnostics"
+          title="Diagnostics & Engine Status"
         >
           <Cpu className="nav-icon" />
-          {!isCollapsed && <span>Diagnostics & Health</span>}
+          {!isCollapsed && <span>Diagnostics</span>}
         </button>
       </nav>
+
+      {/* Bottom AI Promo Card matching reference design */}
+      {!isCollapsed && (
+        <div className="sidebar-promo-card">
+          <div className="sidebar-promo-icon">
+            <ShieldCheck style={{ width: 18, height: 18, color: '#10b981' }} />
+          </div>
+          <div className="sidebar-promo-title">Keep your stock running smoothly</div>
+          <div className="sidebar-promo-desc">AI-powered insights for better decisions.</div>
+        </div>
+      )}
 
       <div className="sidebar-footer">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>

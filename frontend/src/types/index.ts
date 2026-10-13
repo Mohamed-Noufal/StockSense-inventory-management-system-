@@ -34,11 +34,16 @@ export interface InventoryItem {
   name: string;
   description: string | null;
   category_id: number;
+  category_name?: string;
+  warehouse_name?: string;
   uom: string;
   unit_cost_minor: number;
   criticality: 'CRITICAL' | 'STANDARD' | 'LOW';
   is_active: number;
   total_on_hand: number;
+  reserved_qty?: number;
+  available_qty?: number;
+  reorder_point?: number;
 }
 
 export interface InventoryLocation {

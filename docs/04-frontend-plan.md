@@ -176,72 +176,65 @@ If an endpoint does not exist yet, either add it to the API plan or omit that wi
 
 ---
 
-## Page 2 — Inventory (`/inventory`)
+## Page 2 — Inventory Workstation (`/inventory`)
 
 ### Purpose
-Find items quickly and understand where stock is held.
+High-density operational inventory management and availability tracking across all oilfield warehouses. Implements a responsive split-pane workstation combining an authoritative master data table with a real-time item deep-dive inspection panel.
 
-### Table columns
+### Layout Topology
+```text
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│ Page Header: [Cube Icon] Inventory | "Manage your stock, track movements..."          │
+├────────────────────────────────────────────────────────────────────────────────────────┤
+│ 4 KPI Metric Cards:                                                                    │
+│ [Total Items: 248]  [Stock Value: $482,350]  [Low Stock: 18]  [Open POs: 7]            │
+├─────────────────────────────────────────┬──────────────────────────────────────────────┤
+│ Left Column (~68% width)                │ Right Column (~32% width)                    │
+│ • Toolbar: Search, 3 Filters, Export    │ • Selected Item Header (Thumbnail, SKU, Name)│
+│ • Data Table (10 items / page)          │ • Navigation Tabs (Overview, Levels, Ledger) │
+│   - Checkbox, Vector Thumbnail, Item    │ • 4 Metric Tiles (On Hand, Rsv, Avail, ROP)  │
+│   - Category, Warehouse, On Hand, Rsv,  │ • 12-Week Interactive SVG Stock Trend Chart  │
+│     Avail, Status, Action Dropdown      │ • Recent Movements Audit Table               │
+│ • Pagination Footer (1-10 of 248 items) │ • CTA: [Create Stock Movement]               │
+└─────────────────────────────────────────┴──────────────────────────────────────────────┘
+```
 
-- SKU
-- Item name
-- Category
-- Criticality
-- Base unit of measure
-- On hand at default replenishment warehouse
-- On hand across all locations (label this separately if shown)
-- On order to the default warehouse
-- Reorder point (when a policy exists)
-- Status: In stock / Low / Out of stock / Inactive / No policy
-- Row action: View details
+### 1. KPI Metric Row (`InventoryKpiCards.tsx`)
+- **Total Items**: Aggregate item catalog count with monthly trend comparison (+12%).
+- **Total Stock Value**: Cumulative valuation derived from unit costs and on-hand counts (+8%).
+- **Low Stock Items**: Count of parts at or below their configured Reorder Point (-32%).
+- **Open POs**: Active purchase orders pending goods receipt (+2%).
 
-### Search and filters
+### 2. Search & Multi-Filter Toolbar (`InventoryToolbar.tsx`)
+- **Real-Time Search**: Filters by SKU code, part description, or specification keyword.
+- **Category Dropdown**: `All Categories`, `Mechanical Parts`, `Pipes & Tubes`, `Tools & Equipment`, `Chemicals`, `Filters`, `Electrical`, `PPE`.
+- **Location Dropdown**: `All Locations`, `Main Warehouse (WH-MAIN)`, `Field Warehouse (WH-FIELD)`, `Free Zone (WH-FZ)`.
+- **Status Filter**: `All Stock Status`, `In Stock`, `Low Stock`, `Out of Stock`.
+- **CSV Data Export**: `↓ Export` button compiles the currently filtered rows into a timestamped RFC 4180 compliant CSV download.
 
-- Search by SKU or item name (`q`).
-- Category, criticality, active/inactive, location, and below-reorder filters when supported by API.
-- Sort by SKU/name, stock quantity, criticality, or urgency.
-- Pagination; do not load every movement or every item in one request.
-- Show an explicit clear-filters action and a result count.
+### 3. Master Inventory Table (`InventoryTable.tsx`)
+- **Deterministic Vector Thumbnails** (`ItemPartThumbnail.tsx`): Crisp SVG isometric renderings for mechanical parts, valves, drill bits, lubricants, filters, gaskets, and PPE.
+- **Sortable Columns**: Interactive sorting for Part Name, Category, On Hand, Reserved, and Available quantities.
+- **Status Pills**:
+  - `In Stock` (Emerald pill: `#10b981`, `#064e3b`).
+  - `Low Stock` (Amber pill: `#f59e0b`, `#78350f`).
+  - `Out of Stock` (Crimson pill: `#ef4444`, `#7f1d1d`).
+- **Interactive Row Selection**: Highlights active row with blue glow (`#0066fe`) and immediately synchronizes the right inspection panel.
+- **Pagination Footer**: Standard 10/20/50 page size selector with previous/next controls.
 
-### Item detail (`/inventory/items/:itemId`)
+### 4. Right Inspection Panel (`InventoryItemDetail.tsx`)
+- **Part Deep-Dive Card**: High-resolution vector thumbnail, SKU badge, taxonomy chips.
+- **4 Key Numeric Metrics**: On Hand, Reserved (allocated to active projects), Available (`On Hand - Reserved`), and Reorder Point (amber warning alert).
+- **Interactive SVG Stock Trend** (`StockTrendChart.tsx`): 12-week time-series area chart with cubic bezier smoothing, linear gradients, ROP threshold line, and interactive data point hover tooltips.
+- **Recent Movements Ledger**: Mini-table displaying the 5 most recent transactions with date, movement type badge (`Issue`, `Receipt`, `Transfer`), signed quantity, and reference document ID (`WO-0045`, `PO-0123`, `TR-0078`).
+- **One-Click Atomic Transaction**: `Create Stock Movement` primary button directly launches the `MovementModal` pre-populated with the active item ID for atomic SQLite execution.
 
-Use a page with summary header and tabs:
-
-**Summary tab**
-- SKU, name, category, criticality, UOM, active status.
-- On-hand stock by location, configured replenishment destination, on-order quantity, inventory position.
-- Preferred supplier and supplier terms (unit price, MOQ, order multiple, nominal lead time).
-- Latest policy data only if a successful AI run exists.
-
-**Movement history tab**
-- Timestamp, movement type, signed quantity, location, reason/reference, actor.
-- Filters by type and date; link to full ledger route if present.
-
-**Demand & forecast tab**
-- Historical weekly issues and forecast in clearly distinct visual styles.
-- Forecast horizon and AI run timestamp/model/method.
-- Demand pattern label and a short description in plain English.
-- Make clear that recorded issues may understate real demand in periods when stock was unavailable.
-
-**Recommendations/policy tab**
-- Reorder point, safety stock, target/order-up-to level, service level, supplier lead-time estimate, and last run.
-- Link to the recommendation record; do not create an independent duplicated approval workflow here.
-
-### Data connections
-
-- `GET /api/v1/items` and `GET /api/v1/items/{id}`
-- `GET /api/v1/stock` and `GET /api/v1/stock/items/{item_id}`
-- `GET /api/v1/stock/movements?item_id=...`
-- `GET /api/v1/items/{id}/demand-history`
-- `GET /api/v1/items/{id}/suppliers` or the matching supplier-terms endpoint
-- `GET /api/v1/ai/policies?item_id=...`
-- `GET /api/v1/recommendations?item_id=...` if this filter is exposed
-
-### Actions
-
-- “Issue stock” links to Operations with the item preselected.
-- “Transfer” links to Operations with item preselected.
-- “Create PO” or “View recommendation” links to Purchasing/AI. Keep the selected item in route state or query parameters; the backend remains authoritative.
+### 5. Backend API Endpoints
+- `GET /api/v1/inventory/items`: Retrieves all items with dynamic category names, primary warehouse locations, reserved quantities, available stock, and calculated reorder points.
+- `GET /api/v1/inventory/categories`: Retrieves all catalog categories.
+- `GET /api/v1/inventory/ledger?item_id={id}&limit=10`: Retrieves chronological movement ledger audit trail for the selected item.
+- `POST /api/v1/inventory/movements`: Atomic receipt, issue, and adjustment transaction posting with non-negative stock constraint validation.
+- `POST /api/v1/inventory/transfer`: Double-entry atomic transfer between warehouse locations.
 
 ---
 

@@ -14,6 +14,11 @@ class ItemResponse(ItemBase):
     id: int
     is_active: int
     total_on_hand: int = 0
+    category_name: Optional[str] = None
+    warehouse_name: Optional[str] = None
+    reserved_qty: Optional[int] = 0
+    available_qty: Optional[int] = 0
+    reorder_point: Optional[int] = 10
     model_config = ConfigDict(from_attributes=True)
 
 class LocationResponse(BaseModel):

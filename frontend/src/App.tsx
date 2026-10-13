@@ -342,7 +342,17 @@ const App: React.FC = () => {
         )}
 
         <div className="content-body">
-          {activeTab === 'inventory' && <InventoryView items={items} onAction={(itemId, type) => { setSelectedItemId(itemId); setModalType(type); setShowModal(true); }} />}
+          {activeTab === 'inventory' && (
+            <InventoryView
+              items={items}
+              onAction={(itemId, type) => {
+                setSelectedItemId(itemId);
+                setModalType(type);
+                setShowModal(true);
+              }}
+              onNavigateTab={(tab) => setActiveTab(tab)}
+            />
+          )}
           {activeTab === 'ledger' && <LedgerView ledger={ledger} onRefresh={fetchData} />}
           {activeTab === 'procurement' && (
             <ProcurementView

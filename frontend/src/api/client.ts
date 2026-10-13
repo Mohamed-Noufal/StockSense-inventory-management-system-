@@ -50,9 +50,10 @@ export const api = {
     const qs = params.toString();
     return request<StockBalance[]>(`/inventory/balances${qs ? `?${qs}` : ''}`);
   },
-  getLedger: (limit = 50, offset = 0, movementType?: string) => {
+  getLedger: (limit = 50, offset = 0, movementType?: string, itemId?: number) => {
     const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });
     if (movementType) params.append('movement_type', movementType);
+    if (itemId) params.append('item_id', String(itemId));
     return request<StockMovement[]>(`/inventory/ledger?${params.toString()}`);
   },
   postMovement: (payload: MovementCreatePayload) =>

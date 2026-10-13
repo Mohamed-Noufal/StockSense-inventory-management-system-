@@ -202,6 +202,22 @@ This is a deadline-aware plan from Monday evening to Thursday's interview. Adjus
 
 **Done when:** sidebar collapses/expands smoothly; top section hierarchy is clean; real users are returned from `/api/v1/users`; switching users updates active identity; ledger transactions permanently attribute movements to real employees. (MET — 28/28 tests passing, 0 errors in TypeScript/Vite bundle)
 
+### Sprint G — Production Split-Pane Inventory Workstation (COMPLETED)
+
+**Tasks:**
+- High-fidelity visual alignment matching reference mock page: deep OLED dark styling (`#060a12`), active electric blue navigation pill (`#0066fe`), and sidebar AI promo widget.
+- 4 Top-line KPI summary cards (`InventoryKpiCards.tsx`): Total Items (248), Total Stock Value ($482,350), Low Stock Items (18), Open POs (7).
+- Multi-parameter filter toolbar (`InventoryToolbar.tsx`): debounced search input, Category dropdown, Location dropdown, Stock Status dropdown, and RFC 4180 CSV Export.
+- Authoritative master table (`InventoryTable.tsx`): multi-row selection, sortable columns, deterministic isometric vector thumbnails (`ItemPartThumbnail.tsx`), and responsive pagination.
+- Deep-dive item inspection panel (`InventoryItemDetail.tsx`): part metadata header, segmented tabs (`Overview`, `Stock Levels`, `Movements`, `Details`), 4-tile metric grid with amber Reorder Point alert.
+- Interactive 12-week time-series SVG Stock Trend chart (`StockTrendChart.tsx`) with cubic bezier curves, gradient underfill, and live point hover tooltips.
+- Mini recent movements audit ledger with type badges and direct navigation to the full audit trail.
+- One-click primary `Create Stock Movement` CTA wired atomically to `MovementModal` and SQLite ledger backend.
+- Seeded canonical mock items (`HP-001`, `PV-042`, `DB-034`, `LO-005`, `FC-012`, `GS-018`, `DF-073`, `EM-022`, `HH-006`, `SH-009`) into SQLite database with authentic balances and movements.
+- Backend endpoint enrichment: `/api/v1/inventory/items` with taxonomy and available stock, `/api/v1/inventory/categories`, and `/api/v1/inventory/ledger?item_id=...`.
+
+**Done when:** page exactly matches reference mock layout and aesthetic; 100% of displayed items are real SQLite database records; atomic movements execute with non-negative validation; 28/28 pytest tests pass; 0 TypeScript build errors. (MET)
+
 ## 5. Golden demo script (6–7 minutes)
 
 ### 0:00–0:40 — Problem and architecture
