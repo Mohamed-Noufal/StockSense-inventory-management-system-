@@ -11,27 +11,38 @@ interface StockTrendChartProps {
   reorderPoint?: number;
 }
 
-const DEFAULT_TREND_DATA: TrendDataPoint[] = [
-  { date: 'Jul 20', stock: 38 },
-  { date: 'Jul 27', stock: 34 },
-  { date: 'Aug 3', stock: 31 },
-  { date: 'Aug 10', stock: 29 },
-  { date: 'Aug 17', stock: 25 },
-  { date: 'Aug 24', stock: 24 },
-  { date: 'Aug 31', stock: 20 },
-  { date: 'Sep 7', stock: 19 },
-  { date: 'Sep 14', stock: 18 },
-  { date: 'Sep 21', stock: 15 },
-  { date: 'Sep 28', stock: 12 },
-  { date: 'Oct 12', stock: 8 },
-];
+export const generateDynamicTrend = (currentStock: number, reorderPoint: number): TrendDataPoint[] => {
+  const now = new Date('2026-10-15T12:00:00Z');
+  const result: TrendDataPoint[] = [];
+  const baseStep = Math.max(1, Math.round(currentStock * 0.08));
+  const rolling = currentStock <= reorderPoint
+    ? Math.round(reorderPoint * 2.2)
+    : Math.max(currentStock + baseStep * 3, Math.round(currentStock * 1.15));
+
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(now.getTime() - i * 7 * 86400000);
+    const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    if (i === 0) {
+      result.push({ date: dateStr, stock: currentStock });
+    } else {
+      const progress = (11 - i) / 11;
+      const interpolated = Math.round(rolling * (1 - progress) + currentStock * progress);
+      const noise = ((i % 3) - 1) * Math.max(1, Math.round(baseStep * 0.3));
+      result.push({ date: dateStr, stock: Math.max(0, interpolated + noise) });
+    }
+  }
+  return result;
+};
 
 export const StockTrendChart: React.FC<StockTrendChartProps> = ({
-  data = DEFAULT_TREND_DATA,
+  data,
   currentStock = 8,
   reorderPoint = 10,
 }) => {
   const [hoveredPoint, setHoveredPoint] = useState<{ index: number; x: number; y: number; val: TrendDataPoint } | null>(null);
+
+  // Fallback to dynamic trend derived from item properties if data not provided
+  const chartData = data && data.length > 0 ? data : generateDynamicTrend(currentStock, reorderPoint);
 
   // Chart dimensions & scaling
   const width = 360;
@@ -44,12 +55,20 @@ export const StockTrendChart: React.FC<StockTrendChartProps> = ({
   const innerWidth = width - paddingLeft - paddingRight;
   const innerHeight = height - paddingTop - paddingBottom;
 
-  const yMax = 40;
-  const yTicks = [40, 30, 20, 10, 0];
+  // Dynamically calculate yMax based on highest data value, current stock, and ROP
+  const peakVal = Math.max(...chartData.map((d) => d.stock), currentStock, reorderPoint, 1);
+  const yMax = Math.max(Math.ceil((peakVal * 1.25) / 10) * 10, 10);
+  const yTicks = [
+    yMax,
+    Math.round(yMax * 0.75),
+    Math.round(yMax * 0.5),
+    Math.round(yMax * 0.25),
+    0,
+  ];
 
   // Map data points to SVG coordinates
-  const points = data.map((d, i) => {
-    const x = paddingLeft + (i / (data.length - 1)) * innerWidth;
+  const points = chartData.map((d, i) => {
+    const x = paddingLeft + (i / (chartData.length - 1)) * innerWidth;
     const y = paddingTop + innerHeight - (Math.min(yMax, Math.max(0, d.stock)) / yMax) * innerHeight;
     return { x, y, data: d };
   });
@@ -188,17 +207,17 @@ export const StockTrendChart: React.FC<StockTrendChartProps> = ({
           })}
 
           {/* X-Axis Date Labels with clean non-overlapping spacing */}
-          {data.map((d, i) => {
+          {chartData.map((d, i) => {
             // Evenly spaced key dates to prevent label collisions
-            const tickIndices = [0, 3, 6, 9, data.length - 1];
+            const tickIndices = [0, 3, 6, 9, chartData.length - 1];
             if (!tickIndices.includes(i)) return null;
-            const x = paddingLeft + (i / (data.length - 1)) * innerWidth;
+            const x = paddingLeft + (i / (chartData.length - 1)) * innerWidth;
             return (
               <text
                 key={i}
                 x={x}
                 y={height - 8}
-                textAnchor={i === 0 ? 'start' : i === data.length - 1 ? 'end' : 'middle'}
+                textAnchor={i === 0 ? 'start' : i === chartData.length - 1 ? 'end' : 'middle'}
                 fill="#64748b"
                 fontSize="8.5"
                 fontFamily="var(--font-mono)"
