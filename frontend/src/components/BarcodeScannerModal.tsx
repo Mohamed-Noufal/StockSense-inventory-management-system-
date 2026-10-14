@@ -1,5 +1,8 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { X, Search, Scan, ArrowUpRight, ArrowDownLeft, Tag, Layers, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import {
+  X, Search, Scan, ArrowUpRight, ArrowDownLeft, Tag, Layers,
+  AlertCircle, Camera, Check, ShieldCheck
+} from 'lucide-react';
 import { InventoryItem } from '../types';
 import { useBarcodeScanner } from '../hooks/useBarcodeScanner';
 import { soundEffects } from '../utils/audio';
@@ -23,7 +26,14 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
   const [scannedItem, setScannedItem] = useState<InventoryItem | null>(null);
   const [scanStatus, setScanStatus] = useState<string>('Ready for input');
   const [isError, setIsError] = useState<boolean>(false);
+  const [scannerMode, setScannerMode] = useState<'gun' | 'camera'>('gun');
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const [auditVerified, setAuditVerified] = useState<boolean>(false);
+
   const inputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const detectionAnimRef = useRef<number | null>(null);
 
   // Automatically focus input on mount
   useEffect(() => {
@@ -36,6 +46,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
     if (!trimmed) return;
 
     setQuery(trimmed);
+    setAuditVerified(false);
 
     // Exact or prefix match against SKU or ID
     const found = items.find(
@@ -57,7 +68,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
     }
   }, [items]);
 
-  // Global USB Barcode Scanner Wedge Hook
+  // Global USB Barcode Scanner Wedge Hook (Keyboard Wedge Mode)
   useBarcodeScanner({
     onScan: (code) => {
       handleResolveCode(code);
@@ -71,6 +82,92 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
       handleResolveCode(query);
     }
   };
+
+  // Camera Management
+  const stopCamera = useCallback(() => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
+    if (detectionAnimRef.current) {
+      cancelAnimationFrame(detectionAnimRef.current);
+      detectionAnimRef.current = null;
+    }
+  }, []);
+
+  const startCamera = useCallback(async () => {
+    setCameraError(null);
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Camera access API is not available on this device/browser.');
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: false,
+      });
+
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play().catch(() => {});
+      }
+
+      // Feature detect BarcodeDetector API (modern Chrome/Edge/Android)
+      if ('BarcodeDetector' in window) {
+        const barcodeDetector = new (window as any).BarcodeDetector({
+          formats: ['code_128', 'qr_code', 'ean_13', 'upc_a', 'data_matrix'],
+        });
+
+        const scanFrame = async () => {
+          if (videoRef.current && videoRef.current.readyState >= 2) {
+            try {
+              const barcodes = await barcodeDetector.detect(videoRef.current);
+              if (barcodes.length > 0) {
+                const rawValue = barcodes[0].rawValue;
+                if (rawValue) {
+                  handleResolveCode(rawValue);
+                  setScannerMode('gun'); // switch to resolved HUD card
+                  stopCamera();
+                  return;
+                }
+              }
+            } catch {
+              // Ignore frame decode errors
+            }
+          }
+          detectionAnimRef.current = requestAnimationFrame(scanFrame);
+        };
+        detectionAnimRef.current = requestAnimationFrame(scanFrame);
+      }
+    } catch (err: any) {
+      setCameraError(err.message || 'Unable to access device camera.');
+    }
+  }, [handleResolveCode, stopCamera]);
+
+  useEffect(() => {
+    if (scannerMode === 'camera') {
+      startCamera();
+    } else {
+      stopCamera();
+    }
+    return () => {
+      stopCamera();
+    };
+  }, [scannerMode, startCamera, stopCamera]);
+
+  // Derived structured bin location for oilfield yards
+  const storageBinDisplay = useMemo(() => {
+    if (!scannedItem) return 'WH-MAIN';
+    const wh = scannedItem.warehouse_name || 'Central';
+    if (wh.includes('Central') || wh.includes('Cairo')) {
+      return 'BAY-04 / RACK-B2';
+    }
+    if (wh.includes('Western')) {
+      return 'YARD-01 / ROW-C';
+    }
+    return 'RIG-07 / BIN-03';
+  }, [scannedItem]);
 
   // Sample quick test presets for demonstration
   const samplePresets = items.slice(0, 5);
@@ -87,7 +184,28 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
             </span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            {/* Camera / Gun Mode Switcher */}
+            <button
+              type="button"
+              className="scanner-chip-btn"
+              onClick={() => setScannerMode(scannerMode === 'camera' ? 'gun' : 'camera')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                padding: '0.25rem 0.6rem',
+                fontSize: '0.75rem',
+                backgroundColor: scannerMode === 'camera' ? '#2563eb' : '#18181b',
+                color: scannerMode === 'camera' ? '#ffffff' : '#a1a1aa',
+                borderColor: scannerMode === 'camera' ? '#3b82f6' : '#27272a',
+              }}
+              title="Toggle mobile device camera scanner"
+            >
+              <Camera size={13} />
+              <span>{scannerMode === 'camera' ? 'Camera Mode' : 'Camera Scan'}</span>
+            </button>
+
             <div className="scanner-status-pulse">
               <span className="pulse-dot" />
               <span>USB Wedge Active</span>
@@ -100,6 +218,58 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
 
         {/* Body */}
         <div className="scanner-modal-body">
+          {/* Camera Viewport (when active) */}
+          {scannerMode === 'camera' && (
+            <div className="camera-scanner-view">
+              {cameraError ? (
+                <div style={{ padding: '1rem', textAlign: 'center', color: '#ef4444' }}>
+                  <AlertCircle size={28} style={{ margin: '0 auto 8px' }} />
+                  <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>Camera Unavailable</div>
+                  <div style={{ fontSize: '0.75rem', color: '#888888', marginTop: '4px' }}>
+                    {cameraError}
+                  </div>
+                  <button
+                    className="btn btn-secondary"
+                    onClick={() => setScannerMode('gun')}
+                    style={{ marginTop: '10px', fontSize: '0.75rem' }}
+                  >
+                    Return to USB Gun Wedge
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <video
+                    ref={videoRef}
+                    className="camera-video-feed"
+                    playsInline
+                    muted
+                  />
+                  <div className="camera-laser-reticle">
+                    <div className="camera-laser-line" />
+                  </div>
+                  <div
+                    style={{
+                      position: 'absolute',
+                      bottom: '8px',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      background: 'rgba(0, 0, 0, 0.75)',
+                      padding: '3px 10px',
+                      borderRadius: '12px',
+                      fontSize: '0.7rem',
+                      color: '#ffffff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                    }}
+                  >
+                    <span>Point camera at printed SKU tag or QR code</span>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
           {/* Active Input Search Bar */}
           <div className="scanner-input-box">
             <Search size={16} color="#71717a" />
@@ -124,6 +294,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                   setScannedItem(null);
                   setScanStatus('Ready for input');
                   setIsError(false);
+                  setAuditVerified(false);
                   inputRef.current?.focus();
                 }}
               >
@@ -159,7 +330,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                   <div className="scanned-sku-badge">{scannedItem.sku}</div>
                   <div className="scanned-item-title">{scannedItem.name}</div>
                   <div style={{ fontSize: '0.75rem', color: '#888888', marginTop: '2px' }}>
-                    {scannedItem.category_name} • Warehouse: {scannedItem.warehouse_name || 'Main Warehouse'}
+                    {scannedItem.category_name} • Warehouse: {scannedItem.warehouse_name || 'Central Warehouse (Cairo Base)'}
                   </div>
                 </div>
                 <div
@@ -192,22 +363,23 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                 </div>
                 <div className="scanned-stat-box">
                   <span className="scanned-stat-label">Storage Bin</span>
-                  <span className="scanned-stat-value" style={{ fontSize: '0.85rem' }}>
-                    {scannedItem.warehouse_name ? scannedItem.warehouse_name.toUpperCase().slice(0, 10) : 'WH-MAIN'}
+                  <span className="scanned-stat-value" style={{ fontSize: '0.85rem', color: '#38bdf8' }}>
+                    {storageBinDisplay}
                   </span>
                 </div>
               </div>
 
               {/* Direct Quick Action Buttons */}
-              <div className="scanned-actions-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+              <div className="scanned-actions-grid" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
                 <button
                   className="scanned-action-btn issue"
                   onClick={() => {
                     onClose();
                     onQuickAction('ISSUE', scannedItem);
                   }}
+                  title="Issue part to drilling rig or maintenance work order"
                 >
-                  <ArrowUpRight size={15} />
+                  <ArrowUpRight size={14} />
                   <span>Record Issue</span>
                 </button>
                 <button
@@ -216,9 +388,26 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                     onClose();
                     onQuickAction('RECEIPT', scannedItem);
                   }}
+                  title="Receive inbound shipment into warehouse stock"
                 >
-                  <ArrowDownLeft size={15} color="#10b981" />
+                  <ArrowDownLeft size={14} color="#10b981" />
                   <span>Record Receipt</span>
+                </button>
+                <button
+                  className="scanned-action-btn label"
+                  onClick={() => {
+                    setAuditVerified(true);
+                    soundEffects.playScanSuccess();
+                  }}
+                  style={{
+                    backgroundColor: auditVerified ? 'rgba(16, 185, 129, 0.15)' : '#18181b',
+                    borderColor: auditVerified ? '#10b981' : '#27272a',
+                    color: auditVerified ? '#10b981' : '#ededed',
+                  }}
+                  title="Verify physical rack count matches system stock"
+                >
+                  {auditVerified ? <Check size={14} color="#10b981" /> : <ShieldCheck size={14} color="#38bdf8" />}
+                  <span>{auditVerified ? 'Count Verified' : 'Audit Count'}</span>
                 </button>
                 <button
                   className="scanned-action-btn label"
@@ -226,8 +415,9 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                     onClose();
                     onPrintLabel(scannedItem);
                   }}
+                  title="Print single-sheet 4x2 thermal shelf tag"
                 >
-                  <Tag size={15} color="#a1a1aa" />
+                  <Tag size={14} color="#a1a1aa" />
                   <span>Print Tag</span>
                 </button>
                 <button
@@ -236,8 +426,9 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                     onClose();
                     onInspectItem(scannedItem);
                   }}
+                  title="Inspect 360-degree ledger history and safety stock"
                 >
-                  <Layers size={15} color="#a1a1aa" />
+                  <Layers size={14} color="#a1a1aa" />
                   <span>Inspect</span>
                 </button>
               </div>

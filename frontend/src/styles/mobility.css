@@ -8,60 +8,95 @@
    1. Print Media Overrides (@media print)
    -------------------------------------------------------------------------- */
 @media print {
-  /* Hide all application chrome, sidebars, headers, backdrop */
-  html, body {
+  /* Scoped thermal label printing when BinLabelModal is open */
+  body.has-thermal-modal {
     background: #ffffff !important;
     color: #000000 !important;
     margin: 0 !important;
     padding: 0 !important;
+    width: 4in !important;
+    height: 2in !important;
+    max-width: 4in !important;
+    max-height: 2in !important;
+    overflow: hidden !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Completely remove background app chrome and layout from DOM flow */
+  body.has-thermal-modal #root > *:not(.label-modal-backdrop) {
+    display: none !important;
+  }
+
+  body.has-thermal-modal .label-modal-backdrop {
+    position: static !important;
+    background: transparent !important;
+    padding: 0 !important;
+    display: block !important;
     width: 100% !important;
     height: 100% !important;
-    overflow: visible !important;
   }
 
-  body * {
-    visibility: hidden;
-  }
-
-  /* Show only the active printable thermal label container */
-  .printable-thermal-label,
-  .printable-thermal-label * {
-    visibility: visible !important;
-  }
-
-  .printable-thermal-label {
-    position: fixed !important;
-    left: 0 !important;
-    top: 0 !important;
-    margin: 0 !important;
-    box-shadow: none !important;
-    border: none !important;
+  body.has-thermal-modal .label-modal-container {
     background: #ffffff !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    height: 100% !important;
+    overflow: hidden !important;
+  }
+
+  /* Hide interactive buttons, selectors, headers, and helper footers */
+  body.has-thermal-modal .label-modal-header,
+  body.has-thermal-modal .label-size-toggle,
+  body.has-thermal-modal .label-modal-footer,
+  body.has-thermal-modal .label-modal-body > div:last-child {
+    display: none !important;
+  }
+
+  body.has-thermal-modal .label-modal-body {
+    padding: 0 !important;
+    background: #ffffff !important;
+    gap: 0 !important;
+  }
+
+  body.has-thermal-modal .label-preview-wrapper {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  body.has-thermal-modal .printable-thermal-label {
+    position: static !important;
+    margin: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+    page-break-after: avoid !important;
+    page-break-inside: avoid !important;
+    overflow: hidden !important;
   }
 
   /* 4x2 inch label print size */
-  .printable-thermal-label.size-4x2 {
+  body.has-thermal-modal .printable-thermal-label.size-4x2 {
     width: 4.00in !important;
     height: 2.00in !important;
-    padding: 0.12in 0.15in !important;
+    padding: 0.12in 0.16in !important;
     box-sizing: border-box !important;
-    page-break-after: always;
   }
 
   /* 2x1 inch label print size */
-  .printable-thermal-label.size-2x1 {
+  body.has-thermal-modal .printable-thermal-label.size-2x1 {
     width: 2.00in !important;
     height: 1.00in !important;
     padding: 0.05in 0.08in !important;
     box-sizing: border-box !important;
-    page-break-after: always;
   }
-}
-
-/* Page rules for standard thermal printers */
-@page {
-  size: 4in 2in;
-  margin: 0;
 }
 
 /* --------------------------------------------------------------------------
@@ -597,6 +632,52 @@
 .scanned-action-btn.label:hover {
   background: #27272a;
   color: #ffffff;
+}
+
+/* Camera Scanner Viewport */
+.camera-scanner-view {
+  position: relative;
+  width: 100%;
+  height: 220px;
+  background: #000000;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #27272a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.camera-video-feed {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.camera-laser-reticle {
+  position: absolute;
+  inset: 18px;
+  border: 2px dashed rgba(16, 185, 129, 0.5);
+  border-radius: 6px;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.camera-laser-line {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  height: 2px;
+  background: #10b981;
+  box-shadow: 0 0 10px #10b981, 0 0 4px #34d399;
+  animation: laser-sweep 1.8s ease-in-out infinite alternate;
+}
+
+@keyframes laser-sweep {
+  0% { top: 8%; opacity: 0.5; }
+  100% { top: 92%; opacity: 1; }
 }
 
 /* Empty scan state */

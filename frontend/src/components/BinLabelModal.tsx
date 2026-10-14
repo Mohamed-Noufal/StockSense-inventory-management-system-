@@ -45,8 +45,223 @@ export const BinLabelModal: React.FC<BinLabelModalProps> = ({
     });
   }, [item.sku, labelSize]);
 
+  // Add body class for print scoping when modal is open
+  React.useEffect(() => {
+    document.body.classList.add('has-thermal-modal');
+    return () => {
+      document.body.classList.remove('has-thermal-modal');
+    };
+  }, []);
+
   const handlePrint = () => {
-    window.print();
+    const labelEl = document.getElementById('printable-thermal-label-element');
+    if (!labelEl) {
+      window.print();
+      return;
+    }
+
+    // Enterprise Isolated Print Frame: Prevents page-break sprawl and background DOM bleed
+    const printFrame = document.createElement('iframe');
+    printFrame.setAttribute('aria-hidden', 'true');
+    printFrame.style.position = 'fixed';
+    printFrame.style.top = '-9999px';
+    printFrame.style.left = '-9999px';
+    printFrame.style.width = '0px';
+    printFrame.style.height = '0px';
+    printFrame.style.border = 'none';
+    document.body.appendChild(printFrame);
+
+    const frameDoc = printFrame.contentWindow?.document;
+    if (!frameDoc) {
+      window.print();
+      return;
+    }
+
+    const widthIn = labelSize === '4x2' ? '4in' : '2in';
+    const heightIn = labelSize === '4x2' ? '2in' : '1in';
+
+    frameDoc.open();
+    frameDoc.write(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>StockSense Label - ${item.sku}</title>
+  <style>
+    @page {
+      size: ${widthIn} ${heightIn};
+      margin: 0;
+    }
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    html, body {
+      width: ${widthIn};
+      height: ${heightIn};
+      margin: 0;
+      padding: 0;
+      background: #ffffff;
+      color: #000000;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .printable-thermal-label {
+      width: ${widthIn} !important;
+      height: ${heightIn} !important;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: ${labelSize === '4x2' ? '0.12in 0.16in' : '0.06in 0.08in'} !important;
+      page-break-after: avoid !important;
+      page-break-inside: avoid !important;
+      overflow: hidden;
+    }
+    .thermal-header-4x2 {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 2px solid #000000;
+      padding-bottom: 4px;
+    }
+    .thermal-bin-code {
+      font-family: monospace;
+      font-size: 1.35rem;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      line-height: 1;
+    }
+    .thermal-company-sub {
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #333333;
+      margin-top: 2px;
+    }
+    .thermal-sku-box {
+      text-align: right;
+    }
+    .thermal-sku-text {
+      font-family: monospace;
+      font-size: 1rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+    .thermal-crit-tag {
+      display: inline-block;
+      font-size: 0.6rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      border: 1px solid #000000;
+      padding: 1px 4px;
+      border-radius: 2px;
+      margin-top: 2px;
+    }
+    .thermal-body-4x2 {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin: 4px 0;
+    }
+    .thermal-item-name {
+      font-size: 0.8rem;
+      font-weight: 700;
+      line-height: 1.2;
+      max-height: 2.4em;
+      overflow: hidden;
+    }
+    .thermal-item-meta {
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: #444444;
+      margin-top: 2px;
+    }
+    .thermal-barcode-box {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .thermal-barcode-box svg {
+      max-width: 100%;
+      height: auto;
+    }
+    .thermal-qr-box {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .thermal-qr-box svg {
+      display: block;
+    }
+    .thermal-footer-4x2 {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid #000000;
+      padding-top: 4px;
+      font-family: monospace;
+      font-size: 0.625rem;
+      font-weight: 600;
+    }
+    .thermal-compact-body {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 100%;
+    }
+    .thermal-compact-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 1px solid #000000;
+      padding-bottom: 2px;
+    }
+    .thermal-compact-bin {
+      font-family: monospace;
+      font-size: 0.95rem;
+      font-weight: 900;
+    }
+    .thermal-compact-sku {
+      font-family: monospace;
+      font-size: 0.8rem;
+      font-weight: 800;
+    }
+    .thermal-compact-name {
+      font-size: 0.65rem;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 2px;
+    }
+    .thermal-compact-barcode {
+      display: flex;
+      justify-content: center;
+      margin: 2px 0;
+    }
+  </style>
+</head>
+<body>
+  ${labelEl.outerHTML}
+</body>
+</html>`);
+    frameDoc.close();
+
+    setTimeout(() => {
+      printFrame.contentWindow?.focus();
+      printFrame.contentWindow?.print();
+      setTimeout(() => {
+        if (document.body.contains(printFrame)) {
+          document.body.removeChild(printFrame);
+        }
+      }, 1500);
+    }, 250);
   };
 
   const handleDownloadSvg = () => {
