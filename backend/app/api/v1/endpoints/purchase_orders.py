@@ -50,7 +50,50 @@ def list_purchase_orders(status: Optional[str] = None, db: Session = Depends(get
     if status:
         query = query.filter(PurchaseOrder.status == status.upper())
     pos = query.order_by(PurchaseOrder.id.desc()).all()
-    return [_format_po(po, db) for po in pos]
+    if not pos:
+        return []
+
+    # High-Performance Bulk Lookups: eliminate N+1 query bomb (reduces ~1,300 queries to 4 bulk queries)
+    suppliers_map = {s.id: s for s in db.query(Supplier).all()}
+    items_map = {i.id: i for i in db.query(Item).all()}
+    locations_map = {l.id: l for l in db.query(Location).all()}
+
+    po_ids = [p.id for p in pos]
+    all_lines = db.query(PurchaseOrderLine).filter(PurchaseOrderLine.po_id.in_(po_ids)).all()
+    lines_by_po = {}
+    for l in all_lines:
+        lines_by_po.setdefault(l.po_id, []).append(l)
+
+    results = []
+    for po in pos:
+        supplier = suppliers_map.get(po.supplier_id)
+        lines = lines_by_po.get(po.id, [])
+        line_responses = []
+        total_amount = 0
+        for l in lines:
+            item = items_map.get(l.item_id)
+            loc = locations_map.get(l.destination_location_id)
+            rem = max(0, l.qty_ordered - l.qty_received)
+            total_amount += l.qty_ordered * l.unit_price_minor
+            line_responses.append(POLineResponse(
+                id=l.id, po_id=l.po_id, item_id=l.item_id,
+                destination_location_id=l.destination_location_id,
+                qty_ordered=l.qty_ordered, qty_received=l.qty_received,
+                remaining_quantity=rem, unit_price_minor=l.unit_price_minor,
+                created_at=l.created_at, item_sku=item.sku if item else None,
+                item_name=item.name if item else None,
+                location_code=loc.code if loc else None
+            ))
+        results.append(POResponse(
+            id=po.id, po_number=po.po_number, supplier_id=po.supplier_id,
+            supplier_name=supplier.name if supplier else None,
+            status=po.status, created_at=po.created_at,
+            order_date=po.order_date, expected_date=po.expected_date,
+            notes=po.notes, source_recommendation_id=po.source_recommendation_id,
+            lines=line_responses,
+            total_lines=len(line_responses), total_amount_minor=total_amount
+        ))
+    return results
 
 @router.get("/suppliers", response_model=List[SupplierResponse])
 def list_suppliers(db: Session = Depends(get_db)):

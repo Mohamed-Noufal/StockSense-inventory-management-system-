@@ -70,13 +70,29 @@ class AIService:
         if status:
             query = query.filter(Recommendation.status == status.upper())
         recs = query.order_by(Recommendation.id.desc()).all()
+        if not recs:
+            return []
+
+        # High-Performance Bulk Lookups: eliminate N+1 query bomb (reduces ~400 queries to 5 bulk queries)
+        items_map = {i.id: i for i in db.query(Item).all()}
+        suppliers_map = {s.id: s for s in db.query(Supplier).all()}
+        locations_map = {l.id: l for l in db.query(Location).all()}
+
+        rec_ids = [r.id for r in recs]
+        linked_pos = db.query(PurchaseOrder).filter(PurchaseOrder.source_recommendation_id.in_(rec_ids)).all()
+        pos_by_rec = {p.source_recommendation_id: p for p in linked_pos}
+
+        run_ids = list({r.run_id for r in recs})
+        policies = db.query(ItemPolicy).filter(ItemPolicy.run_id.in_(run_ids)).all()
+        policy_map = {(p.run_id, p.item_id): p for p in policies}
+
         results = []
         for r in recs:
-            item = db.query(Item).filter_by(id=r.item_id).first()
-            sup = db.query(Supplier).filter_by(id=r.supplier_id).first()
-            loc = db.query(Location).filter_by(id=r.destination_location_id).first()
-            pol = db.query(ItemPolicy).filter_by(run_id=r.run_id, item_id=r.item_id).first()
-            linked_po = db.query(PurchaseOrder).filter_by(source_recommendation_id=r.id).first()
+            item = items_map.get(r.item_id)
+            sup = suppliers_map.get(r.supplier_id)
+            loc = locations_map.get(r.destination_location_id)
+            pol = policy_map.get((r.run_id, r.item_id))
+            linked_po = pos_by_rec.get(r.id)
             results.append(RecommendationResponse(
                 id=r.id, run_id=r.run_id, item_id=r.item_id, supplier_id=r.supplier_id,
                 destination_location_id=r.destination_location_id, status=r.status,

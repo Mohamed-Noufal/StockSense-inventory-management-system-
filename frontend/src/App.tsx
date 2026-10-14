@@ -168,55 +168,62 @@ const App: React.FC = () => {
   });
 
   const fetchData = async () => {
-    setLoading(true);
+    // Only set blocking loading on initial cold mount
+    if (items.length === 0) setLoading(true);
     setError(null);
     try {
-      const [
-        hData, rData, itmData, locData, ledgData, integData,
-        poData, supData, recData, runData, usersData, alertsData, balancesData
-      ] = await Promise.all([
-        api.getHealth().catch(() => null),
-        api.getReadiness().catch(() => null),
+      // Tier 1: Core Operational Inventory (Renders Overview & Cards in ~30ms)
+      const [itmData, locData, balancesData, poData, ledgData] = await Promise.all([
         api.getItems().catch(() => []),
         api.getLocations().catch(() => []),
-        api.getLedger(30).catch(() => []),
-        api.getIntegrityCheck().catch(() => null),
-        api.getPurchaseOrders().catch(() => []),
-        api.getSuppliers().catch(() => []),
-        api.getAIRecommendations().catch(() => []),
-        api.getAIRuns().catch(() => []),
-        api.getUsers().catch(() => []),
-        api.getAlerts().catch(() => []),
         api.getBalances().catch(() => []),
+        api.getPurchaseOrders().catch(() => []),
+        api.getLedger(30).catch(() => []),
       ]);
-      setHealth(hData);
-      setReadiness(rData);
+
       setItems(itmData);
       setLocations(locData);
       setBalances(balancesData);
-      setLedger(ledgData);
-      setIntegrity(integData);
       setOrders(poData);
-      setSuppliers(supData);
-      setRecommendations(recData);
-      setAiRuns(runData);
-      setUsers(usersData);
-      setAlerts(alertsData);
-
-      if (usersData && usersData.length > 0) {
-        const savedUserId = localStorage.getItem('stocksense_current_user_id');
-        const matched = savedUserId ? usersData.find((u: User) => String(u.id) === savedUserId) : null;
-        setCurrentUser((prev) => prev || matched || usersData[0]);
-      }
+      setLedger(ledgData);
 
       if (itmData.length > 0 && selectedItemId === 0) setSelectedItemId(itmData[0].id);
       if (locData.length > 0 && selectedLocId === 0) {
         setSelectedLocId(locData[0].id);
         if (locData.length > 1) setTargetLocId(locData[1].id);
       }
+
+      // Unblock UI immediately so metrics and cards render instantly
+      setLoading(false);
+
+      // Tier 2: Supporting Subsystems (AI, Health, Users, Alerts, Integrity)
+      const [hData, rData, supData, recData, runData, usersData, alertsData, integData] = await Promise.all([
+        api.getHealth().catch(() => null),
+        api.getReadiness().catch(() => null),
+        api.getSuppliers().catch(() => []),
+        api.getAIRecommendations().catch(() => []),
+        api.getAIRuns().catch(() => []),
+        api.getUsers().catch(() => []),
+        api.getAlerts().catch(() => []),
+        api.getIntegrityCheck().catch(() => null),
+      ]);
+
+      setHealth(hData);
+      setReadiness(rData);
+      setSuppliers(supData);
+      setRecommendations(recData);
+      setAiRuns(runData);
+      setUsers(usersData);
+      setAlerts(alertsData);
+      setIntegrity(integData);
+
+      if (usersData && usersData.length > 0) {
+        const savedUserId = localStorage.getItem('stocksense_current_user_id');
+        const matched = savedUserId ? usersData.find((u: User) => String(u.id) === savedUserId) : null;
+        setCurrentUser((prev) => prev || matched || usersData[0]);
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to fetch inventory data');
-    } finally {
       setLoading(false);
     }
   };
