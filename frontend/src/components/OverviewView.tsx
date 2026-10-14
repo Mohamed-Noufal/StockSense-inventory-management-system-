@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Package, DollarSign, AlertTriangle, ClipboardList,
   ArrowUpRight, ArrowDownRight, ArrowRight, ArrowLeftRight,
@@ -17,6 +17,7 @@ export interface OverviewViewProps {
   orders: PurchaseOrder[];
   recommendations: AIRecommendation[];
   currentUser?: User | null;
+  loading?: boolean;
   onNavigateTab: (tab: 'overview' | 'inventory' | 'ledger' | 'procurement' | 'ai' | 'activity' | 'sprint' | 'diagnostics' | 'users') => void;
   onOpenMovementModal?: () => void;
   onInspectRec?: (rec: AIRecommendation) => void;
@@ -293,8 +294,37 @@ const CATEGORIES_DATA: DonutCategory[] = [
   { name: 'Others', pct: 5, color: '#64748b' },
 ];
 
-const StockCategoryDonutChart: React.FC<{ totalCount: number }> = ({ totalCount }) => {
+const StockCategoryDonutChart: React.FC<{ items: InventoryItem[]; totalCount: number; loading?: boolean }> = ({ items, totalCount, loading }) => {
   const [activeCategory, setActiveCategory] = useState<DonutCategory | null>(null);
+
+  const categoriesData = useMemo(() => {
+    if (!items || items.length === 0) return CATEGORIES_DATA;
+    const catCounts = new Map<string, number>();
+    items.forEach((itm) => {
+      const cat = itm.category_name || 'General';
+      catCounts.set(cat, (catCounts.get(cat) || 0) + 1);
+    });
+    const colors = ['#ffffff', '#2dd4bf', '#f59e0b', '#c084fc', '#ef4444', '#64748b', '#3b82f6'];
+    const sorted = Array.from(catCounts.entries()).sort((a, b) => b[1] - a[1]);
+    const top = sorted.slice(0, 5);
+    const othersCount = sorted.slice(5).reduce((acc, cur) => acc + cur[1], 0);
+    const total = items.length;
+
+    const res: DonutCategory[] = top.map(([name, count], idx) => ({
+      name,
+      pct: Math.max(1, Math.round((count / total) * 100)),
+      color: colors[idx % colors.length],
+    }));
+
+    if (othersCount > 0) {
+      res.push({
+        name: 'Others',
+        pct: Math.max(1, Math.round((othersCount / total) * 100)),
+        color: '#64748b',
+      });
+    }
+    return res;
+  }, [items]);
 
   const radius = 62;
   const strokeWidth = 24;
@@ -307,7 +337,7 @@ const StockCategoryDonutChart: React.FC<{ totalCount: number }> = ({ totalCount 
       {/* SVG Donut */}
       <div className="donut-visual-box">
         <svg viewBox="0 0 160 160">
-          {CATEGORIES_DATA.map((cat) => {
+          {categoriesData.map((cat) => {
             const strokeDasharray = `${(cat.pct / 100) * circumference} ${circumference}`;
             const strokeDashoffset = -currentOffset;
             currentOffset += (cat.pct / 100) * circumference;
@@ -340,14 +370,14 @@ const StockCategoryDonutChart: React.FC<{ totalCount: number }> = ({ totalCount 
 
         {/* Center Callout */}
         <div className="donut-center-metric">
-          <div className="number">{activeCategory ? `${activeCategory.pct}%` : totalCount}</div>
+          <div className="number">{loading && totalCount === 0 ? '—' : (activeCategory ? `${activeCategory.pct}%` : totalCount)}</div>
           <div className="unit">{activeCategory ? activeCategory.name.split(' ')[0] : 'Items'}</div>
         </div>
       </div>
 
       {/* Legend List */}
       <div className="donut-legend-list">
-        {CATEGORIES_DATA.map((cat) => (
+        {categoriesData.map((cat) => (
           <div
             key={cat.name}
             className="donut-legend-row"
@@ -380,24 +410,27 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   orders,
   recommendations,
   currentUser: _currentUser,
+  loading = false,
   onNavigateTab,
   onOpenMovementModal,
   onInspectRec,
 }) => {
-  // Live computed metrics with realistic enterprise fallbacks
-  const totalItemsCount = items.length > 0 ? items.length : 248;
+  // Live computed metrics directly from authoritative database props
+  const totalItemsCount = items.length;
 
-  const totalStockValue = items.length > 0
-    ? items.reduce((sum, itm) => sum + (itm.total_on_hand * itm.unit_cost_minor) / 100, 0)
-    : 482350;
+  const totalStockValue = items.reduce(
+    (sum, itm) => sum + (itm.total_on_hand * itm.unit_cost_minor) / 100,
+    0
+  );
 
-  const lowStockCount = items.length > 0
-    ? items.filter((itm) => itm.criticality === 'CRITICAL' || itm.total_on_hand <= 10).length
-    : 18;
+  // Low stock = current total on hand is at or below reorder threshold
+  const lowStockCount = items.filter(
+    (itm) => itm.total_on_hand <= (itm.reorder_point ?? 10)
+  ).length;
 
-  const openPOCount = orders.length > 0
-    ? orders.filter((o) => o.status === 'DRAFT' || o.status === 'APPROVED').length
-    : 7;
+  const openPOCount = orders.filter(
+    (o) => o.status === 'DRAFT' || o.status === 'APPROVED'
+  ).length;
 
   // Format Currency
   const formattedStockValue = new Intl.NumberFormat('en-US', {
@@ -406,14 +439,33 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
     maximumFractionDigits: 0,
   }).format(totalStockValue);
 
-  // Fallback / Live low stock items
-  const lowStockItems = [
+  // Dynamic Low stock items from live items
+  const realLowStockItems = useMemo(() => {
+    if (!items || items.length === 0) return [];
+    return items
+      .filter((itm) => itm.total_on_hand <= (itm.reorder_point ?? 10))
+      .sort((a, b) => a.total_on_hand - b.total_on_hand)
+      .slice(0, 5)
+      .map((itm) => ({
+        name: itm.name,
+        sku: itm.sku,
+        stock: itm.total_on_hand,
+        reorder: itm.reorder_point ?? 10,
+        icon: Wrench,
+      }));
+  }, [items]);
+
+  const fallbackLowStockItems = [
     { name: 'Hydraulic Pump', sku: 'HP-001', stock: 3, reorder: 10, icon: Wrench },
     { name: 'Pressure Valve', sku: 'PV-042', stock: 5, reorder: 15, icon: Droplet },
     { name: 'Drill Bit 3/4"', sku: 'DB-034', stock: 7, reorder: 20, icon: Disc },
     { name: 'Lubricant Oil 5L', sku: 'LO-005', stock: 8, reorder: 25, icon: Droplet },
     { name: 'Filter Cartridge', sku: 'FC-012', stock: 9, reorder: 30, icon: Filter },
   ];
+
+  const displayedLowStockItems = realLowStockItems.length > 0
+    ? realLowStockItems
+    : (loading ? [] : fallbackLowStockItems);
 
   // Dynamic Recent Activity from live ledger with resilient fallback
   const fallbackActivities = [
@@ -532,7 +584,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
           </div>
           <div className="kpi-body">
             <span className="kpi-label">Total Items</span>
-            <span className="kpi-value">{totalItemsCount}</span>
+            <span className="kpi-value">{loading && totalItemsCount === 0 ? '—' : totalItemsCount}</span>
             <div className="kpi-trend positive">
               <ArrowUpRight style={{ width: 14, height: 14 }} />
               <span>12%</span>
@@ -548,7 +600,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
           </div>
           <div className="kpi-body">
             <span className="kpi-label">Total Stock Value</span>
-            <span className="kpi-value">{formattedStockValue}</span>
+            <span className="kpi-value">{loading && totalItemsCount === 0 ? '—' : formattedStockValue}</span>
             <div className="kpi-trend positive">
               <ArrowUpRight style={{ width: 14, height: 14 }} />
               <span>8%</span>
@@ -564,7 +616,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
           </div>
           <div className="kpi-body">
             <span className="kpi-label">Low Stock Items</span>
-            <span className="kpi-value">{lowStockCount}</span>
+            <span className="kpi-value">{loading && totalItemsCount === 0 ? '—' : lowStockCount}</span>
             <div className="kpi-trend positive">
               <ArrowDownRight style={{ width: 14, height: 14 }} />
               <span>32%</span>
@@ -580,7 +632,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
           </div>
           <div className="kpi-body">
             <span className="kpi-label">Open POs</span>
-            <span className="kpi-value">{openPOCount}</span>
+            <span className="kpi-value">{loading && totalItemsCount === 0 ? '—' : openPOCount}</span>
             <div className="kpi-trend positive">
               <ArrowUpRight style={{ width: 14, height: 14 }} />
               <span>2%</span>
@@ -628,7 +680,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
             </div>
           </div>
 
-          <StockCategoryDonutChart totalCount={totalItemsCount} />
+          <StockCategoryDonutChart items={items} totalCount={totalItemsCount} loading={loading} />
         </div>
       </div>
 
@@ -663,7 +715,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                 </tr>
               </thead>
               <tbody>
-                {lowStockItems.map((row) => {
+                {displayedLowStockItems.map((row) => {
                   const Icon = row.icon;
                   return (
                     <tr

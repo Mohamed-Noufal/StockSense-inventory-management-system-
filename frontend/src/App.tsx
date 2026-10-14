@@ -28,8 +28,49 @@ import { BarcodeScannerModal } from './components/BarcodeScannerModal';
 import { NewItemModal } from './components/NewItemModal';
 import { useBarcodeScanner } from './hooks/useBarcodeScanner';
 
+const VALID_TABS = ['overview', 'inventory', 'ledger', 'procurement', 'ai', 'activity', 'sprint', 'diagnostics', 'users'] as const;
+type TabType = typeof VALID_TABS[number];
+
+const getInitialTab = (): TabType => {
+  if (typeof window !== 'undefined') {
+    const rawHash = window.location.hash.replace(/^#\/?/, '').toLowerCase() as TabType;
+    if (VALID_TABS.includes(rawHash)) {
+      return rawHash;
+    }
+    const saved = localStorage.getItem('stocksense_active_tab') as TabType;
+    if (saved && VALID_TABS.includes(saved)) {
+      return saved;
+    }
+  }
+  return 'overview';
+};
+
 const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'inventory' | 'ledger' | 'procurement' | 'ai' | 'activity' | 'sprint' | 'diagnostics' | 'users'>('overview');
+  const [activeTab, setActiveTab] = useState<TabType>(getInitialTab);
+
+  const handleTabChange = (tab: TabType) => {
+    setActiveTab(tab);
+    if (typeof window !== 'undefined') {
+      window.location.hash = `#/${tab}`;
+      localStorage.setItem('stocksense_active_tab', tab);
+    }
+  };
+
+  useEffect(() => {
+    const onHashChange = () => {
+      const rawHash = window.location.hash.replace(/^#\/?/, '').toLowerCase() as TabType;
+      if (VALID_TABS.includes(rawHash)) {
+        setActiveTab(rawHash);
+        localStorage.setItem('stocksense_active_tab', rawHash);
+      }
+    };
+    window.addEventListener('hashchange', onHashChange);
+    // Ensure initial hash is present
+    if (!window.location.hash) {
+      window.location.hash = `#/${activeTab}`;
+    }
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, [activeTab]);
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [readiness, setReadiness] = useState<ReadyResponse | null>(null);
   const [items, setItems] = useState<InventoryItem[]>([]);
@@ -358,7 +399,7 @@ const App: React.FC = () => {
     <div className="app-container">
       <Sidebar
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={handleTabChange}
         itemsCount={items.length}
         ledgerCount={ledger.length}
         poCount={orders.length}
@@ -383,7 +424,7 @@ const App: React.FC = () => {
           users={users}
           currentUser={currentUser}
           onSelectUser={handleSelectUser}
-          onNavigateTab={(tab) => setActiveTab(tab)}
+          onNavigateTab={(tab) => handleTabChange(tab as TabType)}
           onOpenScanner={() => setShowScannerModal(true)}
         />
 
@@ -405,12 +446,14 @@ const App: React.FC = () => {
           {activeTab === 'inventory' && (
             <InventoryView
               items={items}
+              orders={orders}
+              loading={loading}
               onAction={(itemId, type) => {
                 setSelectedItemId(itemId);
                 setModalType(type);
                 setShowModal(true);
               }}
-              onNavigateTab={(tab) => setActiveTab(tab)}
+              onNavigateTab={handleTabChange}
               onPrintLabel={(item) => setLabelPrintItem(item)}
               onAddNewItem={() => handleOpenNewItemModal('')}
             />
@@ -457,7 +500,7 @@ const App: React.FC = () => {
               onDismissRec={handleDismissRecommendation}
               onNavigateToPO={(poId) => {
                 setNavPoId(poId);
-                setActiveTab('procurement');
+                handleTabChange('procurement');
               }}
               loading={loading}
               runningAi={runningAi}
@@ -481,7 +524,7 @@ const App: React.FC = () => {
               currentUser={currentUser}
               onSelectUser={handleSelectUser}
               ledger={ledger}
-              onNavigateTab={(tab) => setActiveTab(tab)}
+              onNavigateTab={(tab) => handleTabChange(tab as TabType)}
             />
           )}
           {activeTab === 'overview' && (
@@ -492,7 +535,8 @@ const App: React.FC = () => {
               orders={orders}
               recommendations={recommendations}
               currentUser={currentUser}
-              onNavigateTab={(tab) => setActiveTab(tab as any)}
+              loading={loading}
+              onNavigateTab={(tab) => handleTabChange(tab as TabType)}
               onOpenMovementModal={() => { setModalType('RECEIPT'); setShowModal(true); }}
               onInspectRec={(rec) => setInspectingRec(rec)}
             />

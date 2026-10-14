@@ -6,13 +6,15 @@ interface InventoryKpiCardsProps {
   totalValue?: number;
   lowStockCount?: number;
   openPOCount?: number;
+  loading?: boolean;
 }
 
 export const InventoryKpiCards: React.FC<InventoryKpiCardsProps> = ({
-  totalItems = 248,
-  totalValue = 482350,
-  lowStockCount = 18,
-  openPOCount = 7,
+  totalItems = 0,
+  totalValue = 0,
+  lowStockCount = 0,
+  openPOCount = 0,
+  loading = false,
 }) => {
   // Format monetary value cleanly
   const formattedValue = new Intl.NumberFormat('en-US', {
@@ -31,7 +33,7 @@ export const InventoryKpiCards: React.FC<InventoryKpiCardsProps> = ({
           </div>
           <div>
             <div className="kpi-label">Total Items</div>
-            <div className="kpi-value">{totalItems}</div>
+            <div className="kpi-value">{loading && totalItems === 0 ? '—' : totalItems}</div>
           </div>
         </div>
         <div className="kpi-trend-pill trend-positive">
@@ -49,7 +51,7 @@ export const InventoryKpiCards: React.FC<InventoryKpiCardsProps> = ({
           </div>
           <div>
             <div className="kpi-label">Total Stock Value</div>
-            <div className="kpi-value">{formattedValue}</div>
+            <div className="kpi-value">{loading && totalItems === 0 ? '—' : formattedValue}</div>
           </div>
         </div>
         <div className="kpi-trend-pill trend-positive">
@@ -67,7 +69,7 @@ export const InventoryKpiCards: React.FC<InventoryKpiCardsProps> = ({
           </div>
           <div>
             <div className="kpi-label">Low Stock Items</div>
-            <div className="kpi-value">{lowStockCount}</div>
+            <div className="kpi-value">{loading && totalItems === 0 ? '—' : lowStockCount}</div>
           </div>
         </div>
         <div className="kpi-trend-pill trend-positive">
@@ -85,7 +87,7 @@ export const InventoryKpiCards: React.FC<InventoryKpiCardsProps> = ({
           </div>
           <div>
             <div className="kpi-label">Open POs</div>
-            <div className="kpi-value">{openPOCount}</div>
+            <div className="kpi-value">{loading && totalItems === 0 ? '—' : openPOCount}</div>
           </div>
         </div>
         <div className="kpi-trend-pill trend-positive">

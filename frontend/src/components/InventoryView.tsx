@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { InventoryItem, StockMovement } from '../types';
+import { InventoryItem, StockMovement, PurchaseOrder } from '../types';
 import { api } from '../api/client';
 import { InventoryKpiCards } from './InventoryKpiCards';
 import { InventoryToolbar } from './InventoryToolbar';
@@ -8,6 +8,8 @@ import { InventoryItemDetail } from './InventoryItemDetail';
 
 interface InventoryViewProps {
   items: InventoryItem[];
+  orders?: PurchaseOrder[];
+  loading?: boolean;
   onAction: (itemId: number, type: 'RECEIPT' | 'ISSUE' | 'TRANSFER') => void;
   onNavigateTab?: (tab: any) => void;
   onPrintLabel?: (item: InventoryItem) => void;
@@ -190,45 +192,34 @@ const REFERENCE_MOCK_ITEMS: InventoryItem[] = [
 
 export const InventoryView: React.FC<InventoryViewProps> = ({
   items: backendItems,
+  orders = [],
+  loading = false,
   onAction,
   onNavigateTab = () => {},
   onPrintLabel,
   onAddNewItem,
 }) => {
-  // Combine real database items with canonical ordering
+  // Use real backend items directly from database
   const allItems = useMemo(() => {
     if (backendItems && backendItems.length > 0) {
-      const backendSkuMap = new Map(backendItems.map((b) => [b.sku, b]));
-      const ordered: InventoryItem[] = [];
-      const addedSkus = new Set<string>();
-
-      // 1. Prioritize canonical mock items with their real SQLite database IDs & balances
-      REFERENCE_MOCK_ITEMS.forEach((refItem) => {
-        const real = backendSkuMap.get(refItem.sku);
-        if (real) {
-          ordered.push(real);
-          addedSkus.add(real.sku);
-        } else {
-          ordered.push(refItem);
-          addedSkus.add(refItem.sku);
-        }
-      });
-
-      // 2. Append all other operational items from database
-      backendItems.forEach((bItem) => {
-        if (!addedSkus.has(bItem.sku)) {
-          ordered.push(bItem);
-          addedSkus.add(bItem.sku);
-        }
-      });
-
-      return ordered;
+      return backendItems;
     }
     return REFERENCE_MOCK_ITEMS;
   }, [backendItems]);
 
-  // Selected item state (default to HP-001 Hydraulic Pump)
+  // Selected item state
   const [selectedItem, setSelectedItem] = useState<InventoryItem>(allItems[0]);
+
+  // Sync selectedItem when allItems loads
+  useEffect(() => {
+    if (allItems.length > 0) {
+      setSelectedItem((prev) => {
+        if (!prev) return allItems[0];
+        const match = allItems.find((i) => i.id === prev.id);
+        return match || allItems[0];
+      });
+    }
+  }, [allItems]);
 
   // Ledger movements for selected item
   const [itemMovements, setItemMovements] = useState<StockMovement[]>([]);
@@ -353,11 +344,20 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
     document.body.removeChild(link);
   };
 
-  // KPI aggregates
-  const totalItemsCount = 248; // Preserving reference KPI number
-  const totalStockValue = 482350; // Preserving reference KPI number
-  const lowStockCount = 18; // Preserving reference KPI number
-  const openPOCount = 7; // Preserving reference KPI number
+  // Live KPI aggregates computed from authoritative items and orders
+  const totalItemsCount = backendItems.length > 0
+    ? backendItems.length
+    : (loading ? 0 : REFERENCE_MOCK_ITEMS.length);
+
+  const totalStockValue = backendItems.length > 0
+    ? backendItems.reduce((sum, itm) => sum + (itm.total_on_hand * itm.unit_cost_minor) / 100, 0)
+    : (loading ? 0 : REFERENCE_MOCK_ITEMS.reduce((sum, itm) => sum + (itm.total_on_hand * itm.unit_cost_minor) / 100, 0));
+
+  const lowStockCount = backendItems.length > 0
+    ? backendItems.filter((itm) => itm.total_on_hand <= (itm.reorder_point ?? 10)).length
+    : (loading ? 0 : REFERENCE_MOCK_ITEMS.filter((itm) => itm.total_on_hand <= (itm.reorder_point ?? 10)).length);
+
+  const openPOCount = orders.filter((o) => o.status === 'DRAFT' || o.status === 'APPROVED').length;
 
   return (
     <div className="inventory-view-root">
@@ -367,6 +367,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
         totalValue={totalStockValue}
         lowStockCount={lowStockCount}
         openPOCount={openPOCount}
+        loading={loading}
       />
 
       {/* 3. Split Layout Workstation */}
