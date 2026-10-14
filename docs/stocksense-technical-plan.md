@@ -653,7 +653,8 @@ Error codes: `VALIDATION_ERROR`, `NOT_FOUND`, `INSUFFICIENT_STOCK`, `DUPLICATE_R
 | Method | Path | Description | Tier |
 |---|---|---|---|
 | GET, POST | `/categories` | List / create | T1 |
-| GET, POST | `/items` | List (filters: `q`, `category_id`, `is_active`, `criticality`, `below_reorder`) / create | T1 |
+| GET | `/items` | List (filters: `q`, `category_id`, `is_active`, `criticality`, `below_reorder`; enriched with `supplier_skus`) | T1 |
+| POST | `/items` | Fast-track onboarding: create item, link primary supplier, initialize balance & record atomic `RECEIPT` | T1 |
 | GET, PATCH | `/items/{id}` | Detail (includes stock summary) / update (deactivate via `is_active=false`) | T1 |
 | GET, POST | `/items/{id}/suppliers` | Supplier terms for an item / add | T1 |
 | PATCH | `/items/{id}/suppliers/{supplier_id}` | Update terms | T1 |
@@ -663,6 +664,8 @@ Error codes: `VALIDATION_ERROR`, `NOT_FOUND`, `INSUFFICIENT_STOCK`, `DUPLICATE_R
 | PATCH | `/locations/{id}` | Update | T1 |
 | GET, POST | `/projects` | List / create | T1 |
 | PATCH | `/projects/{id}` | Update | T1 |
+
+*Note on Inbound Receiving & Aliasing:* `POST /items` accepts `supplier_sku` and initial inventory. In a single atomic transaction, it inserts the item, links the supplier terms, initializes `stock_balances`, and writes an immutable `RECEIPT` row in `stock_movements`, ensuring continuous zero-mismatch ledger auditability. `GET /items` aggregates `supplier_skus` to allow the universal optical scanner to instantly resolve vendor packaging barcodes (`VND-...`) to internal inventory SKUs.
 
 **Stock**
 

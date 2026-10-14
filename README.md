@@ -94,6 +94,9 @@ All specifications, architectural RFCs, sprint roadmaps, and autonomous agent gu
 | **Sprint 4: AI & Replenishment** | Forecasting & Advisory | **Completed** | Zero-leakage demand extraction, Croston & SBA intermittent demand models, risk policies, human approval to Draft PO, AI Insights screen. |
 | **Sprint 5: Golden Demo Verification** | Workflow Hardening | **Completed** | Automated golden flow integration test, end-to-end audit reconciliation, zero-mismatch verification, verification script. |
 | **Sprint 6: Ergonomics & User Audit** | Workspace & Directory | **Completed** | Collapsible rail sidebar with local persistence, streamlined header, real database user directory, and non-repudiable ledger audit attribution. |
+| **Sprint 7–12: Workstations & Integrity** | High-Density Workstations | **Completed** | Split-pane Inventory, Operations movement center, Procurement dock, AI replenishment intelligence, and Activity & Integrity center. |
+| **Sprint 13: Warehouse Mobility** | Physical Docs & Barcodes | **Completed** | Document attachment engine, printable transit waybills, thermal shelf bin labels, and USB barcode gun support. |
+| **Sprint 14: Enterprise Receiving & Onboarding** | Universal Scanning & Catalog | **Completed** | Universal Multi-Code Scanner (PO slips, vendor SKU cross-referencing, internal SKUs), in-scanner line receiving, fast-track catalog onboarding (`POST /api/v1/inventory/items`), and isolated iframe thermal print engine. |
 
 ---
 
@@ -199,16 +202,16 @@ stocksense/
 │   │   ├── schemas/            # Pydantic v2 schemas and validation (health, inventory, purchase_orders)
 │   │   ├── api/v1/             # Modular REST API endpoints (/health, /inventory, /po, /ai)
 │   │   └── services/           # Authoritative domain services
-│   │       ├── inventory_service.py   # Movements, over-issue rejection, paired transfers
+│   │       ├── inventory_service.py   # Movements, item onboarding, over-issue rejection, paired transfers
 │   │       ├── integrity_service.py   # Ledger-sum vs running-balance reconciliation
 │   │       └── procurement_service.py # PO state machine, goods receiving, over-receipt check
-│   ├── tests/                  # Backend pytest suite (27 passed, full golden flow integration)
+│   ├── tests/                  # Backend pytest suite (40 passed, 100% verified)
 │   ├── scripts/                # Database initialization & synthetic generation (init_db, seed_data)
 │   └── requirements.txt        # Pinned Python dependencies
 ├── frontend/
 │   ├── src/
 │   │   ├── api/                # Central typed REST API client (client.ts)
-│   │   ├── components/         # Modular UI views (Sidebar, Header, InventoryView, LedgerView, ProcurementView, AIInsightsView, AIMetricsCards, AIRowItem, RecommendationModal, MovementModal, etc.)
+│   │   ├── components/         # Modular UI views (Sidebar, Header, InventoryView, OperationsView, ProcurementView, AIInsightsView, ActivityView, BarcodeScannerModal, NewItemModal, BinLabelModal, WaybillModal, etc.)
 │   │   ├── types/              # TypeScript domain types & API models (index.ts)
 │   │   ├── App.tsx             # Concise layout coordinator (<260 lines)
 │   │   ├── index.css           # Industrial dark slate design tokens & styles
@@ -262,13 +265,16 @@ stocksense/
 ## 9. Verification & Golden Demo Flow
 
 The system is tested against the Golden End-to-End Workflow:
-1. Verify database integrity check (0 mismatches between ledger and balances).
-2. Record an item issue and verify balance decrements and non-negativity constraint.
-3. Attempt over-issue and confirm immediate rejection.
-4. Run AI Replenishment to generate recommendations.
-5. Inspect recommendation explanation in UI and approve purchase order.
-6. Partially receive goods against the PO and observe ledger and balance updates.
-7. Re-run integrity check verifying total balance equals the sum of ledger transactions.
+1. **Ledger Integrity Audit:** Verify database integrity check (`0 mismatches` between ledger and balances).
+2. **Issue Operation:** Record an item issue and verify balance decrements and non-negativity constraint.
+3. **Over-Issue Protection:** Attempt over-issue and confirm immediate rejection with HTTP 400.
+4. **AI Replenishment:** Run AI Replenishment to generate intermittent demand recommendations (Croston/SBA).
+5. **Human Approval:** Inspect recommendation explanation in UI and approve purchase order (`DRAFT` PO).
+6. **Inbound PO Receiving:** Partially receive goods against the PO and observe ledger and balance updates.
+7. **Universal Barcode Scanning:** Scan PO packing slips (`PO-...`) in Universal Scanner HUD to receive open lines, cross-reference vendor SKUs (`VND-...`) to internal SKUs, or detect unlisted codes.
+8. **Fast-Track Onboarding:** Register new unlisted catalog items with vendor terms, initializing balance and recording an atomic ledger `RECEIPT` in a single transaction.
+9. **Thermal Tag Printing:** Generate and print exact single-page vector thermal bin labels (4"×2" or 2"×1") via the isolated iframe print engine.
+10. **Re-reconciliation:** Re-run integrity check verifying total balance equals the sum of ledger transactions with 100% mathematical consistency.
 
 ---
 

@@ -623,12 +623,18 @@ Base path: `/api/v1`. Use JSON request/response schemas and consistent error cod
 | GET | `/health` | Process liveness | Must |
 | GET | `/ready` | Database/schema readiness | Must |
 | GET, POST | `/categories` | List/create categories | Must if categories are editable in UI; otherwise seed-only |
-| GET, POST | `/items` | List/filter/create items | Must |
+| GET | `/items` | List/filter items (enriched with `supplier_skus: List[str]`) | Must |
+| POST | `/items` | Fast-track onboard new item with supplier terms, balance & atomic ledger receipt | Must |
 | GET, GET/PATCH | `/items/{id}` | Detail/update item | Must |
 | GET, POST | `/suppliers` | List/create suppliers | Must |
 | GET, POST | `/locations` | List/create locations | Must |
 | GET, POST | `/items/{id}/suppliers` | Supplier terms for an item | Must for recommendations |
 | GET, POST | `/projects` | Optional issue/project references | Should |
+
+#### 8.1.1 Fast-Track Item Master Onboarding & Supplier Aliasing
+- **Schema (`ItemCreate`)**: Accepts `sku`, `name`, `category_id`, `base_uom`, `criticality`, `unit_cost`, optional `initial_quantity`, optional `initial_location_id`, optional `primary_supplier_id`, optional `supplier_sku` (vendor part number), optional `supplier_unit_price`, optional `min_order_qty`, and optional `lead_time_days`.
+- **Atomic Transactional Guarantee**: The endpoint `POST /api/v1/inventory/items` registers the item in `items`, attaches supplier purchasing terms in `item_suppliers`, initializes `stock_balances`, and if `initial_quantity > 0`, records an immutable `RECEIPT` in `stock_movements` in the exact same database transaction.
+- **Supplier SKU Resolution**: All `GET /api/v1/inventory/items` responses include aggregated `supplier_skus` from `item_suppliers`, enabling universal multi-code optical scanners to instantly resolve vendor packaging barcodes (`VND-...`) to internal inventory SKUs without additional network hops.
 
 ### 8.2 Stock
 

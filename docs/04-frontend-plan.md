@@ -810,18 +810,54 @@ The Operations Workstation (`/operations`, rendered via `OperationsView.tsx`) ma
   - Wired into `OperationsTable.tsx`, `OperationsView.tsx`, `ActivityView.tsx`, and `App.tsx`.
 
 
-### 16.2 Warehouse Mobility: Barcode & QR Label Printing (`BinLabelModal.tsx` & `BarcodeScannerModal.tsx`) (COMPLETED)
-- **Thermal Label Generator (`BinLabelModal.tsx`)**:
-  - Zebra ZD421/ZT230 compliant printable label generator with size toggle: 4"×2" Rack/Bin Tag and 2"×1" Compact Part Sticker.
-  - Zero-dependency mathematical vector Code 128 (Subset B) 1D barcode and 2D Matrix QR code SVG renderer (`frontend/src/utils/barcode.ts`), guaranteeing 100% crisp vector output on thermal print heads without anti-aliasing raster blur.
-  - Full industrial metadata: rack bin location coordinates, SKU, item description, category, criticality rating, ROP, stock on-hand, unit cost, and download SVG action.
-  - Scoped print stylesheet in `frontend/src/styles/mobility.css` with `@page { size: 4in 2in; margin: 0; }` preventing page creep and blank labels.
-- **Unified Hardware-Agnostic Scanner (`BarcodeScannerModal.tsx`)**:
-  - Global USB barcode scanner gun listener (`frontend/src/hooks/useBarcodeScanner.ts`) distinguishing hardware bursts (<50ms keystrokes + Enter suffix) from manual typing, with 1,500ms debounce gate preventing double-scans.
+### 16.2 Warehouse Mobility & Inbound Receiving: Barcode & QR Scanner, Thermal Printing & Item Onboarding (COMPLETED)
+
+#### 16.2.1 Universal Hardware-Agnostic Scanner HUD (`BarcodeScannerModal.tsx`)
+- **Global USB & Optical Scanner Gun Listener (`frontend/src/hooks/useBarcodeScanner.ts`)**:
+  - Automatically captures hardware keystroke bursts (<50ms inter-character latency ending in `Enter`) across physical USB HID scanner guns and mobile Bluetooth wedges.
+  - 1,500ms debounce gate prevents duplicate accidental scans.
   - Web Audio API synthesized tactile confirmation (`frontend/src/utils/audio.ts`): 800Hz positive sine chime for valid scans, 220Hz buzz for unrecognized barcodes.
-  - Quick interview demo test chips allowing immediate one-click simulation of real spare parts (`HVAC-FLT-001`, `VALV-CHK-002`, `ELEC-MOD-005`, etc.).
-  - Instant transaction routing: 1-click quick actions to Record Issue (Pick), Record Receipt, Print Bin Tag, or Inspect in Inventory.
-  - Accessible anywhere via `F2` global hotkey or top bar `Scan SKU` button.
+  - Accessible system-wide via global `F2` hotkey and top bar `Scan SKU` button.
+
+- **Multi-Format Code Resolution Engine**:
+  1. **Purchase Order Packing Slips (`PO-*`)**:
+     - Automatically parses purchase order barcodes (e.g., `PO-2026-0001`).
+     - Renders an interactive PO overview with supplier metadata, status pill, and line-level fulfillment progress bars (`received / ordered`).
+     - **In-Scanner Goods Receiving**: Allows the storekeeper to select destination warehouse location, specify received quantity, and execute goods receipt directly from the scanner HUD without navigating away.
+     - **Thermal Label Print Action**: 1-click action to print thermal shelf bin tags immediately after receiving.
+  2. **Vendor Part Numbers / Supplier SKU Aliases (`VND-*`)**:
+     - Cross-references incoming supplier labels (e.g., `VND-SLV-SEAT-01`) against `item_suppliers.supplier_sku`.
+     - Automatically resolves to internal enterprise SKU (`SLV-SEAT-01`).
+     - Displays a prominent visual alias badge: `Vendor Part: VND-SLV-SEAT-01 → Internal SKU: SLV-SEAT-01`.
+  3. **Internal Master SKUs**:
+     - Resolves internal item master data with real-time stock balances across all warehouse locations and yards.
+     - 1-click quick-action routing: Record Issue (Pick), Record Receipt, Paired Transfer, Adjustment, or Print Shelf Tag.
+  4. **Unrecognized / Unlisted Barcodes**:
+     - Renders an alert stating the barcode was not found in active POs, supplier aliases, or internal SKUs.
+     - Displays a prominent **`[+ Register New Item]`** button that immediately opens the Fast-Track Master Catalog Onboarding modal with the scanned barcode pre-filled.
+
+- **Interview Demo Test Presets**:
+  - Includes interactive quick-chips for simulated testing:
+    - `PO-2026-0001` (Active PO Docket Receiving)
+    - `VND-SLV-SEAT-01` (Vendor Cross-Referenced Alias)
+    - `HVAC-FLT-001`, `VALV-CHK-002`, `ELEC-MOD-005` (Internal SKUs)
+    - `UNLISTED-BARCODE-99` (Unregistered Scanned Part)
+
+#### 16.2.2 Fast-Track Master Catalog Onboarding (`NewItemModal.tsx`)
+- **Enterprise Dock Onboarding Workflow**:
+  - Accessible via `[+ Register Item]` in the Inventory toolbar or from the scanner HUD when an unlisted barcode is scanned.
+  - Clean modal with full master catalog fields: SKU, Item Name, Category, Base UoM, Criticality rating (`CRITICAL`, `STANDARD`, `LOW`), Unit Cost (in minor currency units/cents), Initial Stock, Initial Location, Primary Supplier, Supplier Part # (Vendor SKU), Supplier Unit Price, Minimum Order Quantity (MOQ), and Lead Time (Days).
+  - **Atomic Transactional Guarantee**: Calls `POST /api/v1/inventory/items`. If initial stock > 0, the backend initializes `stock_balances` and writes an immutable `RECEIPT` row into `stock_movements` within the exact same database transaction, maintaining 100% zero-mismatch ledger integrity.
+
+#### 16.2.3 Thermal Label Generator & Isolated Iframe Print Pipeline (`BinLabelModal.tsx`)
+- **Zebra ZD421/ZT230 Compliant Printable Label Generator**:
+  - Form-factor toggle: 4"×2" Rack/Bin Tag and 2"×1" Compact Part Sticker.
+  - Zero-dependency mathematical vector Code 128 (Subset B) 1D barcode and 2D Matrix QR code SVG renderer (`frontend/src/utils/barcode.ts`), guaranteeing 100% crisp vector output on thermal print heads without anti-aliasing raster blur.
+  - Full industrial metadata: rack bin location coordinates, SKU, item description, category, criticality rating, ROP, stock on-hand, and unit cost.
+- **Isolated Iframe Printing Architecture (`printThermalLabelViaIframe`)**:
+  - Eliminates the browser print bug where uncontained DOM elements caused 15+ blank overflow pages on thermal roll printers.
+  - Dynamically constructs a hidden off-screen `iframe`, clones the exact label SVG content, injects scoped `@page { size: 4in 2in; margin: 0; }` styling, and triggers printing exclusively within the sandboxed iframe context.
+  - Guaranteed exact 1-page output across Zebra, Brother, Rollo, and Dymo thermal continuous roll printers.
 
 ### 16.3 Production Authentication & Role-Based Navigation
 - **Login / Session Shell**: Dedicated login modal and token management.

@@ -120,7 +120,7 @@ which python  # Must output /home/noufal/workspace/inventory-poc-project/.venv/b
 Before modifying any files, verify that the current test suite passes 100%:
 ```bash
 .venv/bin/pytest backend/tests/
-# Expected: 9 passed in <0.20s
+# Expected: 40 passed in <2.5s
 ```
 
 ### Step 3: Verify Running Services
@@ -331,8 +331,12 @@ As of Tuesday, 13 October 2026:
 - [x] **Storekeeper Document Attachments & Audit Proof Engine (Sprint 13 / Task 1 Complete):** Physical document attachment engine with `document_attachments` table, multipart PDF/image upload API, file streaming, modal dropzones in Movement and PO Receiving modals, and drawer inspection cards.
 - [x] **Printable Transit Waybill & Delivery Docket (Sprint 13 / Task 2 Complete):** Official warehouse delivery docket modal (`WaybillModal.tsx`) with vector Code128 barcode, carrier metadata, manifest table, dual signature blocks, and `@media print` black-and-white paper layout. Dynamically derived from `stock_movements`, `items`, and `locations` with zero schema migrations.
 - [x] **Physical Warehouse Mobility & Optical Scanner (Sprint 13 / Task 3 Complete):** Thermal bin label printing (`BinLabelModal.tsx`) for Zebra 4"×2" & 2"×1" labels with pure vector Code128 & QR SVG renderer (`barcode.ts`). Unified hardware-agnostic optical scanner (`BarcodeScannerModal.tsx`) capturing USB scanner guns (HID keyboard wedge), Web Audio API tactile chime/buzz (`audio.ts`), instant SKU resolution, and 1-click transaction routing. Accessible via global `F2` hotkey and top bar.
-- [x] **Passing Test Harness:** 39/39 backend test items verified (37 passed, 2 skipped, 0 failures) in ~2.2s.
-- [x] **TypeScript & Vite Build Verified:** Zero compile errors (`tsc && vite build` bundled in 2.32s, 0 errors).
+- [x] **Enterprise Inbound Receiving & Universal Multi-Code Resolution (Sprint 14 Complete):** Upgraded `BarcodeScannerModal.tsx` HUD supporting multi-format barcode parsing: Purchase Order packing slip barcodes (`PO-...`) with line-level fulfillment progress and 1-click in-scanner goods receipt; vendor part numbers (`supplier_sku`) cross-referenced against `item_suppliers` to internal SKUs with prominent visual badges; internal SKUs with live stock breakdown across yards; and unlisted barcode detection with direct 1-click fast-track onboarding modal launch.
+- [x] **Fast-Track Master Data Catalog Onboarding (Sprint 14 Complete):** Fast catalog onboarding modal (`NewItemModal.tsx`) and transactional backend API (`POST /api/v1/inventory/items`). Atomically registers new item, links primary supplier with purchasing terms, initializes balance, and records immutable `RECEIPT` movement in `stock_movements` in the exact same database transaction, preserving the zero-mismatch ledger invariant.
+- [x] **Thermal Label Isolated Iframe Print Engine (Sprint 14 Complete):** Replaced uncontained `window.print()` with off-screen isolated iframe printing (`printThermalLabelViaIframe`), eliminating the 15-page blank overflow bug on thermal printers and guaranteeing exact 1-page labels (4"×2" or 2"×1").
+- [x] **Enriched Supplier SKU Aliasing API:** `GET /api/v1/inventory/items` enriched with `supplier_skus: List[str]` for zero-roundtrip client-side alias resolution.
+- [x] **Passing Test Harness:** 40/40 backend test items verified (38 passed, 2 skipped, 0 failures) in ~2.3s, including `test_create_item_and_alias_resolution`.
+- [x] **TypeScript & Vite Build Verified:** Zero compile errors (`tsc && vite build` bundled in 2.76s, 0 errors).
 
 - [x] **Unified Single-Command Runner:** `./run.sh` / `scripts/run_app.sh` with intelligent port conflict detection and clean `Ctrl+C` shutdown trap.
 - [x] **Lean, Concise Files:** All files partitioned into micro-modules; zero bloated files.

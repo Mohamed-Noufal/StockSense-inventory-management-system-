@@ -369,7 +369,59 @@ This is a deadline-aware plan from Monday evening to Thursday's interview. Adjus
 
 ---
 
-### Sprint O — Production JWT Authentication & Granular RBAC (PLANNED)
+### Sprint N — Enterprise Inbound Receiving, Multi-Code Scanner Resolution & Master Catalog Onboarding (COMPLETED)
+
+**Objective:** Equip warehouse operators with Tier-1 oilfield receiving capabilities (modeled after SLB, Baker Hughes, Aramco, SAP EWM): universal multi-format barcode parsing (PO dockets, vendor part cross-referencing, internal SKUs), in-scanner PO line receiving, fast-track catalog onboarding for unlisted parts, and bug-free single-page thermal tag printing.
+
+#### Task 1: Universal Multi-Code Scanner Resolution Engine (`BarcodeScannerModal.tsx`)
+- **Multi-Code Parsing Pipeline**:
+  - **Purchase Order Packing Slips (`PO-*`)**:
+    - Automatically parses purchase order barcodes (e.g. `PO-2026-0001`).
+    - Displays PO header, supplier information, status pill, and line-level fulfillment progress bars (`received / ordered`).
+    - **In-Scanner Dock Receiving**: Storekeeper selects destination warehouse location, specifies received quantity, and executes goods receipt directly within the scanner HUD without navigating away.
+    - **Direct Shelf Tag Print**: 1-click action to print thermal bin labels immediately upon receiving.
+  - **Vendor Part Numbers / Supplier SKU Aliasing (`VND-*`)**:
+    - Cross-references incoming supplier labels (e.g. `VND-SLV-SEAT-01`) against `item_suppliers.supplier_sku`.
+    - Automatically maps to internal enterprise SKU (`SLV-SEAT-01`) and displays prominent visual alias badge: `Vendor Part: VND-SLV-SEAT-01 → Internal SKU: SLV-SEAT-01`.
+  - **Internal Master SKUs**:
+    - Resolves item master data with real-time stock balances across all warehouses and yards.
+    - 1-click quick-action routing: Record Issue (Pick), Record Receipt, Paired Transfer, Adjustment, or Print Shelf Tag.
+  - **Unlisted / New Item Handling**:
+    - Detects barcodes not present in POs, supplier aliases, or internal SKUs.
+    - Renders warning with direct **`[+ Register New Item]`** CTA button that launches the onboarding modal with the scanned barcode pre-filled.
+- **Interactive Quick-Test Chips**:
+  - `PO-2026-0001` (PO Docket Line Receiving)
+  - `VND-SLV-SEAT-01` (Vendor Cross-Referenced Alias)
+  - `HVAC-FLT-001`, `VALV-CHK-002`, `ELEC-MOD-005` (Internal SKUs)
+  - `UNLISTED-BARCODE-99` (Unregistered Scanned Part)
+
+#### Task 2: Fast-Track Master Data Catalog Onboarding (`NewItemModal.tsx` & `POST /api/v1/inventory/items`)
+- **Dockside Master Data Onboarding Workflow**:
+  - Accessible via `[+ Register Item]` in the Inventory toolbar or from unrecognized barcode scans in the scanner HUD.
+  - Complete master data fields: SKU, Item Name, Category, Base UoM, Criticality rating (`CRITICAL`, `STANDARD`, `LOW`), Unit Cost, Initial Stock, Initial Location, Primary Supplier, Supplier Part # (Vendor SKU), Supplier Unit Price, Minimum Order Quantity (MOQ), and Lead Time (Days).
+- **Atomic Transactional Guarantee**:
+  - Backend transactional service `create_item()` in `inventory_service.py` executes within an atomic database transaction:
+    1. Validates SKU uniqueness (rejects duplicate SKUs with HTTP 400).
+    2. Inserts item master record into `items`.
+    3. Creates primary supplier pricing and terms in `item_suppliers`.
+    4. Initializes balance row in `stock_balances`.
+    5. If initial stock > 0, records an immutable `RECEIPT` movement in `stock_movements`.
+  - Guarantees 100% zero-mismatch ledger integrity between `stock_movements` and `stock_balances`.
+- **Enriched Supplier SKU Aliasing API**:
+  - `GET /api/v1/inventory/items` response enriched with `supplier_skus: List[str]` for zero-roundtrip alias resolution on the client.
+
+#### Task 3: Isolated Iframe Thermal Label Print Engine (`BinLabelModal.tsx`)
+- **Thermal Print Overflow Bug Fix**:
+  - Solved the browser print bug where uncontained DOM elements caused 15+ blank overflow pages on thermal roll printers.
+  - Replaced uncontained `window.print()` with off-screen isolated iframe printing (`printThermalLabelViaIframe`).
+  - Dynamically builds a hidden sandboxed `iframe`, clones exact SVG label content, injects scoped `@page { size: 4in 2in; margin: 0; }` styling, and executes printing strictly inside the iframe context.
+  - Guaranteed exact single-page output across Zebra, Brother, Rollo, and Dymo thermal continuous roll printers.
+
+#### Verification & Test Suite
+- **Backend Test Suite**: 40/40 tests passing (`.venv/bin/pytest backend/tests/ -v`), including new test `test_create_item_and_alias_resolution`.
+- **Frontend Build**: Zero TypeScript errors; `tsc && vite build` bundled cleanly in 2.76s.
+
+---
 
 **Objective:** Secure all API surfaces with cryptographic tokens and role-based permissions.
 
