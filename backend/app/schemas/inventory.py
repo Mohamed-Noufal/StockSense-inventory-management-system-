@@ -10,6 +10,12 @@ class ItemBase(BaseModel):
     unit_cost_minor: int = 0
     criticality: str = "STANDARD"
 
+class ItemCreate(ItemBase):
+    initial_location_id: Optional[int] = None
+    initial_stock: Optional[int] = Field(default=0, ge=0)
+    supplier_id: Optional[int] = None
+    supplier_sku: Optional[str] = None
+
 class ItemResponse(ItemBase):
     id: int
     is_active: int
@@ -19,6 +25,7 @@ class ItemResponse(ItemBase):
     reserved_qty: Optional[int] = 0
     available_qty: Optional[int] = 0
     reorder_point: Optional[int] = 10
+    supplier_skus: List[str] = []
     model_config = ConfigDict(from_attributes=True)
 
 class LocationResponse(BaseModel):

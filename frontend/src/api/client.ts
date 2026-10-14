@@ -3,7 +3,7 @@ import {
   StockBalance, StockMovement, MovementCreatePayload, TransferCreatePayload,
   OperationsStats, IntegrityCheckResponse, Supplier, PurchaseOrder, POCreatePayload, POReceivePayload,
   AIRun, AIRecommendation, AIRunTriggerPayload, User, AlertItem, AlertAcknowledgePayload, AlertResolvePayload,
-  DocumentAttachment
+  DocumentAttachment, ItemCreatePayload, Category
 } from '../types';
 
 const API_BASE = '/api/v1';
@@ -43,6 +43,12 @@ export const api = {
   getUsers: () => request<User[]>('/users'),
   getCurrentUser: () => request<User>('/users/me'),
   getItems: () => request<InventoryItem[]>('/inventory/items'),
+  createItem: (payload: ItemCreatePayload) =>
+    request<InventoryItem>('/inventory/items', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  getCategories: () => request<Category[]>('/inventory/categories'),
   getLocations: () => request<InventoryLocation[]>('/inventory/locations'),
   getBalances: (itemId?: number, locationId?: number) => {
     const params = new URLSearchParams();

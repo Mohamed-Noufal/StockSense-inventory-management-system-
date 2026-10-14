@@ -1,29 +1,45 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   X, Search, Scan, ArrowUpRight, ArrowDownLeft, Tag, Layers,
-  AlertCircle, Camera, Check, ShieldCheck
+  AlertCircle, Camera, Check, ShieldCheck, CheckCircle2,
+  PackagePlus
 } from 'lucide-react';
-import { InventoryItem } from '../types';
+import { InventoryItem, PurchaseOrder, Supplier } from '../types';
 import { useBarcodeScanner } from '../hooks/useBarcodeScanner';
 import { soundEffects } from '../utils/audio';
 
 interface BarcodeScannerModalProps {
   items: InventoryItem[];
+  orders?: PurchaseOrder[];
+  suppliers?: Supplier[];
   onClose: () => void;
   onQuickAction: (action: 'ISSUE' | 'RECEIPT', item: InventoryItem) => void;
   onPrintLabel: (item: InventoryItem) => void;
   onInspectItem: (item: InventoryItem) => void;
+  onOnboardNewItem?: (scannedCode: string) => void;
+  onReceivePOLine?: (po: PurchaseOrder, lineId: number, qty: number) => Promise<void>;
 }
 
 export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
   items,
+  orders = [],
+  suppliers: _suppliers = [],
   onClose,
   onQuickAction,
   onPrintLabel,
   onInspectItem,
+  onOnboardNewItem,
+  onReceivePOLine,
 }) => {
   const [query, setQuery] = useState<string>('');
   const [scannedItem, setScannedItem] = useState<InventoryItem | null>(null);
+  const [matchedVendorSku, setMatchedVendorSku] = useState<string | null>(null);
+  const [scannedPO, setScannedPO] = useState<PurchaseOrder | null>(null);
+  const [selectedPoLineId, setSelectedPoLineId] = useState<number | null>(null);
+  const [poReceiveQty, setPoReceiveQty] = useState<number>(1);
+  const [poReceiving, setPoReceiving] = useState<boolean>(false);
+  const [poSuccessMsg, setPoSuccessMsg] = useState<string | null>(null);
+
   const [scanStatus, setScanStatus] = useState<string>('Ready for input');
   const [isError, setIsError] = useState<boolean>(false);
   const [scannerMode, setScannerMode] = useState<'gun' | 'camera'>('gun');
@@ -40,35 +56,74 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
     inputRef.current?.focus();
   }, []);
 
-  // Resolve barcode string to item
+  // Universal Code Resolution Engine
   const handleResolveCode = useCallback((code: string) => {
     const trimmed = code.trim().toUpperCase();
     if (!trimmed) return;
 
     setQuery(trimmed);
     setAuditVerified(false);
+    setScannedPO(null);
+    setScannedItem(null);
+    setMatchedVendorSku(null);
+    setPoSuccessMsg(null);
 
-    // Exact or prefix match against SKU or ID
-    const found = items.find(
+    // 1. Check if scanned code is a Purchase Order docket
+    if (orders && orders.length > 0) {
+      const foundPO = orders.find(
+        (o) => o.po_number.toUpperCase() === trimmed ||
+               (trimmed.startsWith('PO-') && o.po_number.toUpperCase().includes(trimmed))
+      );
+      if (foundPO) {
+        setScannedPO(foundPO);
+        setIsError(false);
+        setScanStatus(`Scanned PO: ${foundPO.po_number}`);
+        soundEffects.playScanSuccess();
+        if (foundPO.lines && foundPO.lines.length > 0) {
+          const firstPending = foundPO.lines.find((l) => l.qty_received < l.qty_ordered) || foundPO.lines[0];
+          setSelectedPoLineId(firstPending.id);
+          setPoReceiveQty(Math.max(1, firstPending.qty_ordered - firstPending.qty_received));
+        }
+        return;
+      }
+    }
+
+    // 2. Check internal SKU or Item ID
+    const foundItem = items.find(
       (it) => it.sku.toUpperCase() === trimmed ||
               it.sku.toUpperCase().includes(trimmed) ||
               it.id.toString() === trimmed
     );
-
-    if (found) {
-      setScannedItem(found);
+    if (foundItem) {
+      setScannedItem(foundItem);
       setIsError(false);
-      setScanStatus(`Scanned: ${found.sku}`);
+      setScanStatus(`Scanned: ${foundItem.sku}`);
       soundEffects.playScanSuccess();
-    } else {
-      setScannedItem(null);
-      setIsError(true);
-      setScanStatus(`Unknown Barcode: "${trimmed}"`);
-      soundEffects.playScanError();
+      return;
     }
-  }, [items]);
 
-  // Global USB Barcode Scanner Wedge Hook (Keyboard Wedge Mode)
+    // 3. Check vendor part number alias (item_suppliers)
+    const foundByVendor = items.find(
+      (it) => it.supplier_skus && it.supplier_skus.some((s) => s.toUpperCase() === trimmed || s.toUpperCase().includes(trimmed))
+    );
+    if (foundByVendor) {
+      setScannedItem(foundByVendor);
+      setMatchedVendorSku(trimmed);
+      setIsError(false);
+      setScanStatus(`Resolved Vendor Part Alias: ${trimmed} → ${foundByVendor.sku}`);
+      soundEffects.playScanSuccess();
+      return;
+    }
+
+    // 4. Unknown barcode
+    setScannedItem(null);
+    setScannedPO(null);
+    setIsError(true);
+    setScanStatus(`Unknown Code: "${trimmed}"`);
+    soundEffects.playScanError();
+  }, [items, orders]);
+
+  // Global USB Barcode Scanner Wedge Hook
   useBarcodeScanner({
     onScan: (code) => {
       handleResolveCode(code);
@@ -113,7 +168,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
         videoRef.current.play().catch(() => {});
       }
 
-      // Feature detect BarcodeDetector API (modern Chrome/Edge/Android)
+      // Feature detect BarcodeDetector API
       if ('BarcodeDetector' in window) {
         const barcodeDetector = new (window as any).BarcodeDetector({
           formats: ['code_128', 'qr_code', 'ean_13', 'upc_a', 'data_matrix'],
@@ -127,7 +182,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                 const rawValue = barcodes[0].rawValue;
                 if (rawValue) {
                   handleResolveCode(rawValue);
-                  setScannerMode('gun'); // switch to resolved HUD card
+                  setScannerMode('gun');
                   stopCamera();
                   return;
                 }
@@ -169,8 +224,29 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
     return 'RIG-07 / BIN-03';
   }, [scannedItem]);
 
-  // Sample quick test presets for demonstration
-  const samplePresets = items.slice(0, 5);
+  // Handle PO Line Inbound Receipt
+  const handleExecutePoReceive = async () => {
+    if (!scannedPO || !selectedPoLineId || !onReceivePOLine) return;
+    setPoReceiving(true);
+    try {
+      await onReceivePOLine(scannedPO, selectedPoLineId, poReceiveQty);
+      soundEffects.playScanSuccess();
+      setPoSuccessMsg(`Successfully received ${poReceiveQty} units against ${scannedPO.po_number}!`);
+    } catch (err: any) {
+      soundEffects.playScanError();
+    } finally {
+      setPoReceiving(false);
+    }
+  };
+
+  // Preset demonstration codes covering: Internal SKU, Vendor Part Number, and PO Number
+  const samplePresets = [
+    { label: 'SLV-SEAT-01 (SKU)', code: 'SLV-SEAT-01', type: 'Internal SKU' },
+    { label: 'VND-SLV-SEAT-01 (Vendor Part)', code: 'VND-SLV-SEAT-01', type: 'Vendor Part Alias' },
+    { label: 'PO-202610-001 (PO Docket)', code: 'PO-202610-001', type: 'Inbound PO' },
+    { label: 'IMP-750-02 (SKU)', code: 'IMP-750-02', type: 'Internal SKU' },
+    { label: 'PO-202610-005 (PO Docket)', code: 'PO-202610-005', type: 'Inbound PO' },
+  ];
 
   return (
     <div className="scanner-modal-backdrop" onClick={onClose}>
@@ -180,7 +256,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <Scan size={18} color="#ededed" />
             <span style={{ fontSize: '0.95rem', fontWeight: 600, color: '#ededed' }}>
-              Optical Barcode & SKU Scanner
+              Universal Optical Barcode & Delivery Docket Scanner
             </span>
           </div>
 
@@ -203,7 +279,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
               title="Toggle mobile device camera scanner"
             >
               <Camera size={13} />
-              <span>{scannerMode === 'camera' ? 'Camera Mode' : 'Camera Scan'}</span>
+              <span>{scannerMode === 'camera' ? 'Camera Active' : 'Camera Scan'}</span>
             </button>
 
             <div className="scanner-status-pulse">
@@ -263,7 +339,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                       gap: '6px',
                     }}
                   >
-                    <span>Point camera at printed SKU tag or QR code</span>
+                    <span>Point camera at printed SKU tag, vendor barcode, or PO waybill</span>
                   </div>
                 </>
               )}
@@ -276,7 +352,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
             <input
               ref={inputRef}
               type="text"
-              placeholder="Scan barcode with USB gun, or type SKU..."
+              placeholder="Scan barcode with USB gun, enter SKU, Vendor Part #, or PO #..."
               value={query}
               onChange={(e) => {
                 setQuery(e.target.value);
@@ -292,6 +368,8 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                 onClick={() => {
                   setQuery('');
                   setScannedItem(null);
+                  setScannedPO(null);
+                  setMatchedVendorSku(null);
                   setScanStatus('Ready for input');
                   setIsError(false);
                   setAuditVerified(false);
@@ -311,23 +389,191 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
             <div className="scanner-chips-row">
               {samplePresets.map((preset) => (
                 <button
-                  key={preset.id}
+                  key={preset.code}
                   className="scanner-chip-btn"
-                  onClick={() => handleResolveCode(preset.sku)}
-                  title={`Simulate scan of ${preset.name}`}
+                  onClick={() => handleResolveCode(preset.code)}
+                  title={`Simulate scan of ${preset.type}: ${preset.code}`}
                 >
-                  <span>{preset.sku}</span>
+                  <span>{preset.label}</span>
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Scanner Output Zone */}
-          {scannedItem ? (
+          {/* Output Zone: 1. Purchase Order Inbound Receiving HUD */}
+          {scannedPO ? (
             <div className="scanned-item-card">
               <div className="scanned-item-header">
                 <div>
-                  <div className="scanned-sku-badge">{scannedItem.sku}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div className="scanned-sku-badge" style={{ color: '#38bdf8' }}>{scannedPO.po_number}</div>
+                    <span
+                      style={{
+                        fontSize: '0.65rem',
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        padding: '2px 6px',
+                        borderRadius: '4px',
+                        background: 'rgba(56, 189, 248, 0.15)',
+                        color: '#38bdf8',
+                        border: '1px solid rgba(56, 189, 248, 0.3)',
+                      }}
+                    >
+                      Inbound Delivery Docket
+                    </span>
+                  </div>
+                  <div className="scanned-item-title">
+                    Supplier: {scannedPO.supplier_name || 'Apex Seals & Hydraulics Ltd'}
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: '#888888', marginTop: '2px' }}>
+                    Expected: {scannedPO.expected_date ? scannedPO.expected_date.split('T')[0] : 'Today'} • Destination: Central Warehouse (Cairo Base)
+                  </div>
+                </div>
+                <div
+                  className="status-pill"
+                  style={{
+                    backgroundColor: scannedPO.status === 'RECEIVED' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(56, 189, 248, 0.15)',
+                    color: scannedPO.status === 'RECEIVED' ? '#10b981' : '#38bdf8',
+                    border: '1px solid currentColor',
+                  }}
+                >
+                  {scannedPO.status}
+                </div>
+              </div>
+
+              {/* PO Line Items Breakdown */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '0.75rem 0', borderTop: '1px solid #1f1f23', borderBottom: '1px solid #1f1f23' }}>
+                <div style={{ fontSize: '0.7rem', fontWeight: 600, color: '#71717a', textTransform: 'uppercase' }}>
+                  Delivery Lines & Ordered Quantities:
+                </div>
+                {scannedPO.lines && scannedPO.lines.map((line) => {
+                  const remaining = line.qty_ordered - line.qty_received;
+                  const isDone = remaining <= 0;
+                  const itm = items.find((i) => i.id === line.item_id);
+
+                  return (
+                    <div
+                      key={line.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '0.5rem 0.75rem',
+                        background: selectedPoLineId === line.id ? '#1a1a22' : '#141418',
+                        border: selectedPoLineId === line.id ? '1px solid #38bdf8' : '1px solid #27272a',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                      }}
+                      onClick={() => {
+                        setSelectedPoLineId(line.id);
+                        if (remaining > 0) setPoReceiveQty(remaining);
+                      }}
+                    >
+                      <div>
+                        <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#ffffff', fontFamily: 'monospace' }}>
+                          {line.item_sku || itm?.sku || `ITEM #${line.item_id}`}
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: '#a1a1aa' }}>
+                          {line.item_name || itm?.name || 'Oilfield Replacement Part'}
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: '0.85rem', fontWeight: 700, color: isDone ? '#10b981' : '#f59e0b', fontFamily: 'monospace' }}>
+                          {line.qty_received} / {line.qty_ordered} EA
+                        </div>
+                        <div style={{ fontSize: '0.65rem', color: '#71717a' }}>
+                          {isDone ? 'Completed' : `${remaining} remaining`}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* PO Inbound Receiving Actions */}
+              {poSuccessMsg ? (
+                <div style={{ padding: '0.75rem', background: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '6px', color: '#10b981', fontSize: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <CheckCircle2 size={16} />
+                    <span>{poSuccessMsg}</span>
+                  </div>
+                  {scannedPO.lines && scannedPO.lines[0] && (
+                    <button
+                      className="btn btn-secondary"
+                      style={{ fontSize: '0.75rem', padding: '3px 8px' }}
+                      onClick={() => {
+                        const targetItm = items.find((i) => i.id === scannedPO.lines[0].item_id);
+                        if (targetItm) {
+                          onClose();
+                          onPrintLabel(targetItm);
+                        }
+                      }}
+                    >
+                      Print 4"x2" Shelf Tag
+                    </button>
+                  )}
+                </div>
+              ) : (
+                scannedPO.status !== 'RECEIVED' && (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '0.75rem', color: '#a1a1aa' }}>Receive Qty:</span>
+                      <input
+                        type="number"
+                        min="1"
+                        value={poReceiveQty}
+                        onChange={(e) => setPoReceiveQty(Math.max(1, parseInt(e.target.value) || 1))}
+                        style={{
+                          width: '70px',
+                          background: '#18181b',
+                          border: '1px solid #333338',
+                          borderRadius: '4px',
+                          color: '#ffffff',
+                          padding: '4px 8px',
+                          fontSize: '0.85rem',
+                          fontFamily: 'monospace',
+                        }}
+                      />
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button
+                        className="scanned-action-btn issue"
+                        onClick={handleExecutePoReceive}
+                        disabled={poReceiving}
+                        style={{ padding: '0.5rem 1rem' }}
+                      >
+                        <Check size={14} color="#000000" />
+                        <span>{poReceiving ? 'Receiving...' : 'Post Goods Receipt'}</span>
+                      </button>
+                    </div>
+                  </div>
+                )
+              )}
+            </div>
+          ) : scannedItem ? (
+            /* Output Zone: 2. Resolved Inventory Item Card */
+            <div className="scanned-item-card">
+              <div className="scanned-item-header">
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div className="scanned-sku-badge">{scannedItem.sku}</div>
+                    {matchedVendorSku && (
+                      <span
+                        style={{
+                          fontSize: '0.65rem',
+                          fontWeight: 700,
+                          textTransform: 'uppercase',
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          background: 'rgba(56, 189, 248, 0.15)',
+                          color: '#38bdf8',
+                          border: '1px solid rgba(56, 189, 248, 0.3)',
+                        }}
+                      >
+                        Vendor Part Alias: {matchedVendorSku}
+                      </span>
+                    )}
+                  </div>
                   <div className="scanned-item-title">{scannedItem.name}</div>
                   <div style={{ fontSize: '0.75rem', color: '#888888', marginTop: '2px' }}>
                     {scannedItem.category_name} • Warehouse: {scannedItem.warehouse_name || 'Central Warehouse (Cairo Base)'}
@@ -434,23 +680,34 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
               </div>
             </div>
           ) : (
+            /* Output Zone: 3. Empty or Unknown Barcode State */
             <div className="scanner-empty-hud">
               {isError ? (
                 <>
                   <AlertCircle size={32} color="#ef4444" />
                   <div style={{ color: '#ef4444', fontWeight: 600 }}>{scanStatus}</div>
-                  <div style={{ fontSize: '0.75rem', color: '#888888' }}>
-                    No inventory part matches this code. Try scanning another barcode or click a preset above.
+                  <div style={{ fontSize: '0.75rem', color: '#888888', maxWidth: '420px' }}>
+                    No catalog item, vendor part alias, or open Purchase Order matches code "{query}".
                   </div>
+                  {onOnboardNewItem && (
+                    <button
+                      className="btn btn-primary"
+                      onClick={() => onOnboardNewItem(query)}
+                      style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                    >
+                      <PackagePlus size={15} />
+                      <span>+ Onboard "{query}" as New Catalog Item</span>
+                    </button>
+                  )}
                 </>
               ) : (
                 <>
                   <Layers size={32} />
                   <div style={{ fontWeight: 600, color: '#ededed' }}>
-                    Pull scanner gun trigger or select a preset
+                    Pull scanner gun trigger, scan camera, or select a preset
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: '#888888' }}>
-                    Hardware keystroke sequences will automatically populate this workstation with instant audio feedback.
+                  <div style={{ fontSize: '0.75rem', color: '#888888', maxWidth: '420px' }}>
+                    Universal scanner accepts Internal SKUs, Supplier Part Numbers, or Inbound Purchase Order waybills with automatic cross-referencing.
                   </div>
                 </>
               )}

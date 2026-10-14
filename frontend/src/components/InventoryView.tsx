@@ -11,6 +11,7 @@ interface InventoryViewProps {
   onAction: (itemId: number, type: 'RECEIPT' | 'ISSUE' | 'TRANSFER') => void;
   onNavigateTab?: (tab: any) => void;
   onPrintLabel?: (item: InventoryItem) => void;
+  onAddNewItem?: () => void;
 }
 
 // Canonical mock reference items representing the oilfield catalogue
@@ -192,6 +193,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
   onAction,
   onNavigateTab = () => {},
   onPrintLabel,
+  onAddNewItem,
 }) => {
   // Combine real database items with canonical ordering
   const allItems = useMemo(() => {
@@ -395,6 +397,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
             categories={availableCategories}
             locations={availableLocations}
             onExport={handleExportCSV}
+            onAddNewItem={onAddNewItem}
           />
 
           <InventoryTable

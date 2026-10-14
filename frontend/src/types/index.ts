@@ -44,6 +44,27 @@ export interface InventoryItem {
   reserved_qty?: number;
   available_qty?: number;
   reorder_point?: number;
+  supplier_skus?: string[];
+}
+
+export interface ItemCreatePayload {
+  sku: string;
+  name: string;
+  description?: string;
+  category_id: number;
+  uom: string;
+  unit_cost_minor: number;
+  criticality: 'CRITICAL' | 'STANDARD' | 'LOW';
+  initial_location_id?: number;
+  initial_stock?: number;
+  supplier_id?: number;
+  supplier_sku?: string;
+}
+
+export interface Category {
+  id: number;
+  name: string;
+  description?: string;
 }
 
 export interface InventoryLocation {

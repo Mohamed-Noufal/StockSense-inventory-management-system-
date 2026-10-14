@@ -166,3 +166,50 @@ def test_ledger_enriched_fields(client, seeded_fixtures):
     assert "reference_display" in top
     assert "item_name" in top
     assert top["status"] == "Completed"
+
+def test_create_item_and_alias_resolution(client, seeded_fixtures):
+    unique_id = uuid.uuid4().hex[:6].upper()
+    test_sku = f"CHOKE-VLV-{unique_id}"
+    test_sup_sku = f"VND-{test_sku}"
+
+    # Get active category and supplier
+    cat_resp = client.get("/api/v1/inventory/categories")
+    cat_id = cat_resp.json()[0]["id"] if cat_resp.status_code == 200 and cat_resp.json() else 1
+
+    sup_resp = client.get("/api/v1/suppliers")
+    sup_id = sup_resp.json()[0]["id"] if sup_resp.status_code == 200 and sup_resp.json() else None
+
+    payload = {
+        "sku": test_sku,
+        "name": "High-Pressure Choke Valve Assembly 2-1/16in",
+        "description": "Adjustable choke valve 10000psi API-6A",
+        "category_id": cat_id,
+        "uom": "EA",
+        "unit_cost_minor": 145000,
+        "criticality": "CRITICAL",
+        "initial_location_id": seeded_fixtures["loc1_id"],
+        "initial_stock": 3,
+        "supplier_id": sup_id,
+        "supplier_sku": test_sup_sku
+    }
+    resp = client.post("/api/v1/inventory/items", json=payload)
+    assert resp.status_code == 201
+    data = resp.json()
+    assert data["sku"] == test_sku
+    assert data["total_on_hand"] == 3
+    assert data["criticality"] == "CRITICAL"
+    if sup_id:
+        assert test_sup_sku in data["supplier_skus"]
+
+    # Verify duplicate SKU rejection
+    dup_resp = client.post("/api/v1/inventory/items", json=payload)
+    assert dup_resp.status_code == 400
+    assert "already exists" in dup_resp.json()["detail"]
+
+    # Verify item is in list_items with supplier_skus
+    list_resp = client.get("/api/v1/inventory/items")
+    assert list_resp.status_code == 200
+    found = next((i for i in list_resp.json() if i["sku"] == test_sku), None)
+    assert found is not None
+    if sup_id:
+        assert test_sup_sku in found["supplier_skus"]

@@ -7,15 +7,16 @@ from backend.app.core.database import get_db
 from backend.app.models.categories import Category
 from backend.app.models.items import Item
 from backend.app.models.locations import Location
+from backend.app.models.item_suppliers import ItemSupplier
 from backend.app.models.stock_balances import StockBalance
 from backend.app.models.stock_movements import StockMovement
 from backend.app.schemas.inventory import (
-    ItemResponse, LocationResponse, StockBalanceResponse,
+    ItemCreate, ItemResponse, LocationResponse, StockBalanceResponse,
     MovementCreate, TransferCreate, MovementResponse,
     OperationsStatsResponse, IntegrityCheckResponse
 )
 from backend.app.services.inventory_service import (
-    post_movement, transfer_stock, run_integrity_check, get_operations_stats
+    create_item, post_movement, transfer_stock, run_integrity_check, get_operations_stats
 )
 
 router = APIRouter()
@@ -47,6 +48,17 @@ def list_items(db: Session = Depends(get_db)):
     for r in loc_subq:
         if r.item_id not in item_loc_map:
             item_loc_map[r.item_id] = r.loc_name
+
+    # Map vendor supplier SKUs for optical scanner cross-referencing
+    sup_subq = (
+        db.query(ItemSupplier.item_id, ItemSupplier.supplier_sku)
+        .filter(ItemSupplier.item_id.in_(item_ids), ItemSupplier.supplier_sku.isnot(None))
+        .all()
+    ) if item_ids else []
+    item_sup_map: Dict[int, List[str]] = {}
+    for r in sup_subq:
+        if r.supplier_sku:
+            item_sup_map.setdefault(r.item_id, []).append(r.supplier_sku)
 
     results = []
     for item in items:
@@ -81,9 +93,51 @@ def list_items(db: Session = Depends(get_db)):
                 reserved_qty=reserved,
                 available_qty=available,
                 reorder_point=rop,
+                supplier_skus=item_sup_map.get(item.id, []),
             )
         )
     return results
+
+@router.post("/items", response_model=ItemResponse, status_code=201)
+def add_item(payload: ItemCreate, db: Session = Depends(get_db)):
+    item = create_item(db, payload)
+
+    bal = db.query(func.sum(StockBalance.quantity_on_hand)).filter(StockBalance.item_id == item.id).scalar() or 0
+    cat = db.query(Category).filter_by(id=item.category_id).first()
+    cat_name = cat.name if cat else "General Parts"
+    if cat_name == "DRILLING_PARTS":
+        cat_name = "Mechanical Parts"
+    elif cat_name == "SEALS_GASKETS":
+        cat_name = "Pipes & Tubes"
+    elif cat_name == "CHEMICALS_LUBRICANTS":
+        cat_name = "Chemicals"
+
+    loc = db.query(Location).filter_by(id=payload.initial_location_id).first() if payload.initial_location_id else None
+    loc_name = loc.name if loc else "Main Warehouse"
+
+    sup_skus = [
+        s.supplier_sku for s in db.query(ItemSupplier.supplier_sku)
+        .filter(ItemSupplier.item_id == item.id, ItemSupplier.supplier_sku.isnot(None)).all()
+    ]
+
+    return ItemResponse(
+        id=item.id,
+        sku=item.sku,
+        name=item.name,
+        description=item.description,
+        category_id=item.category_id,
+        category_name=cat_name,
+        warehouse_name=loc_name,
+        uom=item.uom,
+        unit_cost_minor=item.unit_cost_minor,
+        criticality=item.criticality,
+        is_active=item.is_active,
+        total_on_hand=int(bal),
+        reserved_qty=0,
+        available_qty=int(bal),
+        reorder_point=15 if item.criticality == "CRITICAL" else 10,
+        supplier_skus=sup_skus,
+    )
 
 @router.get("/categories")
 def list_categories(db: Session = Depends(get_db)):

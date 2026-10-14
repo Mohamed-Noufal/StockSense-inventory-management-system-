@@ -25,6 +25,7 @@ import { RecommendationModal } from './components/RecommendationModal';
 import { WaybillModal } from './components/WaybillModal';
 import { BinLabelModal } from './components/BinLabelModal';
 import { BarcodeScannerModal } from './components/BarcodeScannerModal';
+import { NewItemModal } from './components/NewItemModal';
 import { useBarcodeScanner } from './hooks/useBarcodeScanner';
 
 const App: React.FC = () => {
@@ -46,6 +47,14 @@ const App: React.FC = () => {
   const [runningAi, setRunningAi] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+  const [showNewItemModal, setShowNewItemModal] = useState<boolean>(false);
+  const [newItemInitialSku, setNewItemInitialSku] = useState<string>('');
+
+  const handleOpenNewItemModal = (initialSku = '') => {
+    setNewItemInitialSku(initialSku);
+    setShowNewItemModal(true);
+  };
 
   const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
     return localStorage.getItem('stocksense_sidebar_collapsed') === 'true';
@@ -403,6 +412,7 @@ const App: React.FC = () => {
               }}
               onNavigateTab={(tab) => setActiveTab(tab)}
               onPrintLabel={(item) => setLabelPrintItem(item)}
+              onAddNewItem={() => handleOpenNewItemModal('')}
             />
           )}
           {activeTab === 'ledger' && (
@@ -559,6 +569,8 @@ const App: React.FC = () => {
       {showScannerModal && (
         <BarcodeScannerModal
           items={items}
+          orders={orders}
+          suppliers={suppliers}
           onClose={() => setShowScannerModal(false)}
           onQuickAction={(action, itm) => {
             setSelectedItemId(itm.id);
@@ -569,6 +581,34 @@ const App: React.FC = () => {
           onInspectItem={(itm) => {
             setSelectedItemId(itm.id);
             setActiveTab('inventory');
+          }}
+          onOnboardNewItem={(code) => {
+            setShowScannerModal(false);
+            handleOpenNewItemModal(code);
+          }}
+          onReceivePOLine={async (po, lineId, qty) => {
+            await handleReceivePOLine(po.id, {
+              po_line_id: lineId,
+              quantity_received: qty,
+              destination_location_id: locations[0]?.id || 1,
+              actor_label: currentUser?.full_name || 'Storekeeper',
+            });
+          }}
+        />
+      )}
+
+      {showNewItemModal && (
+        <NewItemModal
+          initialSku={newItemInitialSku}
+          locations={locations}
+          suppliers={suppliers}
+          onClose={() => setShowNewItemModal(false)}
+          onSuccess={() => {
+            fetchData();
+          }}
+          onPrintLabel={(itm) => {
+            setShowNewItemModal(false);
+            setLabelPrintItem(itm);
           }}
         />
       )}

@@ -151,5 +151,78 @@ def get_operations_stats(db: Session, days: int = 7) -> Dict[str, Any]:
         "adjustments_trend_pct": -50.0,
     }
 
+from backend.app.models.categories import Category
+from backend.app.models.item_suppliers import ItemSupplier
+from backend.app.models.suppliers import Supplier
+from backend.app.schemas.inventory import ItemCreate
+
+def create_item(db: Session, payload: ItemCreate) -> Item:
+    """
+    Onboard a new catalog SKU into master data.
+    Atomically establishes initial stock balance and ledger movement if initial stock > 0.
+    """
+    clean_sku = payload.sku.strip().upper()
+    existing = db.query(Item).filter(func.upper(Item.sku) == clean_sku).first()
+    if existing:
+        raise HTTPException(status_code=400, detail=f"Item with SKU '{clean_sku}' already exists.")
+
+    category = db.query(Category).filter_by(id=payload.category_id).first()
+    if not category:
+        raise HTTPException(status_code=400, detail=f"Category ID {payload.category_id} not found.")
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    item = Item(
+        sku=clean_sku,
+        name=payload.name.strip(),
+        description=payload.description.strip() if payload.description else None,
+        category_id=payload.category_id,
+        uom=payload.uom.strip() if payload.uom else "EA",
+        unit_cost_minor=payload.unit_cost_minor,
+        criticality=payload.criticality.upper() if payload.criticality else "STANDARD",
+        is_active=1,
+        created_at=now_iso,
+        updated_at=now_iso,
+    )
+    db.add(item)
+    db.flush()
+
+    if payload.supplier_id:
+        supplier = db.query(Supplier).filter_by(id=payload.supplier_id).first()
+        if supplier:
+            sup_sku = payload.supplier_sku.strip() if payload.supplier_sku else f"VND-{clean_sku}"
+            item_sup = ItemSupplier(
+                item_id=item.id,
+                supplier_id=supplier.id,
+                supplier_sku=sup_sku,
+                unit_price_minor=payload.unit_cost_minor,
+                moq=1,
+                order_multiple=1,
+                lead_time_days_nominal=14,
+                is_preferred=1,
+                created_at=now_iso,
+                updated_at=now_iso,
+            )
+            db.add(item_sup)
+
+    if payload.initial_location_id:
+        loc = db.query(Location).filter_by(id=payload.initial_location_id).first()
+        if loc:
+            init_qty = payload.initial_stock or 0
+            _get_or_create_balance(db, item.id, loc.id)
+            if init_qty > 0:
+                m_in = MovementCreate(
+                    item_id=item.id,
+                    location_id=loc.id,
+                    movement_type="RECEIPT",
+                    quantity=init_qty,
+                    reason="Initial catalog registration receipt",
+                    actor_label="Inventory Manager",
+                )
+                post_movement(db, m_in, commit=False)
+
+    db.commit()
+    db.refresh(item)
+    return item
+
 from backend.app.services.integrity_service import run_integrity_check
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, ChevronDown, Download } from 'lucide-react';
+import { Search, ChevronDown, Download, PackagePlus } from 'lucide-react';
 
 interface InventoryToolbarProps {
   searchQuery: string;
@@ -13,6 +13,7 @@ interface InventoryToolbarProps {
   categories: string[];
   locations: string[];
   onExport: () => void;
+  onAddNewItem?: () => void;
 }
 
 export const InventoryToolbar: React.FC<InventoryToolbarProps> = ({
@@ -27,6 +28,7 @@ export const InventoryToolbar: React.FC<InventoryToolbarProps> = ({
   categories,
   locations,
   onExport,
+  onAddNewItem,
 }) => {
   return (
     <div className="inventory-toolbar-card">
@@ -102,6 +104,28 @@ export const InventoryToolbar: React.FC<InventoryToolbarProps> = ({
           <Download style={{ width: 14, height: 14 }} />
           <span>Export</span>
         </button>
+
+        {/* 4. Register New Item Button */}
+        {onAddNewItem && (
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={onAddNewItem}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '0.45rem 0.85rem',
+              fontSize: '0.8rem',
+              fontWeight: 600,
+              borderRadius: '6px',
+            }}
+            title="Register new catalog SKU into master inventory"
+          >
+            <PackagePlus style={{ width: 14, height: 14 }} />
+            <span>+ Register Item</span>
+          </button>
+        )}
       </div>
     </div>
   );
