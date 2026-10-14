@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, X } from 'lucide-react';
 import { api } from './api/client';
 import {
   HealthResponse, ReadyResponse, InventoryItem, InventoryLocation, StockBalance,
@@ -224,6 +224,24 @@ const App: React.FC = () => {
   useEffect(() => {
     fetchData();
   }, []);
+
+  // Auto-dismiss success notification banner after 5 seconds
+  useEffect(() => {
+    if (!successMsg) return;
+    const timer = setTimeout(() => {
+      setSuccessMsg(null);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [successMsg]);
+
+  // Auto-dismiss general error banner after 8 seconds
+  useEffect(() => {
+    if (!error) return;
+    const timer = setTimeout(() => {
+      setError(null);
+    }, 8000);
+    return () => clearTimeout(timer);
+  }, [error]);
 
   const handleTransaction = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -454,16 +472,36 @@ const App: React.FC = () => {
         />
 
         {error && (
-          <div style={{ padding: '0.75rem 1rem', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: 'var(--radius-md)', color: '#f87171', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
-            <AlertTriangle style={{ width: 16, height: 16 }} />
-            <span>{error}</span>
+          <div style={{ padding: '0.75rem 1rem', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: 'var(--radius-md)', color: '#f87171', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <AlertTriangle style={{ width: 16, height: 16, flexShrink: 0 }} />
+              <span>{error}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setError(null)}
+              style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', padding: '0.2rem', display: 'flex', alignItems: 'center', opacity: 0.8 }}
+              title="Dismiss notification"
+            >
+              <X style={{ width: 15, height: 15 }} />
+            </button>
           </div>
         )}
 
         {successMsg && (
-          <div style={{ padding: '0.75rem 1rem', background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: 'var(--radius-md)', color: '#34d399', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
-            <CheckCircle2 style={{ width: 16, height: 16 }} />
-            <span>{successMsg}</span>
+          <div style={{ padding: '0.75rem 1rem', background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: 'var(--radius-md)', color: '#34d399', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.85rem', animation: 'fadeIn 0.2s ease-in-out' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <CheckCircle2 style={{ width: 16, height: 16, flexShrink: 0 }} />
+              <span>{successMsg}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSuccessMsg(null)}
+              style={{ background: 'none', border: 'none', color: '#34d399', cursor: 'pointer', padding: '0.2rem', display: 'flex', alignItems: 'center', opacity: 0.8 }}
+              title="Dismiss notification"
+            >
+              <X style={{ width: 15, height: 15 }} />
+            </button>
           </div>
         )}
 
