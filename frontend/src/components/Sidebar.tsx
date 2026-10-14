@@ -1,13 +1,13 @@
 import React from 'react';
 import {
   LayoutDashboard, Box, ArrowLeftRight, ShoppingBag, Sparkles,
-  Users, Flag, Cpu, ShieldCheck, PanelLeftClose, Activity
+  Users, ShieldCheck, PanelLeftClose, Activity
 } from 'lucide-react';
 import { HealthResponse } from '../types';
 
 interface SidebarProps {
-  activeTab: 'overview' | 'inventory' | 'ledger' | 'procurement' | 'ai' | 'activity' | 'sprint' | 'diagnostics' | 'users';
-  setActiveTab: (tab: 'overview' | 'inventory' | 'ledger' | 'procurement' | 'ai' | 'activity' | 'sprint' | 'diagnostics' | 'users') => void;
+  activeTab: 'overview' | 'inventory' | 'ledger' | 'procurement' | 'ai' | 'activity' | 'users';
+  setActiveTab: (tab: 'overview' | 'inventory' | 'ledger' | 'procurement' | 'ai' | 'activity' | 'users') => void;
   itemsCount: number;
   ledgerCount: number;
   poCount: number;
@@ -149,24 +149,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {usersCount > 0 && !isCollapsed && (
             <span className="nav-badge">{usersCount}</span>
           )}
-        </button>
-
-        <button
-          className={`nav-item ${activeTab === 'sprint' ? 'active' : ''}`}
-          onClick={() => setActiveTab('sprint')}
-          title="Sprint Delivery Roadmap"
-        >
-          <Flag className="nav-icon" />
-          {!isCollapsed && <span>Sprint Roadmap</span>}
-        </button>
-
-        <button
-          className={`nav-item ${activeTab === 'diagnostics' ? 'active' : ''}`}
-          onClick={() => setActiveTab('diagnostics')}
-          title="Diagnostics & Engine Status"
-        >
-          <Cpu className="nav-icon" />
-          {!isCollapsed && <span>Diagnostics</span>}
         </button>
       </nav>
 

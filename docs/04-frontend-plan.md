@@ -856,7 +856,7 @@ The Operations Workstation (`/operations`, rendered via `OperationsView.tsx`) ma
   - Full industrial metadata: rack bin location coordinates, SKU, item description, category, criticality rating, ROP, stock on-hand, and unit cost.
 #### 16.2.4 Authoritative KPI Synchronization & Route Persistence Architecture (COMPLETED)
 - **Bidirectional Route Persistence (`window.location.hash` & `localStorage`)**:
-  - Workstation views synchronize bidirectionally with the browser location hash (`#/overview`, `#/inventory`, `#/ledger`, `#/procurement`, `#/ai`, `#/activity`, `#/users`, `#/sprint`, `#/diagnostics`).
+  - Workstation views synchronize bidirectionally with the browser location hash (`#/overview`, `#/inventory`, `#/ledger`, `#/procurement`, `#/ai`, `#/activity`, `#/users`).
   - Active tab is read from `window.location.hash` on initial page mount with `localStorage` fallback.
   - Listens to native `window.hashchange` events, ensuring browser reload (<kbd>F5</kbd>), back, and forward navigation keep the user precisely on their current workstation without resetting to Overview.
 - **Harmonized Authoritative KPI Calculations**:
@@ -932,6 +932,20 @@ The Operations Workstation (`/operations`, rendered via `OperationsView.tsx`) ma
   - **Tier 1 (Instant Operational Core, ~30ms)**: Fetches `items`, `locations`, `balances`, `orders`, and `ledger(30)`. Immediately unblocks `loading` (`setLoading(false)`), allowing KPI cards, stock values, and inventory tables to render instantly without visual delay.
   - **Tier 2 (Background Streaming)**: Concurrently streams secondary services (`health`, `readiness`, `suppliers`, `recommendations`, `ai_runs`, `users`, `alerts`, `integrity-check`) in the background without layout shifts or card flickering.
 - **Zero-Flash Revalidation**: Re-fetches preserve existing in-memory state during background synchronization, eliminating placeholder dashes (`—`) on page refresh.
+
+#### 16.2.10 Streamlining Enterprise Navigation & Dev Tab Deprecation (COMPLETED)
+- **Removal of Sprint Roadmap and Diagnostics Scratchpads**:
+  - Removed internal development milestone tabs (`SprintView.tsx`, `DiagnosticsView.tsx`) from the navigation shell (`Sidebar.tsx`, `Header.tsx`, `App.tsx`, `OverviewView.tsx`).
+  - Consolidated navigation to 7 core business domains:
+    1. **Overview** (`#/overview`): Executive KPIs and operational exception queues.
+    2. **Inventory** (`#/inventory`): Authoritative master catalog and multi-location balances.
+    3. **Operations** (`#/ledger`): Physical warehouse movement workstation and A4 waybills.
+    4. **Purchase Orders** (`#/procurement`): Commercial procurement, approvals, receiving, and A4 PO dockets.
+    5. **AI & Replenishment** (`#/ai`): Probabilistic demand classification, TSB/SBA forecasting, and ROP proposals.
+    6. **Activity & Integrity** (`#/activity`): Immutable stock ledger, exception alerts, and 0-mismatch checksum audits.
+    7. **Team & Roles** (`#/users`): Identity switcher and RBAC audit simulation.
+  - Eliminated unused `api.getReadiness()` network roundtrip during application startup hydration.
+  - Reduced production JavaScript bundle size from 556 kB to 547 kB.
 
 ### 16.3 Production Authentication & Role-Based Navigation
 - **Login / Session Shell**: Dedicated login modal and token management.

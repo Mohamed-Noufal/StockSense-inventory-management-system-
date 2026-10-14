@@ -457,9 +457,14 @@ This is a deadline-aware plan from Monday evening to Thursday's interview. Adjus
 - Segregated monolithic `Promise.all` into Tier 1 (operational items, balances, POs, and locations in ~30ms) and Tier 2 (background metadata, health, and integrity checks).
 - Overview KPI cards and inventory tables render instantly (<35ms) without flashing empty placeholder dashes.
 
+#### Task 11: Enterprise Navigation Streamlining & Dev Tab Deprecation (`Sidebar.tsx`, `Header.tsx`, `App.tsx`, `OverviewView.tsx`)
+- Deprecated and removed internal developer milestone tabs (`Sprint Roadmap` and `Diagnostics`) from navigation and UI rendering.
+- Streamlined sidebar navigation to 7 core business domains (Overview, Inventory, Operations, Purchase Orders, AI & Replenishment, Activity & Integrity, Team & Roles).
+- Removed unused `api.getReadiness()` network roundtrip and eliminated dead component code (`SprintView.tsx`, `DiagnosticsView.tsx`), reducing frontend bundle size from 556 kB to 547 kB.
+
 #### Verification & Test Suite
 - **Backend Test Suite**: 40/40 tests passing (`.venv/bin/pytest backend/tests/ -v`).
-- **Frontend Build**: Zero TypeScript errors; `tsc && vite build` bundled cleanly in 2.43s.
+- **Frontend Build**: Zero TypeScript errors; `tsc && vite build` bundled cleanly in 2.32s.
 
 ---
 

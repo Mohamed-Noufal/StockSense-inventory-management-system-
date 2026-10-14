@@ -66,8 +66,6 @@ export const Header: React.FC<HeaderProps> = ({
     ai: 'AI & Replenishment',
     activity: 'Activity & Integrity',
     users: 'Users & Roles',
-    sprint: 'Roadmap',
-    diagnostics: 'Diagnostics',
   };
 
   const getInitials = (name: string) => {

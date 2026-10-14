@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { AlertTriangle, CheckCircle2, X } from 'lucide-react';
 import { api } from './api/client';
 import {
-  HealthResponse, ReadyResponse, InventoryItem, InventoryLocation, StockBalance,
-  StockMovement, IntegrityCheckResponse, Milestone, PurchaseOrder,
+  HealthResponse, InventoryItem, InventoryLocation, StockBalance,
+  StockMovement, IntegrityCheckResponse, PurchaseOrder,
   Supplier, POCreatePayload, POReceivePayload, AIRun, AIRecommendation, User,
   AIRunTriggerPayload, AlertItem
 } from './types';
@@ -16,8 +16,6 @@ import { ProcurementView } from './components/ProcurementView';
 import { AIInsightsView } from './components/AIInsightsView';
 import { ActivityView } from './components/ActivityView';
 import { UsersView } from './components/UsersView';
-import { SprintView } from './components/SprintView';
-import { DiagnosticsView } from './components/DiagnosticsView';
 import { MovementModal } from './components/MovementModal';
 import { POCreateModal } from './components/POCreateModal';
 import { POReceiveModal } from './components/POReceiveModal';
@@ -28,7 +26,7 @@ import { BarcodeScannerModal } from './components/BarcodeScannerModal';
 import { NewItemModal } from './components/NewItemModal';
 import { useBarcodeScanner } from './hooks/useBarcodeScanner';
 
-const VALID_TABS = ['overview', 'inventory', 'ledger', 'procurement', 'ai', 'activity', 'sprint', 'diagnostics', 'users'] as const;
+const VALID_TABS = ['overview', 'inventory', 'ledger', 'procurement', 'ai', 'activity', 'users'] as const;
 type TabType = typeof VALID_TABS[number];
 
 const getInitialTab = (): TabType => {
@@ -72,7 +70,6 @@ const App: React.FC = () => {
     return () => window.removeEventListener('hashchange', onHashChange);
   }, [activeTab]);
   const [health, setHealth] = useState<HealthResponse | null>(null);
-  const [readiness, setReadiness] = useState<ReadyResponse | null>(null);
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [locations, setLocations] = useState<InventoryLocation[]>([]);
   const [balances, setBalances] = useState<StockBalance[]>([]);
@@ -197,9 +194,8 @@ const App: React.FC = () => {
       setLoading(false);
 
       // Tier 2: Supporting Subsystems (AI, Health, Users, Alerts, Integrity)
-      const [hData, rData, supData, recData, runData, usersData, alertsData, integData] = await Promise.all([
+      const [hData, supData, recData, runData, usersData, alertsData, integData] = await Promise.all([
         api.getHealth().catch(() => null),
-        api.getReadiness().catch(() => null),
         api.getSuppliers().catch(() => []),
         api.getAIRecommendations().catch(() => []),
         api.getAIRuns().catch(() => []),
@@ -209,7 +205,6 @@ const App: React.FC = () => {
       ]);
 
       setHealth(hData);
-      setReadiness(rData);
       setSuppliers(supData);
       setRecommendations(recData);
       setAiRuns(runData);
@@ -394,57 +389,6 @@ const App: React.FC = () => {
     }
   };
 
-  const milestones: Milestone[] = [
-    {
-      id: 'sprint-1',
-      title: 'Foundation, Environment & Skeletons',
-      sprint: 'Sprint 1',
-      status: 'completed',
-      description: 'SQLite WAL mode, FastAPI health API, React+Vite SPA, typed client, and unified backend/ai/ module.',
-      deliverables: ['Clean repository', 'SQLite WAL mode', 'FastAPI health endpoints', 'Vite + React + TS', 'AI SBA/Croston engine'],
-    },
-    {
-      id: 'sprint-2',
-      title: 'Core Inventory & Ledger Transactions',
-      sprint: 'Sprint 2',
-      status: 'completed',
-      description: 'Master items, append-only stock movement ledger, atomic balance sync, over-issue rejection, paired transfers, and integrity check.',
-      deliverables: ['Atomic post_movement service', 'CHECK quantity >= 0', 'Over-issue rejection (400)', 'Paired transfers', '0-mismatch integrity check', 'Seed dataset', 'Modular UI tables'],
-    },
-    {
-      id: 'sprint-3',
-      title: 'Procurement & Purchase Order Lifecycle',
-      sprint: 'Sprint 3',
-      status: 'completed',
-      description: 'Draft PO creation, approval workflow, supplier terms, and partial/full goods receiving linked to stock movements ledger.',
-      deliverables: ['PO state machine', 'Partial goods receiving', 'Over-receipt prohibition (400)', 'Ledger append & balance sync', 'Interactive Procurement UI'],
-    },
-    {
-      id: 'sprint-4',
-      title: 'AI Intermittent Demand & Replenishment Integration',
-      sprint: 'Sprint 4',
-      status: 'completed',
-      description: 'Connecting intermittent demand models (Croston/SBA) and safety stock policies directly to live inventory for replenishment proposals.',
-      deliverables: ['Zero-leakage demand extractor', 'Croston / SBA statistical models', 'Risk-based order-up-to policies', 'Human-in-the-loop recommendation approval', 'Atomic Draft PO generation', 'React AI Insights screen'],
-    },
-    {
-      id: 'sprint-5',
-      title: 'End-to-End Workflow Verification & Golden Demo',
-      sprint: 'Sprint 5',
-      status: 'completed',
-      description: 'Comprehensive automated integration test suite validating zero-leakage replenishment, draft PO conversion, and ledger reconciliation.',
-      deliverables: ['Automated test_golden_flow', 'Over-issue rejection (400)', 'Zero-mismatch final audit reconciliation', 'Multi-scenario verification script'],
-    },
-    {
-      id: 'sprint-6',
-      title: 'Workspace Ergonomics, User Directory & Authentic Ledger Audit',
-      sprint: 'Sprint 6',
-      status: 'completed',
-      description: 'Flexible collapsible rail sidebar, streamlined top header with search/notifications, database users directory, and non-repudiable audit ledger attribution.',
-      deliverables: ['Collapsible rail sidebar (localStorage persisted)', 'Streamlined header with / search & notifications', 'Database users directory & role breakdown UI', 'Non-repudiable actor_label attribution on all transactions', 'Interactive employee switcher'],
-    },
-  ];
-
   return (
     <div className="app-container">
       <Sidebar
@@ -604,8 +548,6 @@ const App: React.FC = () => {
               onInspectRec={(rec) => setInspectingRec(rec)}
             />
           )}
-          {activeTab === 'sprint' && <SprintView milestones={milestones} />}
-          {activeTab === 'diagnostics' && <DiagnosticsView readiness={readiness} />}
         </div>
       </main>
 
