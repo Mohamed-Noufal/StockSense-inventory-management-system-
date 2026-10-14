@@ -275,7 +275,8 @@ The system is tested against the Golden End-to-End Workflow:
 7. **Universal Barcode Scanning:** Scan PO packing slips (`PO-...`) in Universal Scanner HUD to receive open lines, cross-reference vendor SKUs (`VND-...`) to internal SKUs, or detect unlisted codes.
 8. **Fast-Track Onboarding:** Register new unlisted catalog items with vendor terms, initializing balance and recording an atomic ledger `RECEIPT` in a single transaction.
 9. **Thermal Tag Printing:** Generate and print exact single-page vector thermal bin labels (4"×2" or 2"×1") via the isolated iframe print engine.
-10. **Re-reconciliation:** Re-run integrity check verifying total balance equals the sum of ledger transactions with 100% mathematical consistency.
+10. **Official Commercial PO & Transit Waybill Printing:** Generate and print legal commercial A4 Purchase Orders and dispatch Waybills featuring Code 128 barcodes, 3-way matching clauses, and dual authorized signature seals.
+11. **Re-reconciliation:** Re-run integrity check verifying total balance equals the sum of ledger transactions with 100% mathematical consistency.
 
 ---
 

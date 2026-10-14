@@ -908,6 +908,24 @@ The Operations Workstation (`/operations`, rendered via `OperationsView.tsx`) ma
   - Waybill inputs and textareas are styled with clean `#f8fafc` backgrounds and `#cbd5e1` borders on screen, perfectly matching physical logistics paperwork.
   - In the printed output, editable inputs automatically render as clean printed text values (`carrierName`, `vehiclePlate`, `driverName`, `remarks`).
 
+#### 16.2.7 Official Commercial Purchase Order Document & Print Engine (`POPrintModal.tsx`) (COMPLETED)
+- **Legal Commercial Procurement Docket**:
+  - Implements an enterprise A4 commercial Purchase Order document supporting physical and digital supply-chain workflows.
+  - **Dual Address Routing**: Vendor/Supplier details (`VEND-000X`, contact email, country, Net 30 terms) and Ship-To/Consignee facility (warehouse code, receiving dock bay, expected arrival).
+  - **Itemized Procurement Manifest**: Line numbers, SKU/part numbers, material descriptions, destination warehouse, ordered quantities, unit prices, line totals, and net committed value.
+  - **Dual Barcode Audit**: Scannable vector Code 128 barcode encoding `PO-YYYYMM-XXX` and 2D QR matrix for mobile validation.
+  - **Legal Boilerplate Terms**: Explicit 3-way matching clause (PO $\leftrightarrow$ Receiving Goods Slip $\leftrightarrow$ Vendor Tax Invoice) and inspection rights.
+  - **Dual Signoff & Seal Blocks**: StockSense Authorized Purchasing Officer (with signature and corporate audit seal `[ ★ OFFICIAL PROCUREMENT AUDIT SEAL ★ ]`) and Vendor Acknowledgment counter-signature.
+  - **Isolated Print Frame (`<iframe>`) Engine**: Ensures crisp black-on-white A4 printing and PDF export without dark-theme background bleed or extra blank pages.
+- **Workstation Integration**:
+  - `PODetailView.tsx`: Integrated **"Print Official PO"** button in the hero action toolbar.
+  - `ProcurementView.tsx`: 1-click **Printer icon** in every row of the Purchase Orders table for fast access.
+
+#### 16.2.8 Notification Banner Auto-Dismiss & Toast Lifecycle (`App.tsx`) (COMPLETED)
+- **Automatic 5-Second Dismissal**: Replaced persistent static notification banners with a reactive `useEffect` timer that automatically dismisses success messages after 5 seconds (`animation: fadeIn 0.2s ease-in-out`).
+- **Manual Dismissal (`X`) Button**: Interactive close button enables immediate dismissal of both success toasts and system error alerts.
+- **Extended Error Retention**: System errors remain visible for 8 seconds before auto-clearing to ensure readability while preventing permanent layout shifting.
+
 ### 16.3 Production Authentication & Role-Based Navigation
 - **Login / Session Shell**: Dedicated login modal and token management.
 - **Role-Scoped Interfaces**:

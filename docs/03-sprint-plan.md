@@ -427,9 +427,28 @@ This is a deadline-aware plan from Monday evening to Thursday's interview. Adjus
 - **Elimination of Loading Number Flashes**: Removed static fallback numbers (`248 / $482,350 / 18 / 7`) that previously flashed before API resolution; cards now display clean placeholder dashes (`—`) during initial load.
 - **Database Item Purity**: Removed synthetic mock item fixtures from `InventoryView`; table renders live SQLite items directly.
 
+#### Task 5: Over-Issue Prevention, Per-Warehouse Balances & In-Modal Error Surface (`MovementModal.tsx`, `App.tsx`)
+- Enforces strict non-negativity constraint on material issues: queries live per-location stock balances (`api.getBalances()`) and calculates available quantity for the selected item and warehouse.
+- Dynamically bounds issue inputs: displays live red warning badges when requested quantity exceeds available stock and provides a 1-click `[Set Max]` shortcut.
+- Surfaces backend `400 Bad Request` exceptions directly inside the modal with error styling, loading spinners, and double-submit prevention.
+
+#### Task 6: Isolated A4 Transit Waybill Printing & Vector Barcodes (`WaybillModal.tsx`)
+- Implements an isolated iframe print pipeline (`iframe`) eliminating Chromium/Edge blank 3-page print overruns.
+- Standalone A4 portrait document with Code 128 barcode, QR audit matrix, editable logistics particulars, and dual storekeeper/receiver signature and warehouse stamp blocks.
+
+#### Task 7: Official Commercial Purchase Order Document & Print Engine (`POPrintModal.tsx`, `PODetailView.tsx`, `ProcurementView.tsx`)
+- Implements formal commercial A4 Purchase Order dockets matching industrial oilfield ERP standards (SAP/Coupa style).
+- Features corporate letterhead, vendor particulars, ship-to facility details, itemized procurement specifications, net committed totals, Code 128 barcode, and QR matrix.
+- Incorporates standard commercial 3-way matching terms and dual signature/seal blocks for Authorized Procurement Approvers and Vendor Acceptance.
+- Accessible via 1-click printer icon in the Purchase Orders table and "Print Official PO" in the detail workstation.
+
+#### Task 8: Notification Banner Auto-Dismiss & Toast Lifecycle (`App.tsx`)
+- Replaces static notification banners with reactive auto-dismiss timers (5s for success toasts, 8s for error alerts).
+- Adds interactive manual close button (`X`) to allow immediate dismissal without layout shift.
+
 #### Verification & Test Suite
-- **Backend Test Suite**: 40/40 tests passing (`.venv/bin/pytest backend/tests/ -v`), including `test_create_item_and_alias_resolution`.
-- **Frontend Build**: Zero TypeScript errors; `tsc && vite build` bundled cleanly in 2.36s.
+- **Backend Test Suite**: 40/40 tests passing (`.venv/bin/pytest backend/tests/ -v`).
+- **Frontend Build**: Zero TypeScript errors; `tsc && vite build` bundled cleanly in 2.32s.
 
 ---
 
