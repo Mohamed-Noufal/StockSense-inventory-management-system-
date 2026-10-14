@@ -28,7 +28,7 @@
 7. [Hardware Mobility & Printing Architecture](#7-hardware-mobility--printing-architecture)
 8. [API Reference & OpenAPI Specification](#8-api-reference--openapi-specification)
 9. [Verification, Quality Assurance & Test Suite](#9-verification-quality-assurance--test-suite)
-10. [Repository Structure & Documentation Index](#10-repository-structure--documentation-index)
+10. [Repository Structure & System Organization](#10-repository-structure--system-organization)
 11. [Golden Demo Presentation Script (6–7 Minutes)](#11-golden-demo-presentation-script-67-minutes)
 
 ---
@@ -359,7 +359,7 @@ The system includes a comprehensive automated test suite verifying invariant enf
 
 ---
 
-## 10. Repository Structure & Documentation Index
+## 10. Repository Structure & System Organization
 
 ```text
 stocksense/
@@ -369,16 +369,6 @@ stocksense/
 ├── run.sh                      # Universal runner entrypoint (./run.sh)
 ├── .env.example                # Sample environment template
 ├── .gitignore                  # Comprehensive Git ignore rules
-│
-├── docs/                       # Complete Engineering Documentation Suite
-│   ├── INDEX.md                # AI Agent Playbook, directory critique, and architecture index
-│   ├── 01-problem-statement.md # Oilfield domain context, personas, and pain points
-│   ├── 02-technical-architecture.md  # 17-table data dictionary and ledger mechanics
-│   ├── 02b-system-design-and-data-flows.md # System topologies and transaction flows
-│   ├── 03-sprint-plan.md       # Sprints 1–14 execution log, exit criteria, and roadmap
-│   ├── 04-frontend-plan.md     # InvenTree/ERPNext patterns, design tokens, and workstation specs
-│   ├── 05-ai-engine-and-activity-log.md # Living AI registry, formulas, and activity audit log
-│   └── stocksense-technical-plan.md     # Master technical plan (Single Source of Truth)
 │
 ├── backend/
 │   ├── Dockerfile              # Backend container definition

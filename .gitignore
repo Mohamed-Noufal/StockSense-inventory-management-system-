@@ -87,3 +87,12 @@ tmp/
 temp/
 scratch/
 *.tmp
+
+# AI Agent Configuration & Customizations (Local IDE only)
+.agents/
+.agent/
+.gemini/
+
+# Internal Project Docs & Assessment Blueprints
+docs/
+
