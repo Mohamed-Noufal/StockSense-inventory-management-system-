@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, CheckCircle, PackageCheck, Ban, Sparkles, Paperclip, Download, FileText, Image as ImageIcon } from 'lucide-react';
-import { PurchaseOrder, InventoryLocation, DocumentAttachment } from '../types';
+import { ArrowLeft, CheckCircle, PackageCheck, Ban, Sparkles, Paperclip, Download, FileText, Image as ImageIcon, Printer } from 'lucide-react';
+import { PurchaseOrder, InventoryLocation, DocumentAttachment, Supplier, InventoryItem } from '../types';
 import { api } from '../api/client';
+import { POPrintModal } from './POPrintModal';
 
 interface PODetailViewProps {
   po: PurchaseOrder;
   locations?: InventoryLocation[];
+  suppliers?: Supplier[];
+  items?: InventoryItem[];
   onBack: () => void;
   onOpenApproveModal: () => void;
   onOpenReceiveModal: () => void;
@@ -15,6 +18,8 @@ interface PODetailViewProps {
 export const PODetailView: React.FC<PODetailViewProps> = ({
   po,
   locations = [],
+  suppliers = [],
+  items = [],
   onBack,
   onOpenApproveModal,
   onOpenReceiveModal,
@@ -22,6 +27,7 @@ export const PODetailView: React.FC<PODetailViewProps> = ({
 }) => {
   const [attachments, setAttachments] = useState<DocumentAttachment[]>([]);
   const [loadingAttachments, setLoadingAttachments] = useState<boolean>(false);
+  const [showPrintModal, setShowPrintModal] = useState<boolean>(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -97,6 +103,17 @@ export const PODetailView: React.FC<PODetailViewProps> = ({
 
           {/* Action Toolbar */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => setShowPrintModal(true)}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', border: '1px solid var(--border-default)' }}
+              title="Print or export official A4 Purchase Order PDF with barcodes and signature blocks"
+            >
+              <Printer style={{ width: 14, height: 14, color: '#38bdf8' }} />
+              <span>Print Official PO</span>
+            </button>
+
             {po.status === 'DRAFT' && (
               <>
                 <button
@@ -338,6 +355,16 @@ export const PODetailView: React.FC<PODetailViewProps> = ({
           </div>
         )}
       </div>
+
+      {showPrintModal && (
+        <POPrintModal
+          po={po}
+          supplier={suppliers.find((s) => s.id === po.supplier_id)}
+          items={items}
+          locations={locations}
+          onClose={() => setShowPrintModal(false)}
+        />
+      )}
     </div>
   );
 };

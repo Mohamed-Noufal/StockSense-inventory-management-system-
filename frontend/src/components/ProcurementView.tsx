@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import {
   Plus, Download, Search, X, ShoppingBag, Clock, Truck,
-  AlertTriangle, CheckCircle, PackageCheck, Sparkles
+  AlertTriangle, CheckCircle, PackageCheck, Sparkles, Printer
 } from 'lucide-react';
 import { PurchaseOrder, Supplier, InventoryItem, InventoryLocation, POCreatePayload, POReceivePayload } from '../types';
 import { POCreateView } from './POCreateView';
@@ -9,6 +9,7 @@ import { PODetailView } from './PODetailView';
 import { POApprovalModal } from './POApprovalModal';
 import { POReceiveModal } from './POReceiveModal';
 import { POCancelModal } from './POCancelModal';
+import { POPrintModal } from './POPrintModal';
 
 interface ProcurementViewProps {
   orders: PurchaseOrder[];
@@ -61,6 +62,7 @@ export const ProcurementView: React.FC<ProcurementViewProps> = ({
   const [approvingPO, setApprovingPO] = useState<PurchaseOrder | null>(null);
   const [receivingPO, setReceivingPO] = useState<PurchaseOrder | null>(null);
   const [cancellingPO, setCancellingPO] = useState<PurchaseOrder | null>(null);
+  const [printingPO, setPrintingPO] = useState<PurchaseOrder | null>(null);
 
   const todayIso = new Date().toISOString().split('T')[0];
 
@@ -214,6 +216,8 @@ export const ProcurementView: React.FC<ProcurementViewProps> = ({
           <PODetailView
             po={activePO}
             locations={locations}
+            suppliers={suppliers}
+            items={items}
             onBack={() => {
               setSelectedPoId(null);
               setViewMode('LIST');
@@ -535,6 +539,15 @@ export const ProcurementView: React.FC<ProcurementViewProps> = ({
                           type="button"
                           className="btn btn-secondary"
                           style={{ padding: '0.25rem 0.55rem', fontSize: '0.72rem' }}
+                          title="Print Official PO Docket"
+                          onClick={() => setPrintingPO(po)}
+                        >
+                          <Printer style={{ width: 12, height: 12, color: '#38bdf8' }} />
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-secondary"
+                          style={{ padding: '0.25rem 0.55rem', fontSize: '0.72rem' }}
                           onClick={() => {
                             setSelectedPoId(po.id);
                             setViewMode('DETAIL');
@@ -581,6 +594,16 @@ export const ProcurementView: React.FC<ProcurementViewProps> = ({
           onConfirm={async (id) => {
             await onCancel(id);
           }}
+        />
+      )}
+
+      {printingPO && (
+        <POPrintModal
+          po={printingPO}
+          supplier={suppliers.find((s) => s.id === printingPO.supplier_id)}
+          items={items}
+          locations={locations}
+          onClose={() => setPrintingPO(null)}
         />
       )}
     </div>
