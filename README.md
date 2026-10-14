@@ -16,15 +16,16 @@
 
 ## Table of Contents
 1. [Problem Statement & Enterprise Value](#1-problem-statement--enterprise-value)
-2. [Key Capabilities & Differentiators](#2-key-capabilities--differentiators)
-3. [System Architecture & Data Flows](#3-system-architecture--data-flows)
-4. [AI Replenishment Engine & Mathematical Foundations](#4-ai-replenishment-engine--mathematical-foundations)
-5. [The 7 Production Workstations](#5-the-7-production-workstations)
-6. [Hardware Mobility & Printing Architecture](#6-hardware-mobility--printing-architecture)
-7. [Quick Start & Deployment](#7-quick-start--deployment)
+2. [Quick Start & Running the System](#2-quick-start--running-the-system)
    - [Method 1: Docker Compose (Production Ready)](#method-1-docker-compose-production-ready)
    - [Method 2: One-Command Unified Runner (Local)](#method-2-one-command-unified-runner-local)
-   - [Method 3: Granular Manual Setup](#method-3-granular-manual-setup)
+   - [Method 3: Running the Automated Test Suite](#method-3-running-the-automated-test-suite)
+   - [Method 4: Granular Manual Setup](#method-4-granular-manual-setup)
+3. [Key Capabilities & Differentiators](#3-key-capabilities--differentiators)
+4. [System Architecture & Data Flows](#4-system-architecture--data-flows)
+5. [AI Replenishment Engine & Mathematical Foundations](#5-ai-replenishment-engine--mathematical-foundations)
+6. [The 7 Production Workstations](#6-the-7-production-workstations)
+7. [Hardware Mobility & Printing Architecture](#7-hardware-mobility--printing-architecture)
 8. [API Reference & OpenAPI Specification](#8-api-reference--openapi-specification)
 9. [Verification, Quality Assurance & Test Suite](#9-verification-quality-assurance--test-suite)
 10. [Repository Structure & Documentation Index](#10-repository-structure--documentation-index)
@@ -54,7 +55,106 @@ In mission-critical industries managing maintenance, repair, and operations (MRO
 
 ---
 
-## 2. Key Capabilities & Differentiators
+## 2. Quick Start & Running the System
+
+### Method 1: Docker Compose (Production Ready — Recommended)
+
+The fastest and most robust way to start StockSense. Automatically initializes SQLite in WAL mode, seeds master data, compiles the React frontend into an Alpine Nginx container, and establishes reverse proxying:
+
+```bash
+# 1. Clone repository
+git clone https://github.com/Mohamed-Noufal/StockSense-inventory-management-system-.git
+cd StockSense-inventory-management-system-
+
+# 2. Build and launch all container services
+docker compose up --build
+```
+
+#### Live Application URLs:
+| Service | URL | Notes |
+|---|---|---|
+| **StockSense Web Application** | [http://localhost:3000](http://localhost:3000) (or [http://localhost:5173](http://localhost:5173)) | React 18 SPA via Nginx |
+| **FastAPI Backend API** | [http://localhost:8000](http://localhost:8000) | Python 3.12 + SQLite WAL |
+| **Interactive Swagger Docs** | [http://localhost:8000/docs](http://localhost:8000/docs) | OpenAPI 3.1 Interactive Explorer |
+| **ReDoc Technical Reference** | [http://localhost:8000/redoc](http://localhost:8000/redoc) | Clean formatted API schema |
+| **Backend Health Check** | [http://localhost:8000/api/v1/health](http://localhost:8000/api/v1/health) | Real-time service diagnostic |
+
+---
+
+### Method 2: One-Command Unified Runner (Local Linux / macOS / WSL)
+
+If you are developing locally without Docker:
+
+```bash
+# 1. Copy sample environment file
+cp .env.example .env
+
+# 2. Run the unified launcher
+./run.sh
+```
+
+The runner will automatically:
+1. Verify/create Python virtual environment (`.venv`) and install dependencies from `requirements.txt`.
+2. Initialize the SQLite database and seed test master data (`backend/scripts/seed_data.py`).
+3. Install frontend packages (`npm install`) if missing.
+4. Concurrently launch the **FastAPI backend** on port `8000` and the **Vite React frontend** on port `5173`.
+
+#### Helper Commands:
+```bash
+./run.sh status    # Check real-time status of backend and frontend processes
+./run.sh restart   # Gracefully restart all services
+./run.sh stop      # Stop all background services
+```
+
+---
+
+### Method 3: Running the Automated Test Suite
+
+StockSense includes an end-to-end automated test harness covering stock ledger invariants, over-issue rejection, zero-leakage AI forecasting, and procurement receiving:
+
+```bash
+# Run complete test suite (40 tests, 100% passing)
+.venv/bin/pytest backend/tests/ -v
+```
+
+---
+
+### Method 4: Granular Manual Setup
+
+#### Step 1: Backend Setup (FastAPI & Python 3.12)
+```bash
+# Create and activate virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Initialize database schema and seed canonical records
+python backend/scripts/init_db.py
+python backend/scripts/seed_data.py
+
+# Launch backend server
+uvicorn backend.app.main:app --host 127.0.0.1 --port 8000 --reload
+```
+
+#### Step 2: Frontend Setup (React 18 & Vite)
+```bash
+cd frontend
+
+# Install dependencies
+npm install
+
+# Build for production
+npm run build
+
+# Start local dev server
+npm run dev
+```
+
+---
+
+## 3. Key Capabilities & Differentiators
 
 - **Authoritative Append-Only Ledger**: Every receipt, issue, transfer, and cycle adjustment commits an immutable event to `stock_movements`. Real-time `stock_balances` act as transactionally synchronized read projections protected by `CHECK (quantity_on_hand >= 0)`.
 - **Zero-Mismatches Cryptographic Verification**: One-click internal consistency audit confirms $\sum \text{Ledger deltas} \equiv \text{Current Balance}$ across all items and warehouse locations with 100% mathematical certainty.
@@ -66,7 +166,7 @@ In mission-critical industries managing maintenance, repair, and operations (MRO
 
 ---
 
-## 3. System Architecture & Data Flows
+## 4. System Architecture & Data Flows
 
 ```mermaid
 flowchart TB
@@ -120,7 +220,7 @@ flowchart TB
 
 ---
 
-## 4. AI Replenishment Engine & Mathematical Foundations
+## 5. AI Replenishment Engine & Mathematical Foundations
 
 StockSense’s AI core is located in `backend/ai/` and operates as an explainable decision-support engine.
 
@@ -150,7 +250,7 @@ $$\text{Suggested Order} = \max\left(0, \left\lceil \frac{ROP - \text{Position}}
 
 ---
 
-## 5. The 7 Production Workstations
+## 6. The 7 Production Workstations
 
 The StockSense user interface is built on 7 dedicated, high-density business workstations:
 
@@ -175,7 +275,7 @@ StockSense Workstations
 
 ---
 
-## 6. Hardware Mobility & Printing Architecture
+## 7. Hardware Mobility & Printing Architecture
 
 ```text
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
@@ -202,90 +302,6 @@ StockSense Workstations
 - **Isolated Iframe Thermal & A4 Print Engines (`BinLabelModal.tsx`, `WaybillModal.tsx`, `POPrintModal.tsx`)**:
   - Solves the common browser print flaw where uncontained CSS causes blank page overflows.
   - Generates sandboxed `<iframe>` contexts with scoped `@page` dimensions, guaranteeing crisp black-and-white output with zero dark-theme bleed.
-
----
-
-## 7. Quick Start & Deployment
-
-### Method 1: Docker Compose (Production Ready)
-
-The simplest and most robust way to run StockSense. Automatically initializes SQLite in WAL mode, seeds master data, compiles the React frontend into an Alpine Nginx container, and establishes reverse proxying:
-
-```bash
-# 1. Clone repository
-git clone https://github.com/Mohamed-Noufal/StockSense-inventory-management-system-.git
-cd StockSense-inventory-management-system-
-
-# 2. Build and run containers
-docker compose up --build
-```
-
-Access services:
-- **StockSense Web Application:** [http://localhost:3000](http://localhost:3000) (or [http://localhost:5173](http://localhost:5173))
-- **FastAPI Backend API:** [http://localhost:8000](http://localhost:8000)
-- **Interactive Swagger Docs:** [http://localhost:8000/docs](http://localhost:8000/docs)
-- **API Health Check:** [http://localhost:8000/api/v1/health](http://localhost:8000/api/v1/health)
-
----
-
-### Method 2: One-Command Unified Runner (Local)
-
-If developing natively on Linux, macOS, or WSL:
-
-```bash
-# 1. Copy sample environment file
-cp .env.example .env
-
-# 2. Start all services concurrently
-./run.sh
-```
-
-The unified runner verifies `.venv`, installs missing packages, seeds the database if empty, and launches FastAPI and Vite concurrently.
-
-Helper commands:
-```bash
-./run.sh status    # Check status of background backend/frontend processes
-./run.sh restart   # Gracefully restart all services
-./run.sh stop      # Terminate background services
-```
-
----
-
-### Method 3: Granular Manual Setup
-
-#### Backend Setup (Python 3.12)
-```bash
-# Create and activate virtual environment
-python3 -m venv .venv
-source .venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Initialize database schema and seed canonical records
-python backend/scripts/init_db.py
-python backend/scripts/seed_data.py
-
-# Run test suite (40 tests)
-pytest backend/tests -v
-
-# Launch backend server
-uvicorn backend.app.main:app --host 127.0.0.1 --port 8000 --reload
-```
-
-#### Frontend Setup (Node.js 18+ / React 18)
-```bash
-cd frontend
-
-# Install npm dependencies
-npm install
-
-# Verify production build
-npm run build
-
-# Start development server
-npm run dev
-```
 
 ---
 
