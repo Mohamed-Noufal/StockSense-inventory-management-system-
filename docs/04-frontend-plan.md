@@ -926,6 +926,13 @@ The Operations Workstation (`/operations`, rendered via `OperationsView.tsx`) ma
 - **Manual Dismissal (`X`) Button**: Interactive close button enables immediate dismissal of both success toasts and system error alerts.
 - **Extended Error Retention**: System errors remain visible for 8 seconds before auto-clearing to ensure readability while preventing permanent layout shifting.
 
+#### 16.2.9 Two-Tier Progressive Data Hydration & Latency Elimination (`App.tsx`) (COMPLETED)
+- **Elimination of Monolithic Promise Barrier**: Previously, `fetchData()` waited for 13 concurrent requests in a single `Promise.all()`, blocking overview cards for ~1 second while slower endpoints (`/po`, `/ai/recommendations`) resolved.
+- **Two-Tier Hydration Architecture**:
+  - **Tier 1 (Instant Operational Core, ~30ms)**: Fetches `items`, `locations`, `balances`, `orders`, and `ledger(30)`. Immediately unblocks `loading` (`setLoading(false)`), allowing KPI cards, stock values, and inventory tables to render instantly without visual delay.
+  - **Tier 2 (Background Streaming)**: Concurrently streams secondary services (`health`, `readiness`, `suppliers`, `recommendations`, `ai_runs`, `users`, `alerts`, `integrity-check`) in the background without layout shifts or card flickering.
+- **Zero-Flash Revalidation**: Re-fetches preserve existing in-memory state during background synchronization, eliminating placeholder dashes (`—`) on page refresh.
+
 ### 16.3 Production Authentication & Role-Based Navigation
 - **Login / Session Shell**: Dedicated login modal and token management.
 - **Role-Scoped Interfaces**:

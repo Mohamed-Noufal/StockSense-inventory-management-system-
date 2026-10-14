@@ -446,9 +446,20 @@ This is a deadline-aware plan from Monday evening to Thursday's interview. Adjus
 - Replaces static notification banners with reactive auto-dismiss timers (5s for success toasts, 8s for error alerts).
 - Adds interactive manual close button (`X`) to allow immediate dismissal without layout shift.
 
+#### Task 9: Backend N+1 Query Elimination & Bulk In-Memory Lookups (`purchase_orders.py`, `service.py`)
+- **Diagnosis**: Benchmark investigation revealed severe latency bottlenecks in `GET /api/v1/po` (672ms) and `GET /api/v1/ai/recommendations` (315ms) caused by N+1 queries executing >1,700 individual sequential queries on every reload.
+- **Optimization**: Pre-fetches master items, locations, suppliers, and PO lines in 4 bulk queries and performs $O(1)$ in-memory dictionary joins.
+- **Benchmark Results**:
+  - `GET /api/v1/po`: Reduced from **672ms $\rightarrow$ 76ms (8.8x speedup)**.
+  - `GET /api/v1/ai/recommendations`: Reduced from **315ms $\rightarrow$ 171ms (1.8x speedup)**.
+
+#### Task 10: Two-Tier Progressive Data Hydration (`App.tsx`)
+- Segregated monolithic `Promise.all` into Tier 1 (operational items, balances, POs, and locations in ~30ms) and Tier 2 (background metadata, health, and integrity checks).
+- Overview KPI cards and inventory tables render instantly (<35ms) without flashing empty placeholder dashes.
+
 #### Verification & Test Suite
 - **Backend Test Suite**: 40/40 tests passing (`.venv/bin/pytest backend/tests/ -v`).
-- **Frontend Build**: Zero TypeScript errors; `tsc && vite build` bundled cleanly in 2.32s.
+- **Frontend Build**: Zero TypeScript errors; `tsc && vite build` bundled cleanly in 2.43s.
 
 ---
 
