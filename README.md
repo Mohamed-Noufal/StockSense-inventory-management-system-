@@ -29,7 +29,6 @@
 8. [API Reference & OpenAPI Specification](#8-api-reference--openapi-specification)
 9. [Verification, Quality Assurance & Test Suite](#9-verification-quality-assurance--test-suite)
 10. [Repository Structure & System Organization](#10-repository-structure--system-organization)
-11. [Golden Demo Presentation Script (6–7 Minutes)](#11-golden-demo-presentation-script-67-minutes)
 
 ---
 
@@ -387,7 +386,7 @@ stocksense/
 │   │   ├── policy.py           # Safety stock, ROP, Order-up-to (OUT) calculations
 │   │   ├── evaluator.py        # Out-of-sample backtesting (RMSSE, MASE, Bias)
 │   │   └── service.py          # AI HITL recommendation service & bulk lookups
-│   ├── scripts/                # Database initialization and synthetic generator
+│   ├── scripts/                # Database initialization and sample data seed generator
 │   └── tests/                  # Pytest test suite (40 automated tests)
 │
 ├── frontend/
@@ -404,22 +403,6 @@ stocksense/
 ├── data/                       # Local SQLite WAL database and file attachments
 └── scripts/                    # Developer tooling, system verification, and Docker entrypoint
 ```
-
----
-
-## 11. Golden Demo Presentation Script (6–7 Minutes)
-
-When presenting StockSense to stakeholders, technical interviewers, or clients, follow this structured narrative:
-
-| Timestamp | Phase | Key Talking Points & Demonstrated Actions |
-|---|---|---|
-| **0:00 – 0:45** | **Problem & Architecture** | Introduce StockSense as an auditable MRO inventory system for intermittent demand. Explain the React $\rightarrow$ FastAPI $\rightarrow$ SQLite WAL architecture and why synthetic assumptions were used. |
-| **0:45 – 1:45** | **Inventory & Core Integrity** | Open `Inventory Workstation`. Inspect a part (`HP-001`). Show cross-warehouse balances. Open `Operations` and record a valid issue. Attempt an over-issue to demonstrate immediate HTTP 400 rejection. Run `Integrity Check` to show 0 mismatches. |
-| **1:45 – 3:00** | **AI Replenishment Intelligence** | Navigate to `AI & Replenishment`. Open an urgent recommendation. Inspect the 6-section Explainability Drawer: show the TSB/SBA formula, ADI/CV² classification, lead-time assumptions, and safety stock calculation. Emphasize zero-leakage training. |
-| **3:00 – 4:15** | **Human Approval & Procurement** | Click `Approve Recommendation`. Point out that the AI never auto-orders; approval creates a `DRAFT` Purchase Order atomically. Open `Purchase Orders`, approve the PO, and print the legal A4 commercial PO docket with barcodes and signature seals. |
-| **4:15 – 5:15** | **Warehouse Mobility & Receiving** | Open the `Universal Barcode Scanner HUD` (<kbd>F2</kbd>). Scan incoming PO barcode (`PO-2026-0001`). Receive dock delivery directly in the scanner. Demonstrate vendor part alias cross-referencing (`VND-*`). Print an exact single-page thermal shelf bin label. |
-| **5:15 – 6:00** | **Ledger Reconciliation & Waybill** | Return to `Operations`. View the immutable receipt entry. Open the row action and generate an official A4 Material Transit Waybill. Re-run `Integrity Diagnostic` to prove 100% mathematical reconciliation. |
-| **6:00 – 6:45** | **Engineering Choices & Scaling** | Summarize architectural decisions: SQLite WAL for reproducible evaluation, clean separation of concerns, N+1 optimization (<35ms load time), and the transition roadmap to PostgreSQL 16 & Celery. |
 
 ---
 
