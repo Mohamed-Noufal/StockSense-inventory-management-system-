@@ -874,12 +874,32 @@ The Operations Workstation (`/operations`, rendered via `OperationsView.tsx`) ma
   - Overview's "Stock by Category" SVG donut chart computes real-time category distribution percentages directly from `items`.
   - Overview's "Low Stock Items" operational table dynamically surfaces the top 5 items closest to stockout ordered by ascending on-hand quantity.
 
+#### 16.2.5 Warehouse-Specific Inventory Balances & Over-Issue Guards (`MovementModal.tsx`) (COMPLETED)
+- **Per-Warehouse Real-Time Balance Reflection**:
+  - The movement modal dynamically reads authoritative SQLite `stock_balances` across all warehouses (`api.getBalances()`).
+  - Dropdown options display location-specific stock availability (e.g. `WH-01 — Central Warehouse (Cairo Base) (10 EA available)`).
+  - Below the location selector, an **Active Location Stock Card** displays exact on-hand units, real-time stock status (in-stock vs out-of-stock), and a cross-warehouse summary with 1-click shortcut buttons to switch immediately to warehouses with positive inventory.
+- **Intelligent Warehouse Auto-Switching**:
+  - When an item is selected for an issue or transfer, if the currently selected warehouse has 0 stock but another warehouse holds inventory, the modal automatically selects the stocked warehouse location to prevent operator frustration.
+- **Client-Side Over-Issue Protection & Live Validation**:
+  - During depleting transactions (`ISSUE`, `TRANSFER`, or `ADJUSTMENT - SHRINKAGE`), the input dynamically enforces `max={availableAtLocation}`.
+  - If an operator enters a quantity greater than available (e.g., entering 18 when only 10 exist at `WH-01`):
+    - Input border turns red with a distinct danger glow.
+    - An immediate in-form warning appears: `Cannot issue 18 EA. Requested quantity exceeds available stock at WH-01 (Max: 10 EA).`
+    - The submit button is disabled with text `Exceeds Available (10)` or `Zero Stock at Location`.
+  - Provides a **1-click `[Set Max (X)]` button** next to the quantity label to instantly autofill the maximum permissible quantity.
+- **In-Modal Server Error Banner (400 Bad Request Surface)**:
+  - Previously, if the backend returned `400 Bad Request` (e.g., `Insufficient stock for PUMP-SEAL-99 at WH-01. Available: 10, requested: 18`), the error was captured in `App.tsx` behind the modal overlay backdrop, leaving the modal open with no visual feedback.
+  - The modal now receives `modalError` and renders a prominent, red server rejection alert banner directly inside the modal with full backend details.
+  - Includes a loading spinner state (`Recording Movement...`) and disables duplicate submissions during asynchronous flight.
+
 ### 16.3 Production Authentication & Role-Based Navigation
 - **Login / Session Shell**: Dedicated login modal and token management.
 - **Role-Scoped Interfaces**:
   - Storekeeper persona: Restricted to physical inventory, movement modals, and waybill printing.
   - Procurement persona: Focused on purchase orders, supplier management, and receiving.
   - Operations Manager persona: Comprehensive access including AI policy adjustments, exception resolutions, and system health.
+
 
 
 

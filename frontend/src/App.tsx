@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { api } from './api/client';
 import {
-  HealthResponse, ReadyResponse, InventoryItem, InventoryLocation,
+  HealthResponse, ReadyResponse, InventoryItem, InventoryLocation, StockBalance,
   StockMovement, IntegrityCheckResponse, Milestone, PurchaseOrder,
   Supplier, POCreatePayload, POReceivePayload, AIRun, AIRecommendation, User,
   AIRunTriggerPayload, AlertItem
@@ -75,6 +75,7 @@ const App: React.FC = () => {
   const [readiness, setReadiness] = useState<ReadyResponse | null>(null);
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [locations, setLocations] = useState<InventoryLocation[]>([]);
+  const [balances, setBalances] = useState<StockBalance[]>([]);
   const [ledger, setLedger] = useState<StockMovement[]>([]);
   const [orders, setOrders] = useState<PurchaseOrder[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -87,6 +88,8 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [runningAi, setRunningAi] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [modalError, setModalError] = useState<string | null>(null);
+  const [isSubmittingTx, setIsSubmittingTx] = useState<boolean>(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   const [showNewItemModal, setShowNewItemModal] = useState<boolean>(false);
@@ -122,9 +125,19 @@ const App: React.FC = () => {
   const [selectedItemId, setSelectedItemId] = useState<number>(0);
   const [selectedLocId, setSelectedLocId] = useState<number>(0);
   const [targetLocId, setTargetLocId] = useState<number>(0);
-  const [txQty, setTxQty] = useState<number>(5);
+  const [txQty, setTxQty] = useState<number>(1);
   const [txReason, setTxReason] = useState<string>('');
   const [attachedFile, setAttachedFile] = useState<File | null>(null);
+
+  const handleOpenMovementModal = (type: 'RECEIPT' | 'ISSUE' | 'TRANSFER' | 'ADJUSTMENT' = 'RECEIPT', itemId?: number) => {
+    setModalError(null);
+    setModalType(type);
+    if (itemId !== undefined) {
+      setSelectedItemId(itemId);
+    }
+    setTxQty(1);
+    setShowModal(true);
+  };
 
   const [showPOCreateModal, setShowPOCreateModal] = useState<boolean>(false);
   const [receivingPO, setReceivingPO] = useState<PurchaseOrder | null>(null);
@@ -158,7 +171,10 @@ const App: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const [hData, rData, itmData, locData, ledgData, integData, poData, supData, recData, runData, usersData, alertsData] = await Promise.all([
+      const [
+        hData, rData, itmData, locData, ledgData, integData,
+        poData, supData, recData, runData, usersData, alertsData, balancesData
+      ] = await Promise.all([
         api.getHealth().catch(() => null),
         api.getReadiness().catch(() => null),
         api.getItems().catch(() => []),
@@ -171,11 +187,13 @@ const App: React.FC = () => {
         api.getAIRuns().catch(() => []),
         api.getUsers().catch(() => []),
         api.getAlerts().catch(() => []),
+        api.getBalances().catch(() => []),
       ]);
       setHealth(hData);
       setReadiness(rData);
       setItems(itmData);
       setLocations(locData);
+      setBalances(balancesData);
       setLedger(ledgData);
       setIntegrity(integData);
       setOrders(poData);
@@ -210,7 +228,9 @@ const App: React.FC = () => {
   const handleTransaction = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setModalError(null);
     setSuccessMsg(null);
+    setIsSubmittingTx(true);
     const actorLabel = currentUser ? `${currentUser.full_name} (${currentUser.role})` : 'Storekeeper (STOREKEEPER)';
     try {
       if (modalType === 'TRANSFER') {
@@ -240,12 +260,17 @@ const App: React.FC = () => {
         }
       }
       setShowModal(false);
-      setTxQty(5);
+      setModalError(null);
+      setTxQty(1);
       setTxReason('');
       setAttachedFile(null);
-      fetchData();
+      await fetchData();
     } catch (err: any) {
-      setError(err.message || 'Transaction failed');
+      const msg = err.message || 'Transaction failed';
+      setModalError(msg);
+      setError(msg);
+    } finally {
+      setIsSubmittingTx(false);
     }
   };
 
@@ -418,7 +443,7 @@ const App: React.FC = () => {
           loading={loading}
           onRefresh={fetchData}
           onRunAudit={handleRunIntegrityCheck}
-          onOpenModal={() => { setModalType('RECEIPT'); setShowModal(true); }}
+          onOpenModal={() => handleOpenMovementModal('RECEIPT')}
           isCollapsed={isCollapsed}
           onToggleCollapse={handleToggleCollapse}
           users={users}
@@ -448,11 +473,7 @@ const App: React.FC = () => {
               items={items}
               orders={orders}
               loading={loading}
-              onAction={(itemId, type) => {
-                setSelectedItemId(itemId);
-                setModalType(type);
-                setShowModal(true);
-              }}
+              onAction={(itemId, type) => handleOpenMovementModal(type, itemId)}
               onNavigateTab={handleTabChange}
               onPrintLabel={(item) => setLabelPrintItem(item)}
               onAddNewItem={() => handleOpenNewItemModal('')}
@@ -464,10 +485,7 @@ const App: React.FC = () => {
               items={items}
               locations={locations}
               onRefresh={fetchData}
-              onOpenMovementModal={(type) => {
-                setModalType(type);
-                setShowModal(true);
-              }}
+              onOpenMovementModal={(type) => handleOpenMovementModal(type)}
               onPrintWaybill={(mov) => setWaybillMovement(mov)}
               onOpenScanner={() => setShowScannerModal(true)}
             />
@@ -537,7 +555,7 @@ const App: React.FC = () => {
               currentUser={currentUser}
               loading={loading}
               onNavigateTab={(tab) => handleTabChange(tab as TabType)}
-              onOpenMovementModal={() => { setModalType('RECEIPT'); setShowModal(true); }}
+              onOpenMovementModal={() => handleOpenMovementModal('RECEIPT')}
               onInspectRec={(rec) => setInspectingRec(rec)}
             />
           )}
@@ -549,15 +567,28 @@ const App: React.FC = () => {
       {showModal && (
         <MovementModal
           modalType={modalType}
-          setModalType={setModalType}
+          setModalType={(type) => {
+            setModalError(null);
+            setModalType(type);
+          }}
           items={items}
           locations={locations}
+          balances={balances}
           selectedItemId={selectedItemId}
-          setSelectedItemId={setSelectedItemId}
+          setSelectedItemId={(id) => {
+            setModalError(null);
+            setSelectedItemId(id);
+          }}
           selectedLocId={selectedLocId}
-          setSelectedLocId={setSelectedLocId}
+          setSelectedLocId={(id) => {
+            setModalError(null);
+            setSelectedLocId(id);
+          }}
           targetLocId={targetLocId}
-          setTargetLocId={setTargetLocId}
+          setTargetLocId={(id) => {
+            setModalError(null);
+            setTargetLocId(id);
+          }}
           txQty={txQty}
           setTxQty={setTxQty}
           txReason={txReason}
@@ -568,7 +599,14 @@ const App: React.FC = () => {
           setDestinationLabel={setDestinationLabel}
           attachedFile={attachedFile}
           setAttachedFile={setAttachedFile}
-          onClose={() => { setShowModal(false); setAttachedFile(null); }}
+          modalError={modalError}
+          setModalError={setModalError}
+          isSubmitting={isSubmittingTx}
+          onClose={() => {
+            setShowModal(false);
+            setAttachedFile(null);
+            setModalError(null);
+          }}
           onSubmit={handleTransaction}
         />
       )}
@@ -616,11 +654,7 @@ const App: React.FC = () => {
           orders={orders}
           suppliers={suppliers}
           onClose={() => setShowScannerModal(false)}
-          onQuickAction={(action, itm) => {
-            setSelectedItemId(itm.id);
-            setModalType(action);
-            setShowModal(true);
-          }}
+          onQuickAction={(action, itm) => handleOpenMovementModal(action, itm.id)}
           onPrintLabel={(itm) => setLabelPrintItem(itm)}
           onInspectItem={(itm) => {
             setSelectedItemId(itm.id);

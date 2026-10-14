@@ -1,15 +1,17 @@
-import React from 'react';
+import React, { useMemo, useEffect, useRef } from 'react';
 import {
   PlusCircle, MinusCircle, ArrowRightLeft, ShieldCheck, X,
-  TrendingUp, TrendingDown, Paperclip, UploadCloud, FileText, Trash2
+  TrendingUp, TrendingDown, Paperclip, UploadCloud, FileText, Trash2,
+  AlertCircle, AlertTriangle, CheckCircle2, ArrowUpRight
 } from 'lucide-react';
-import { InventoryItem, InventoryLocation } from '../types';
+import { InventoryItem, InventoryLocation, StockBalance } from '../types';
 
 interface MovementModalProps {
   modalType: 'RECEIPT' | 'ISSUE' | 'TRANSFER' | 'ADJUSTMENT';
   setModalType: (type: 'RECEIPT' | 'ISSUE' | 'TRANSFER' | 'ADJUSTMENT') => void;
   items: InventoryItem[];
   locations: InventoryLocation[];
+  balances: StockBalance[];
   selectedItemId: number;
   setSelectedItemId: (id: number) => void;
   selectedLocId: number;
@@ -26,6 +28,9 @@ interface MovementModalProps {
   setDestinationLabel?: (label: string) => void;
   attachedFile?: File | null;
   setAttachedFile?: (file: File | null) => void;
+  modalError?: string | null;
+  setModalError?: (err: string | null) => void;
+  isSubmitting?: boolean;
   onClose: () => void;
   onSubmit: (e: React.FormEvent) => void;
 }
@@ -36,6 +41,7 @@ export const MovementModal: React.FC<MovementModalProps> = ({
   setModalType,
   items,
   locations,
+  balances,
   selectedItemId,
   setSelectedItemId,
   selectedLocId,
@@ -52,11 +58,85 @@ export const MovementModal: React.FC<MovementModalProps> = ({
   setDestinationLabel,
   attachedFile,
   setAttachedFile,
+  modalError,
+  setModalError,
+  isSubmitting = false,
   onClose,
   onSubmit,
 }) => {
   const selectedItem = items.find((i) => i.id === selectedItemId);
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const selectedLoc = locations.find((l) => l.id === selectedLocId);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Compute all balances across locations for the currently selected item
+  const itemBalances = useMemo(() => {
+    return balances.filter((b) => b.item_id === selectedItemId);
+  }, [balances, selectedItemId]);
+
+  const getLocBalance = (locId: number): number => {
+    const b = itemBalances.find((bal) => bal.location_id === locId);
+    return b ? b.quantity_on_hand : 0;
+  };
+
+  const currentLocBalance = getLocBalance(selectedLocId);
+
+  // Identify other warehouses that hold positive inventory for this item
+  const otherStockLocations = useMemo(() => {
+    return itemBalances
+      .filter((b) => b.location_id !== selectedLocId && b.quantity_on_hand > 0)
+      .map((b) => {
+        const loc = locations.find((l) => l.id === b.location_id);
+        return {
+          locationId: b.location_id,
+          code: loc?.code || b.location_code || `WH-${b.location_id}`,
+          name: loc?.name || 'Warehouse',
+          qty: b.quantity_on_hand,
+        };
+      });
+  }, [itemBalances, selectedLocId, locations]);
+
+  // Intelligent auto-switch: if issuing/transferring and current warehouse has 0 stock,
+  // but another location has stock, switch to that location
+  useEffect(() => {
+    if ((modalType === 'ISSUE' || modalType === 'TRANSFER') && currentLocBalance === 0) {
+      if (otherStockLocations.length > 0) {
+        setSelectedLocId(otherStockLocations[0].locationId);
+      }
+    }
+  }, [selectedItemId, modalType]);
+
+  // Adjust default target location for transfers if same as selected
+  useEffect(() => {
+    if (modalType === 'TRANSFER' && selectedLocId === targetLocId) {
+      const alt = locations.find((l) => l.id !== selectedLocId);
+      if (alt) setTargetLocId(alt.id);
+    }
+  }, [selectedLocId, targetLocId, modalType, locations, setTargetLocId]);
+
+  const isDepletingMode =
+    modalType === 'ISSUE' ||
+    modalType === 'TRANSFER' ||
+    (modalType === 'ADJUSTMENT' && adjustmentDirection === 'SHRINKAGE');
+
+  const isZeroStock = isDepletingMode && currentLocBalance <= 0;
+  const isOverStock = isDepletingMode && txQty > currentLocBalance;
+  const isInvalidTransfer = modalType === 'TRANSFER' && selectedLocId === targetLocId;
+  const isFormInvalid = isZeroStock || isOverStock || isInvalidTransfer || txQty <= 0;
+
+  const handleModeChange = (t: 'RECEIPT' | 'ISSUE' | 'TRANSFER' | 'ADJUSTMENT') => {
+    if (setModalError) setModalError(null);
+    setModalType(t);
+  };
+
+  const handleItemChange = (itemId: number) => {
+    if (setModalError) setModalError(null);
+    setSelectedItemId(itemId);
+  };
+
+  const handleLocChange = (locId: number) => {
+    if (setModalError) setModalError(null);
+    setSelectedLocId(locId);
+  };
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -78,6 +158,33 @@ export const MovementModal: React.FC<MovementModalProps> = ({
           </button>
         </div>
 
+        {/* Server Rejection Alert Banner (Shows 400 Bad Request directly inside modal) */}
+        {modalError && (
+          <div
+            style={{
+              margin: '0.85rem 1.25rem 0 1.25rem',
+              padding: '0.75rem 0.95rem',
+              background: 'rgba(239, 68, 68, 0.16)',
+              border: '1px solid rgba(239, 68, 68, 0.35)',
+              borderRadius: 'var(--radius-md)',
+              color: '#f87171',
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '0.55rem',
+              fontSize: '0.82rem',
+              lineHeight: 1.45,
+            }}
+          >
+            <AlertCircle style={{ width: 17, height: 17, flexShrink: 0, marginTop: 2, color: '#ef4444' }} />
+            <div style={{ flex: 1 }}>
+              <strong style={{ display: 'block', color: '#fca5a5', marginBottom: '0.2rem' }}>
+                Transaction Rejected by Server
+              </strong>
+              <span>{modalError}</span>
+            </div>
+          </div>
+        )}
+
         <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
           <div className="modal-body">
             {/* Movement Type Selector */}
@@ -95,7 +202,7 @@ export const MovementModal: React.FC<MovementModalProps> = ({
                       fontWeight: 600,
                       justifyContent: 'center',
                     }}
-                    onClick={() => setModalType(t)}
+                    onClick={() => handleModeChange(t)}
                   >
                     {t === 'RECEIPT' && 'Receive'}
                     {t === 'ISSUE' && 'Issue'}
@@ -112,32 +219,124 @@ export const MovementModal: React.FC<MovementModalProps> = ({
               <select
                 className="form-select"
                 value={selectedItemId}
-                onChange={(e) => setSelectedItemId(Number(e.target.value))}
+                onChange={(e) => handleItemChange(Number(e.target.value))}
               >
                 {items.map((itm) => (
                   <option key={itm.id} value={itm.id}>
-                    {itm.sku} — {itm.name} (On-Hand: {itm.total_on_hand})
+                    {itm.sku} — {itm.name} (Total On-Hand: {itm.total_on_hand} {itm.uom || 'EA'})
                   </option>
                 ))}
               </select>
             </div>
 
-            {/* Warehouse Locations */}
+            {/* Warehouse Locations with on-hand reflection */}
             <div className="form-group">
-              <label className="form-label">
-                {modalType === 'TRANSFER' ? 'Source Warehouse (From)' : 'Warehouse Location'}
-              </label>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
+                <label className="form-label" style={{ margin: 0 }}>
+                  {modalType === 'TRANSFER' ? 'Source Warehouse (From)' : 'Warehouse Location'}
+                </label>
+                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                  Per-location inventory
+                </span>
+              </div>
               <select
                 className="form-select"
                 value={selectedLocId}
-                onChange={(e) => setSelectedLocId(Number(e.target.value))}
+                onChange={(e) => handleLocChange(Number(e.target.value))}
               >
-                {locations.map((loc) => (
-                  <option key={loc.id} value={loc.id}>
-                    {loc.code} — {loc.name}
-                  </option>
-                ))}
+                {locations.map((loc) => {
+                  const bal = getLocBalance(loc.id);
+                  return (
+                    <option key={loc.id} value={loc.id}>
+                      {loc.code} — {loc.name} {modalType !== 'RECEIPT' ? `(${bal} ${selectedItem?.uom || 'EA'} available)` : ''}
+                    </option>
+                  );
+                })}
               </select>
+
+              {/* Warehouse Stock Status Breakdown Card */}
+              <div
+                style={{
+                  marginTop: '0.45rem',
+                  padding: '0.6rem 0.8rem',
+                  background: currentLocBalance > 0 ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.09)',
+                  border: `1px solid ${currentLocBalance > 0 ? 'rgba(16, 185, 129, 0.25)' : 'rgba(239, 68, 68, 0.25)'}`,
+                  borderRadius: 'var(--radius-md)',
+                  fontSize: '0.78rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.35rem',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>
+                    Available Stock at {selectedLoc?.code || 'Selected Location'}:
+                  </span>
+                  <span
+                    style={{
+                      fontWeight: 700,
+                      color: currentLocBalance > 0 ? '#34d399' : '#f87171',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                    }}
+                  >
+                    {currentLocBalance > 0 ? (
+                      <>
+                        <CheckCircle2 style={{ width: 13, height: 13 }} />
+                        {currentLocBalance} {selectedItem?.uom || 'EA'} on-hand
+                      </>
+                    ) : (
+                      <>
+                        <AlertCircle style={{ width: 13, height: 13 }} />
+                        0 {selectedItem?.uom || 'EA'} (Out of Stock here)
+                      </>
+                    )}
+                  </span>
+                </div>
+
+                {/* Show other warehouses where this item is in stock with 1-click switch */}
+                {otherStockLocations.length > 0 && (
+                  <div
+                    style={{
+                      fontSize: '0.72rem',
+                      color: 'var(--text-muted)',
+                      borderTop: '1px dashed rgba(255, 255, 255, 0.08)',
+                      paddingTop: '0.35rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.45rem',
+                      flexWrap: 'wrap',
+                    }}
+                  >
+                    <span>Also stocked in:</span>
+                    {otherStockLocations.map((other) => (
+                      <button
+                        key={other.locationId}
+                        type="button"
+                        onClick={() => handleLocChange(other.locationId)}
+                        style={{
+                          background: 'rgba(255, 255, 255, 0.08)',
+                          border: '1px solid var(--border-color)',
+                          borderRadius: '4px',
+                          color: '#e2e8f0',
+                          padding: '0.12rem 0.45rem',
+                          fontSize: '0.7rem',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.25rem',
+                          transition: 'all 0.15s ease',
+                        }}
+                        title={`Switch source to ${other.name} (${other.qty} ${selectedItem?.uom || 'EA'})`}
+                      >
+                        <span>{other.code}: <strong>{other.qty}</strong></span>
+                        <ArrowUpRight style={{ width: 10, height: 10, color: 'var(--text-muted)' }} />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Destination for Transfers */}
@@ -147,13 +346,21 @@ export const MovementModal: React.FC<MovementModalProps> = ({
                 <select
                   className="form-select"
                   value={targetLocId}
-                  onChange={(e) => setTargetLocId(Number(e.target.value))}
+                  onChange={(e) => {
+                    if (setModalError) setModalError(null);
+                    setTargetLocId(Number(e.target.value));
+                  }}
                 >
-                  {locations.filter((loc) => loc.id !== selectedLocId).map((loc) => (
-                    <option key={loc.id} value={loc.id}>
-                      {loc.code} — {loc.name}
-                    </option>
-                  ))}
+                  {locations
+                    .filter((loc) => loc.id !== selectedLocId)
+                    .map((loc) => {
+                      const destBal = getLocBalance(loc.id);
+                      return (
+                        <option key={loc.id} value={loc.id}>
+                          {loc.code} — {loc.name} ({destBal} {selectedItem?.uom || 'EA'} currently on-hand)
+                        </option>
+                      );
+                    })}
                 </select>
               </div>
             )}
@@ -185,7 +392,10 @@ export const MovementModal: React.FC<MovementModalProps> = ({
                     type="button"
                     className={`btn ${adjustmentDirection === 'SURPLUS' ? 'btn-primary' : 'btn-secondary'}`}
                     style={{ padding: '0.45rem', fontSize: '0.75rem', gap: '0.4rem' }}
-                    onClick={() => setAdjustmentDirection && setAdjustmentDirection('SURPLUS')}
+                    onClick={() => {
+                      if (setModalError) setModalError(null);
+                      setAdjustmentDirection && setAdjustmentDirection('SURPLUS');
+                    }}
                   >
                     <TrendingUp style={{ width: 14, height: 14, color: '#34d399' }} />
                     <span>Surplus (+) [Found Stock]</span>
@@ -195,7 +405,10 @@ export const MovementModal: React.FC<MovementModalProps> = ({
                     type="button"
                     className={`btn ${adjustmentDirection === 'SHRINKAGE' ? 'btn-primary' : 'btn-secondary'}`}
                     style={{ padding: '0.45rem', fontSize: '0.75rem', gap: '0.4rem' }}
-                    onClick={() => setAdjustmentDirection && setAdjustmentDirection('SHRINKAGE')}
+                    onClick={() => {
+                      if (setModalError) setModalError(null);
+                      setAdjustmentDirection && setAdjustmentDirection('SHRINKAGE');
+                    }}
                   >
                     <TrendingDown style={{ width: 14, height: 14, color: '#f87171' }} />
                     <span>Shrinkage (-) [Damaged / Missing]</span>
@@ -204,19 +417,111 @@ export const MovementModal: React.FC<MovementModalProps> = ({
               </div>
             )}
 
-            {/* Quantity */}
+            {/* Quantity with live bounds, Max button, and real-time over-issue detection */}
             <div className="form-group">
-              <label className="form-label">
-                Quantity Units {selectedItem?.uom ? `(${selectedItem.uom})` : ''}
-              </label>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
+                <label className="form-label" style={{ margin: 0 }}>
+                  Quantity Units {selectedItem?.uom ? `(${selectedItem.uom})` : ''}
+                </label>
+
+                {isDepletingMode && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.72rem' }}>
+                    <span style={{ color: 'var(--text-muted)' }}>
+                      Available at {selectedLoc?.code}:{' '}
+                      <strong style={{ color: currentLocBalance > 0 ? '#34d399' : '#f87171' }}>
+                        {currentLocBalance}
+                      </strong>
+                    </span>
+                    {currentLocBalance > 0 && (
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        style={{
+                          padding: '0.15rem 0.45rem',
+                          fontSize: '0.68rem',
+                          height: 'auto',
+                          lineHeight: 1.2,
+                          borderRadius: '4px',
+                          color: '#34d399',
+                          borderColor: 'rgba(52, 211, 153, 0.35)',
+                        }}
+                        onClick={() => {
+                          if (setModalError) setModalError(null);
+                          setTxQty(currentLocBalance);
+                        }}
+                        title={`Auto-fill maximum available quantity (${currentLocBalance})`}
+                      >
+                        Set Max ({currentLocBalance})
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+
               <input
                 type="number"
                 min="1"
+                max={isDepletingMode && currentLocBalance > 0 ? currentLocBalance : undefined}
                 className="form-input"
+                style={{
+                  borderColor: isOverStock ? '#ef4444' : undefined,
+                  boxShadow: isOverStock ? '0 0 0 2px rgba(239, 68, 68, 0.2)' : undefined,
+                  background: isOverStock ? 'rgba(239, 68, 68, 0.06)' : undefined,
+                }}
                 value={txQty}
-                onChange={(e) => setTxQty(Math.max(1, Number(e.target.value)))}
+                onChange={(e) => {
+                  if (setModalError) setModalError(null);
+                  setTxQty(Math.max(1, Number(e.target.value)));
+                }}
                 required
               />
+
+              {/* Real-time over-issue warning banner */}
+              {isOverStock && (
+                <div
+                  style={{
+                    marginTop: '0.4rem',
+                    padding: '0.5rem 0.75rem',
+                    background: 'rgba(239, 68, 68, 0.15)',
+                    border: '1px solid rgba(239, 68, 68, 0.35)',
+                    borderRadius: 'var(--radius-sm)',
+                    color: '#f87171',
+                    fontSize: '0.75rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.45rem',
+                    fontWeight: 500,
+                  }}
+                >
+                  <AlertTriangle style={{ width: 14, height: 14, flexShrink: 0 }} />
+                  <span>
+                    Cannot {modalType.toLowerCase()} {txQty} {selectedItem?.uom || 'EA'}. Requested quantity exceeds available stock at {selectedLoc?.code || 'this location'} (Max: {currentLocBalance} {selectedItem?.uom || 'EA'}).
+                  </span>
+                </div>
+              )}
+
+              {/* Zero stock warning */}
+              {isZeroStock && (
+                <div
+                  style={{
+                    marginTop: '0.4rem',
+                    padding: '0.5rem 0.75rem',
+                    background: 'rgba(239, 68, 68, 0.15)',
+                    border: '1px solid rgba(239, 68, 68, 0.35)',
+                    borderRadius: 'var(--radius-sm)',
+                    color: '#f87171',
+                    fontSize: '0.75rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.45rem',
+                  }}
+                >
+                  <AlertCircle style={{ width: 14, height: 14, flexShrink: 0 }} />
+                  <span>
+                    Warehouse {selectedLoc?.code} has 0 stock of this item. Select another warehouse location with stock or receive new inventory first.
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Reference & Reason */}
@@ -237,7 +542,10 @@ export const MovementModal: React.FC<MovementModalProps> = ({
                 }
                 className="form-input"
                 value={txReason}
-                onChange={(e) => setTxReason(e.target.value)}
+                onChange={(e) => {
+                  if (setModalError) setModalError(null);
+                  setTxReason(e.target.value);
+                }}
               />
             </div>
 
@@ -307,21 +615,36 @@ export const MovementModal: React.FC<MovementModalProps> = ({
             </div>
           </div>
 
-
           <div className="modal-footer">
-            <button type="button" className="btn btn-secondary" onClick={onClose}>
+            <button type="button" className="btn btn-secondary" onClick={onClose} disabled={isSubmitting}>
               Cancel
             </button>
             <button
               type="submit"
+              disabled={isFormInvalid || isSubmitting}
               className={`btn ${
                 modalType === 'ISSUE' ? 'btn-issue' :
                 modalType === 'RECEIPT' ? 'btn-receipt' :
                 modalType === 'TRANSFER' ? 'btn-primary' : 'btn-adjust'
               }`}
-              style={{ minWidth: 140 }}
+              style={{
+                minWidth: 160,
+                opacity: (isFormInvalid || isSubmitting) ? 0.6 : 1,
+                cursor: (isFormInvalid || isSubmitting) ? 'not-allowed' : 'pointer',
+              }}
             >
-              Commit to Ledger
+              {isSubmitting ? (
+                <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'center' }}>
+                  <span className="spinner" style={{ width: 13, height: 13, borderWidth: 2 }} />
+                  Recording Movement...
+                </span>
+              ) : isZeroStock ? (
+                'Zero Stock at Location'
+              ) : isOverStock ? (
+                `Exceeds Available (${currentLocBalance})`
+              ) : (
+                'Commit to Ledger'
+              )}
             </button>
           </div>
         </form>
