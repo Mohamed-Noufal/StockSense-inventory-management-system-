@@ -52,7 +52,8 @@ Refer to [`03-sprint-plan.md`](./03-sprint-plan.md) for granular task tracking:
   - **Universal Multi-Code Scanner HUD (`BarcodeScannerModal.tsx`)**: Upgraded scanner engine supporting multi-format barcode resolution: PO packing slip barcodes (`PO-...`) with line fulfillment tracking and 1-click receiving; vendor part numbers (`supplier_sku`) cross-referenced against `item_suppliers` to internal SKUs with visual badges; internal SKUs with stock level breakdowns; and unlisted barcode detection with direct 1-click item registration.
   - **Fast-Track Master Data Catalog Onboarding (`NewItemModal.tsx` & `POST /api/v1/inventory/items`)**: Complete modal and transactional API endpoint to onboard new items on the dock. Automatically links primary supplier, initializes balance, and records immutable ledger `RECEIPT` in a single atomic database transaction.
   - **Thermal Label Isolated Iframe Print Engine**: Replaced flawed `window.print()` with off-screen isolated iframe print pipeline (`printThermalLabelViaIframe`), eliminating the 15-page blank overflow bug on thermal printers and guaranteeing exact 1-page labels (4"×2" or 2"×1").
-  - **Test Suite**: 40/40 backend tests verified (38 passed, 2 skipped, 0 failures), 0 TypeScript compile errors (`✓ built in 2.76s`).
+  - **Authoritative KPI Synchronization & Route Persistence**: Synchronized live KPI metrics between Overview and Inventory derived directly from SQLite (`124` items, `$943,314` stock valuation, `56` low stock items, `224` open POs). Eliminated loading number flashes (`248 / $482,350 / 18 / 7`), bound `InventoryView` directly to database items, and implemented bidirectional URL hash routing (`window.location.hash` / `localStorage`) preserving active workstation tabs across browser reloads (<kbd>F5</kbd>).
+  - **Test Suite**: 40/40 backend tests verified (38 passed, 2 skipped, 0 failures), 0 TypeScript compile errors (`✓ built in 2.36s`).
 
 ---
 

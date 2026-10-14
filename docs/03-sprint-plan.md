@@ -417,11 +417,23 @@ This is a deadline-aware plan from Monday evening to Thursday's interview. Adjus
   - Dynamically builds a hidden sandboxed `iframe`, clones exact SVG label content, injects scoped `@page { size: 4in 2in; margin: 0; }` styling, and executes printing strictly inside the iframe context.
   - Guaranteed exact single-page output across Zebra, Brother, Rollo, and Dymo thermal continuous roll printers.
 
+#### Task 4: Authoritative KPI Synchronization & Bidirectional Route Persistence (`App.tsx`, `OverviewView.tsx`, `InventoryView.tsx`)
+- **Bidirectional Route Persistence**: Workstation navigation synchronizes bidirectionally with `window.location.hash` and `localStorage`, preserving active tabs across page reloads (<kbd>F5</kbd>) and browser back/forward history.
+- **Harmonized Authoritative KPI Calculations**: Eliminated conflicting and hardcoded metrics between Overview and Inventory. Both workstations now derive metrics directly from the live database:
+  - Total Items: `items.length` (124 items)
+  - Total Stock Value: `items.reduce(...)` ($943,314)
+  - Low Stock Items: `items.filter(i => i.total_on_hand <= (i.reorder_point ?? 10))` (56 items)
+  - Open Purchase Orders: `orders.filter(o => o.status === 'DRAFT' || o.status === 'APPROVED')` (224 orders)
+- **Elimination of Loading Number Flashes**: Removed static fallback numbers (`248 / $482,350 / 18 / 7`) that previously flashed before API resolution; cards now display clean placeholder dashes (`—`) during initial load.
+- **Database Item Purity**: Removed synthetic mock item fixtures from `InventoryView`; table renders live SQLite items directly.
+
 #### Verification & Test Suite
-- **Backend Test Suite**: 40/40 tests passing (`.venv/bin/pytest backend/tests/ -v`), including new test `test_create_item_and_alias_resolution`.
-- **Frontend Build**: Zero TypeScript errors; `tsc && vite build` bundled cleanly in 2.76s.
+- **Backend Test Suite**: 40/40 tests passing (`.venv/bin/pytest backend/tests/ -v`), including `test_create_item_and_alias_resolution`.
+- **Frontend Build**: Zero TypeScript errors; `tsc && vite build` bundled cleanly in 2.36s.
 
 ---
+
+### Sprint O — Production JWT Authentication & Granular RBAC (PLANNED)
 
 **Objective:** Secure all API surfaces with cryptographic tokens and role-based permissions.
 

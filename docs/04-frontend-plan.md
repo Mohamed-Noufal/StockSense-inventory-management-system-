@@ -854,10 +854,25 @@ The Operations Workstation (`/operations`, rendered via `OperationsView.tsx`) ma
   - Form-factor toggle: 4"×2" Rack/Bin Tag and 2"×1" Compact Part Sticker.
   - Zero-dependency mathematical vector Code 128 (Subset B) 1D barcode and 2D Matrix QR code SVG renderer (`frontend/src/utils/barcode.ts`), guaranteeing 100% crisp vector output on thermal print heads without anti-aliasing raster blur.
   - Full industrial metadata: rack bin location coordinates, SKU, item description, category, criticality rating, ROP, stock on-hand, and unit cost.
-- **Isolated Iframe Printing Architecture (`printThermalLabelViaIframe`)**:
-  - Eliminates the browser print bug where uncontained DOM elements caused 15+ blank overflow pages on thermal roll printers.
-  - Dynamically constructs a hidden off-screen `iframe`, clones the exact label SVG content, injects scoped `@page { size: 4in 2in; margin: 0; }` styling, and triggers printing exclusively within the sandboxed iframe context.
-  - Guaranteed exact 1-page output across Zebra, Brother, Rollo, and Dymo thermal continuous roll printers.
+#### 16.2.4 Authoritative KPI Synchronization & Route Persistence Architecture (COMPLETED)
+- **Bidirectional Route Persistence (`window.location.hash` & `localStorage`)**:
+  - Workstation views synchronize bidirectionally with the browser location hash (`#/overview`, `#/inventory`, `#/ledger`, `#/procurement`, `#/ai`, `#/activity`, `#/users`, `#/sprint`, `#/diagnostics`).
+  - Active tab is read from `window.location.hash` on initial page mount with `localStorage` fallback.
+  - Listens to native `window.hashchange` events, ensuring browser reload (<kbd>F5</kbd>), back, and forward navigation keep the user precisely on their current workstation without resetting to Overview.
+- **Harmonized Authoritative KPI Calculations**:
+  - Eliminated conflicting metrics between Overview and Inventory. Both workstations now compute metrics dynamically from the live database:
+    - **Total Items**: `items.length` (`124` items)
+    - **Total Stock Value**: `items.reduce((sum, itm) => sum + (itm.total_on_hand * itm.unit_cost_minor) / 100, 0)` (`$943,314`)
+    - **Low Stock Items**: `items.filter(i => i.total_on_hand <= (i.reorder_point ?? 10)).length` (`56` items)
+    - **Open Purchase Orders**: `orders.filter(o => o.status === 'DRAFT' || o.status === 'APPROVED').length` (`224` orders)
+- **Elimination of Loading Number Flashes**:
+  - Removed static placeholder fallbacks (`248 / $482,350 / 18 / 7`) that previously caused numbers to visibly flash and jump when database queries resolved.
+  - During asynchronous loading, metric cards display a clean placeholder (`—`) and smoothly populate with true database numbers upon resolution.
+- **Master Data Purity in Inventory Table**:
+  - Removed synthetic mock items from `InventoryView.tsx`. The inventory table now binds directly to authoritative SQLite items, ensuring all row clicks, barcode scans, and modal actions operate on valid database foreign keys.
+- **Dynamic Category Donut & Low Stock Table**:
+  - Overview's "Stock by Category" SVG donut chart computes real-time category distribution percentages directly from `items`.
+  - Overview's "Low Stock Items" operational table dynamically surfaces the top 5 items closest to stockout ordered by ascending on-hand quantity.
 
 ### 16.3 Production Authentication & Role-Based Navigation
 - **Login / Session Shell**: Dedicated login modal and token management.

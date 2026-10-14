@@ -335,8 +335,9 @@ As of Tuesday, 13 October 2026:
 - [x] **Fast-Track Master Data Catalog Onboarding (Sprint 14 Complete):** Fast catalog onboarding modal (`NewItemModal.tsx`) and transactional backend API (`POST /api/v1/inventory/items`). Atomically registers new item, links primary supplier with purchasing terms, initializes balance, and records immutable `RECEIPT` movement in `stock_movements` in the exact same database transaction, preserving the zero-mismatch ledger invariant.
 - [x] **Thermal Label Isolated Iframe Print Engine (Sprint 14 Complete):** Replaced uncontained `window.print()` with off-screen isolated iframe printing (`printThermalLabelViaIframe`), eliminating the 15-page blank overflow bug on thermal printers and guaranteeing exact 1-page labels (4"×2" or 2"×1").
 - [x] **Enriched Supplier SKU Aliasing API:** `GET /api/v1/inventory/items` enriched with `supplier_skus: List[str]` for zero-roundtrip client-side alias resolution.
+- [x] **Authoritative KPI Synchronization & Route Persistence (Sprint 14 Complete):** Harmonized live KPI metrics between Overview and Inventory derived directly from SQLite (`124` items, `$943,314` stock valuation, `56` low stock items, `224` open POs). Eliminated loading number flashes (`248 / $482,350 / 18 / 7`), bound `InventoryView` directly to database items, and implemented bidirectional URL hash routing (`window.location.hash` / `localStorage`) preserving active workstation tabs across browser reloads (<kbd>F5</kbd>).
 - [x] **Passing Test Harness:** 40/40 backend test items verified (38 passed, 2 skipped, 0 failures) in ~2.3s, including `test_create_item_and_alias_resolution`.
-- [x] **TypeScript & Vite Build Verified:** Zero compile errors (`tsc && vite build` bundled in 2.76s, 0 errors).
+- [x] **TypeScript & Vite Build Verified:** Zero compile errors (`tsc && vite build` bundled in 2.36s, 0 errors).
 
 - [x] **Unified Single-Command Runner:** `./run.sh` / `scripts/run_app.sh` with intelligent port conflict detection and clean `Ctrl+C` shutdown trap.
 - [x] **Lean, Concise Files:** All files partitioned into micro-modules; zero bloated files.

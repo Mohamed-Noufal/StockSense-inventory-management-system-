@@ -64,6 +64,7 @@ flowchart TB
 - **Separation of Concerns:** Business logic and stock calculations reside exclusively in the backend service layer; the UI never computes authoritative inventory balances.
 - **Atomic Double-Entry Movements:** Transfers between locations are executed as paired, atomic `TRANSFER_OUT` and `TRANSFER_IN` movements sharing a `transfer_group_id`.
 - **Zero-Service Portability:** SQLite in WAL (Write-Ahead Logging) mode provides immediate, zero-configuration local reproducibility while maintaining ACID guarantees.
+- **Route Persistence & Deep-Linking:** The React SPA synchronizes active workstation views with the browser address bar via bidirectional URL hash routing (`window.location.hash` e.g. `#/inventory`, `#/procurement`, `#/ai`) and `localStorage`, ensuring page refreshes maintain exact workstation context without unwanted resets.
 
 ---
 
@@ -96,7 +97,7 @@ All specifications, architectural RFCs, sprint roadmaps, and autonomous agent gu
 | **Sprint 6: Ergonomics & User Audit** | Workspace & Directory | **Completed** | Collapsible rail sidebar with local persistence, streamlined header, real database user directory, and non-repudiable ledger audit attribution. |
 | **Sprint 7–12: Workstations & Integrity** | High-Density Workstations | **Completed** | Split-pane Inventory, Operations movement center, Procurement dock, AI replenishment intelligence, and Activity & Integrity center. |
 | **Sprint 13: Warehouse Mobility** | Physical Docs & Barcodes | **Completed** | Document attachment engine, printable transit waybills, thermal shelf bin labels, and USB barcode gun support. |
-| **Sprint 14: Enterprise Receiving & Onboarding** | Universal Scanning & Catalog | **Completed** | Universal Multi-Code Scanner (PO slips, vendor SKU cross-referencing, internal SKUs), in-scanner line receiving, fast-track catalog onboarding (`POST /api/v1/inventory/items`), and isolated iframe thermal print engine. |
+| **Sprint 14: Enterprise Receiving & Onboarding** | Universal Scanning & Catalog | **Completed** | Universal Multi-Code Scanner (PO slips, vendor SKU cross-referencing, internal SKUs), in-scanner line receiving, fast-track catalog onboarding (`POST /api/v1/inventory/items`), isolated iframe thermal print engine, and harmonized KPI metrics with URL hash route persistence. |
 
 ---
 
