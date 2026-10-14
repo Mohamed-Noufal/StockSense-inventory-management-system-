@@ -893,12 +893,28 @@ The Operations Workstation (`/operations`, rendered via `OperationsView.tsx`) ma
   - The modal now receives `modalError` and renders a prominent, red server rejection alert banner directly inside the modal with full backend details.
   - Includes a loading spinner state (`Recording Movement...`) and disables duplicate submissions during asynchronous flight.
 
+#### 16.2.6 Official A4 Transit Waybill Printing Engine (`WaybillModal.tsx`) (COMPLETED)
+- **Isolated Iframe Print Pipeline (Eliminating Blank 3-Page Sprawl)**:
+  - Previously, triggering `window.print()` in `WaybillModal.tsx` inherited the main application DOM tree (`#root` with `100vh`, dark theme background, and `visibility: hidden` CSS resets). In Chromium / Edge / Microsoft Print to PDF, this caused the print driver to generate a 3-page blank white document with 0 content.
+  - Replaced with an **Enterprise Isolated Print Frame (`<iframe>`) Engine**:
+    - Spawns a dedicated hidden iframe detached from the React app DOM hierarchy.
+    - Generates a standalone, standards-compliant A4 portrait HTML document (`@page { size: A4 portrait; margin: 8mm 12mm; }`).
+    - Guarantees **exactly 1 page** (1 of 1) with 100% visible, high-contrast, black-and-white industrial typography.
+- **Dynamic Scannable Barcode & QR Code Matrices**:
+  - Incorporates mathematical vector Code 128 (Subset B) barcode for the official waybill number (e.g. `*WB-202610-00931*`).
+  - Generates an instant vector QR matrix containing the cryptographic non-repudiation audit payload (`STOCKSENSE:WAYBILL:...`).
+- **Paper-Compliant Screen Preview Inputs**:
+  - Fixed dark theme CSS bleeding where `input[type="text"]` inherited black background (`#09090b`) from `components.css`.
+  - Waybill inputs and textareas are styled with clean `#f8fafc` backgrounds and `#cbd5e1` borders on screen, perfectly matching physical logistics paperwork.
+  - In the printed output, editable inputs automatically render as clean printed text values (`carrierName`, `vehiclePlate`, `driverName`, `remarks`).
+
 ### 16.3 Production Authentication & Role-Based Navigation
 - **Login / Session Shell**: Dedicated login modal and token management.
 - **Role-Scoped Interfaces**:
   - Storekeeper persona: Restricted to physical inventory, movement modals, and waybill printing.
   - Procurement persona: Focused on purchase orders, supplier management, and receiving.
   - Operations Manager persona: Comprehensive access including AI policy adjustments, exception resolutions, and system health.
+
 
 
 

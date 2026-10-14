@@ -169,15 +169,27 @@
   text-align: right;
 }
 
-.waybill-inline-input {
-  border: 1px solid #d4d4d8;
-  border-radius: 3px;
-  padding: 0.15rem 0.35rem;
-  font-size: 0.72rem;
-  background: #ffffff;
-  color: #000000;
-  width: 140px;
+.waybill-inline-input,
+.waybill-paper input,
+.waybill-paper input[type="text"] {
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 4px !important;
+  padding: 0.2rem 0.45rem !important;
+  font-size: 0.74rem !important;
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+  width: 150px;
   text-align: right;
+  font-family: inherit;
+  transition: all 0.15s ease;
+}
+
+.waybill-inline-input:focus,
+.waybill-paper input:focus {
+  background-color: #ffffff !important;
+  border-color: #2563eb !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15) !important;
 }
 
 .waybill-section-heading {
@@ -218,16 +230,27 @@
   padding: 0.5rem 0.6rem;
 }
 
-.waybill-textarea {
+.waybill-textarea,
+.waybill-paper textarea {
   width: 100%;
-  border: 1px solid #d4d4d8;
-  border-radius: 3px;
-  padding: 0.35rem 0.5rem;
-  font-size: 0.74rem;
-  background: #ffffff;
-  color: #000000;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 4px !important;
+  padding: 0.4rem 0.6rem !important;
+  font-size: 0.76rem !important;
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
   margin-top: 0.25rem;
   resize: vertical;
+  font-family: inherit;
+  transition: all 0.15s ease;
+}
+
+.waybill-textarea:focus,
+.waybill-paper textarea:focus {
+  background-color: #ffffff !important;
+  border-color: #2563eb !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15) !important;
 }
 
 /* Security Barcode Strip */
