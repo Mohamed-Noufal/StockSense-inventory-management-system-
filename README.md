@@ -5,7 +5,7 @@
 [![Docker](https://img.shields.io/badge/Container-Docker%20%26%20Compose-2496ED?logo=docker&logoColor=white)](https://www.docker.com)
 [![SQLite](https://img.shields.io/badge/Database-SQLite%20(WAL%20Mode)-003B57?logo=sqlite&logoColor=white)](https://sqlite.org)
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](https://python.org)
-[![Tests](https://img.shields.io/badge/Tests-55%2F55%20Passing%20(100%25)-brightgreen)](backend/tests)
+[![Tests](https://img.shields.io/badge/Tests-60%2F60%20Passing%20(100%25)-brightgreen)](backend/tests)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 > [!NOTE]
@@ -29,7 +29,7 @@
 3. [Key Capabilities & Differentiators](#3-key-capabilities--differentiators)
 4. [System Architecture & Data Flows](#4-system-architecture--data-flows)
 5. [AI Replenishment Engine & Mathematical Foundations](#5-ai-replenishment-engine--mathematical-foundations)
-6. [The 7 Production Workstations](#6-the-7-production-workstations)
+6. [The 8 Production Workstations](#6-the-8-production-workstations)
 7. [Hardware Mobility & Printing Architecture](#7-hardware-mobility--printing-architecture)
 8. [API Reference & OpenAPI Specification](#8-api-reference--openapi-specification)
 9. [Verification, Quality Assurance & Test Suite](#9-verification-quality-assurance--test-suite)
@@ -145,7 +145,7 @@ StockSense enforces **Bearer JWT authentication** with **Role-Based Access Contr
 StockSense includes an end-to-end automated test harness covering stock ledger invariants, over-issue rejection, zero-leakage AI forecasting, empirical holdout evaluations, and JWT authentication:
 
 ```bash
-# Run complete test suite (55 tests, 100% passing)
+# Run complete test suite (60 tests, 100% passing)
 .venv/bin/pytest backend/tests/ -v
 ```
 
@@ -188,6 +188,8 @@ npm run dev
 
 ## 3. Key Capabilities & Differentiators
 
+- **Multi-Industry Store Configuration & 100% Clean Workspace Onboarding**: Adapts to any business domain—including **Fashion & Apparel**, **Electronics & IT Devices**, **Retail Consumer Goods**, or **Industrial MRO & Oilfield**. Store managers can configure company identity, manage branch locations with deletion safety guards, and initialize an empty store (0 items, 0 balances, preserved user accounts) or load preview demo products with 1 click.
+- **Bilingual English & Arabic Precision UI**: Premium typography powered by Google Fonts Almarai for Arabic, high-contrast dark zinc surfaces (Vercel-inspired), and full RTL readability without AI styling artifacts.
 - **Authoritative Append-Only Ledger**: Every receipt, issue, transfer, and cycle adjustment commits an immutable event to `stock_movements`. Real-time `stock_balances` act as transactionally synchronized read projections protected by `CHECK (quantity_on_hand >= 0)`.
 - **Zero-Mismatches Ledger Integrity Verification**: One-click internal consistency audit confirms $\sum \text{Ledger deltas} \equiv \text{Current Balance}$ across all items and warehouse locations, detecting any state drift or concurrency discrepancy with 100% mathematical certainty.
 - **Teunter-Syntetos-Babai (TSB) & Syntetos-Boylan Approximation (SBA)**: Decouples demand probability from non-zero order size, eliminating Croston’s classical upward bias and detecting obsolescence risk.
@@ -282,28 +284,30 @@ $$\text{Suggested Order} = \max\left(0, \left\lceil \frac{ROP - \text{Position}}
 
 ---
 
-## 6. The 7 Production Workstations
+## 6. The 8 Production Workstations
 
-The StockSense user interface is built on 7 dedicated, high-density business workstations:
+The StockSense user interface is built on 8 dedicated, high-density business workstations:
 
 ```text
 StockSense Workstations
 ├── 1. Overview Workstation (/overview)
-├── 2. Inventory Workstation (/inventory)
-├── 3. Operations Workstation (/operations)
-├── 4. Purchase Orders Workstation (/purchase-orders)
+├── 2. Inventory Master & Availability (/inventory)
+├── 3. Operations & Movement Ledger (/ledger)
+├── 4. Purchase Orders & Procurement (/procurement)
 ├── 5. AI Replenishment Intelligence (/ai)
 ├── 6. Activity & Integrity Center (/activity)
-└── 7. Team & RBAC Audit Directory (/users)
+├── 7. Team & RBAC Audit Directory (/users)
+└── 8. Store & Workspace Settings (Sidebar Settings / Settings Modal)
 ```
 
 1. **Overview Workstation (`#/overview`)**: Real-time executive KPIs (Total Items, Stock Value, Low Stock Count, Open POs), category distribution SVG donut chart, and operational low-stock triage table.
-2. **Inventory Master Catalog (`#/inventory`)**: Split-pane workstation combining an authoritative master data table, real-time cross-warehouse balance pills, 12-week interactive time-series stock trend, and item detail inspector.
+2. **Inventory Master Catalog (`#/inventory`)**: Split-pane workstation combining an authoritative master data table, real-time cross-warehouse balance pills, 12-week interactive time-series stock trend, item detail inspector, and a pristine empty-store state for newly created companies.
 3. **Operations Movement Center (`#/ledger`)**: High-frequency physical warehouse hub supporting Receipts, Issues (with Rig/Project destination routing), Paired Inter-Warehouse Transfers, and Cycle Count Adjustments with live over-issue prevention (`max={available}`).
 4. **Purchase Orders Workstation (`#/procurement`)**: Commercial procurement management, draft order builder with line calculations, supplier terms, partial receiving, and 1-click legal A4 purchase order printing.
 5. **AI Replenishment Intelligence (`#/ai`)**: Human-in-the-loop decision queue, 6-section explainability drawer (*"Why this order?"*), 52-week historical issue timelines, probabilistic quantile ribbons (P50/P90), and empirical backtest accuracy reports.
 6. **Activity & Integrity Center (`#/activity`)**: Immutable stock ledger with signed quantity indicators, operational alert triage, and 1-click database reconciliation certificate confirming 0 mismatches.
 7. **Team & RBAC Audit Directory (`#/users`)**: Database user directory, role breakdown metrics, and interactive employee switcher that stamps every movement and receiving transaction with a non-repudiable actor label.
+8. **Store & Workspace Settings (`⚙️ Settings`)**: Multi-industry company and warehouse configuration workstation. Allows business managers to define their store profile (fashion/apparel, retail goods, electronics, or industrial MRO), manage multi-branch storage locations with dynamic deletion safety guards, initialize a 100% clean empty store (0 items, 0 POs, preserved user accounts), or restore an optional 15-item sample demo catalog.
 
 ---
 
@@ -363,6 +367,12 @@ StockSense provides a fully documented REST API under `/api/v1`. Interactive Ope
 | `POST` | `/api/v1/ai/recommendations/{id}/dismiss` | Dismiss recommendation with mandatory operational reason logging. |
 | `GET` | `/api/v1/ai/forecasts` | 52-week time-series demand and future point forecasts. |
 | `GET` | `/api/v1/ai/model-report` | Out-of-sample holdout metrics (RMSSE, MASE, Forecast Bias %). |
+| `GET` | `/api/v1/workspace/info` | Current company name, facility, industry, and demo dataset status. |
+| `PUT` | `/api/v1/workspace/profile` | Update company profile and industry without modifying item data. |
+| `POST` | `/api/v1/workspace/init-clean` | Initialize a pristine empty store (0 items, preserved user logins). |
+| `POST` | `/api/v1/workspace/restore-demo` | 1-click restore of the 15 sample items and 52-week ledger history. |
+| `POST` | `/api/v1/inventory/locations` | Add a new warehouse, storage yard, or retail branch. |
+| `DELETE` | `/api/v1/inventory/locations/{id}` | Delete a storage location (enforces zero active balance safety guard). |
 | `GET` | `/api/v1/users` | Personnel directory with roles and transaction audit statistics. |
 | `GET` | `/api/v1/alerts` | Active operational exceptions, stockout risks, and discrepancy alerts. |
 | `POST` | `/api/v1/attachments/upload` | Upload supporting delivery dockets, inspection photos, or PDF waybills. |
@@ -378,15 +388,17 @@ The system includes a comprehensive automated test suite verifying invariant enf
 .venv/bin/pytest backend/tests/ -v
 ```
 
-### Verified Test Matrix (40 Passed Tests)
-- `backend/tests/test_ai.py` (6 tests): TSB, Croston, SBA convergence, quantile policies, zero-demand intervals.
+### Verified Test Matrix (60 Passed Tests)
+- `backend/tests/test_ai.py` (7 tests): TSB, Croston, SBA convergence, quantile policies, zero-demand intervals.
 - `backend/tests/test_ai_integration.py` (5 tests): Temporal cutoffs, zero future data leakage, atomic proposal $\rightarrow$ PO conversion.
-- `backend/tests/test_inventory.py` (9 tests): Atomic movements, non-negative constraint (`CHECK >= 0`), over-issue rejection (`HTTP 400`), double-entry transfer pairing.
-- `backend/tests/test_purchase_orders.py` (7 tests): Lifecycle state machine, partial receipts, over-receipt prohibition, cancellation invariants.
+- `backend/tests/test_inventory.py` (11 tests): Atomic movements, non-negative constraint (`CHECK >= 0`), over-issue rejection (`HTTP 400`), double-entry transfer pairing.
+- `backend/tests/test_purchase_orders.py` (9 tests): Lifecycle state machine, partial receipts, over-receipt prohibition, cancellation invariants.
 - `backend/tests/test_alerts.py` (2 tests): Operational alert acknowledgment and resolution logging.
-- `backend/tests/test_attachments.py` (4 tests): Multipart document uploads, MIME validation, and disk persistence.
+- `backend/tests/test_attachments.py` (8 tests): Multipart document uploads, MIME validation, and disk persistence.
+- `backend/tests/test_auth.py` (6 tests): JWT tokens, password hashing, and role verification.
 - `backend/tests/test_users.py` (3 tests): User directory, role definitions, and actor identity tracking.
 - `backend/tests/test_health.py` (3 tests): Database WAL mode, table creation, and API readiness probes.
+- `backend/tests/test_workspace.py` (5 tests): Workspace info, profile updates, multi-industry clean init, demo restore, location creation & deletion.
 - `backend/tests/test_golden_flow.py` (1 test): Complete end-to-end integration flow from stock issue to AI replenishment, PO creation, dock receiving, and zero-mismatch final reconciliation.
 
 ---
