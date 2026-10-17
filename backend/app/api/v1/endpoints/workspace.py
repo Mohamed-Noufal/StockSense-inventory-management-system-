@@ -25,6 +25,7 @@ router = APIRouter()
 class WorkspaceInfoResponse(BaseModel):
     company_name: str
     facility_name: str
+    industry: str = "GENERAL"
     is_demo_dataset: bool
     total_items: int
     total_locations: int
@@ -35,6 +36,11 @@ class InitCleanWorkspaceRequest(BaseModel):
     company_name: str = Field(min_length=2, max_length=120)
     warehouse_name: str = Field(min_length=2, max_length=120)
     warehouse_code: str = Field(default="WH-01", min_length=2, max_length=30)
+    industry: Optional[str] = Field(default="GENERAL", max_length=50)
+
+class UpdateWorkspaceProfileRequest(BaseModel):
+    company_name: str = Field(min_length=2, max_length=120)
+    industry: Optional[str] = Field(default="GENERAL", max_length=50)
 
 def get_setting_value(db: Session, key: str, default: str) -> str:
     setting = db.query(WorkspaceSetting).filter_by(key=key).first()
@@ -51,6 +57,7 @@ def set_setting_value(db: Session, key: str, value: str):
 def get_workspace_info(db: Session = Depends(get_db)):
     company_name = get_setting_value(db, "company_name", "StockSense Energy Logistics")
     facility_name = get_setting_value(db, "facility_name", "Central Receiving Yard • Base (WH-01)")
+    industry = get_setting_value(db, "industry", "GENERAL")
     is_demo_raw = get_setting_value(db, "is_demo_dataset", "auto")
 
     total_items = db.query(Item).filter(Item.is_active == 1).count()
@@ -72,6 +79,7 @@ def get_workspace_info(db: Session = Depends(get_db)):
     return WorkspaceInfoResponse(
         company_name=company_name,
         facility_name=facility_name,
+        industry=industry,
         is_demo_dataset=is_demo,
         total_items=total_items,
         total_locations=total_locations,
@@ -79,11 +87,23 @@ def get_workspace_info(db: Session = Depends(get_db)):
         currency="USD",
     )
 
+@router.put("/profile", response_model=WorkspaceInfoResponse)
+def update_workspace_profile(payload: UpdateWorkspaceProfileRequest, db: Session = Depends(get_db)):
+    company_clean = payload.company_name.strip()
+    if not company_clean:
+        raise HTTPException(status_code=400, detail="Company name cannot be empty.")
+    set_setting_value(db, "company_name", company_clean)
+    if payload.industry:
+        set_setting_value(db, "industry", payload.industry.strip())
+    db.commit()
+    return get_workspace_info(db)
+
 @router.post("/init-clean", response_model=WorkspaceInfoResponse)
 def init_clean_workspace(payload: InitCleanWorkspaceRequest, db: Session = Depends(get_db)):
     company_clean = payload.company_name.strip()
     wh_name_clean = payload.warehouse_name.strip()
     wh_code_clean = payload.warehouse_code.strip().upper()
+    industry_clean = (payload.industry or "GENERAL").strip().upper()
 
     if not company_clean or not wh_name_clean or not wh_code_clean:
         raise HTTPException(status_code=400, detail="Company name and warehouse details are required.")
@@ -105,21 +125,50 @@ def init_clean_workspace(payload: InitCleanWorkspaceRequest, db: Session = Depen
         db.query(Item).delete()
         db.query(Project).delete()
         db.query(Location).delete()
+        db.query(Category).delete()
 
-        # 2. Ensure standard clean categories exist
-        default_categories = [
-            ("MECHANICAL_PARTS", "Mechanical Equipment & Rotation Spares"),
-            ("PIPES_TUBING", "Pipes, Tubing & High-Pressure Fittings"),
-            ("VALVES_PRESSURE", "Valves, Flanges & Pressure Control"),
-            ("ELECTRICAL_INSTRUMENT", "Electrical, Sensors & Instrumentation"),
-            ("TOOLS_HARDWARE", "Rig Tools, Hardware & Consumables"),
-            ("CHEMICALS_LUBRICANTS", "Fluids, Thread Compounds & Industrial Chemicals"),
-        ]
+        # 2. Seed industry-tailored clean categories
+        if industry_clean in ("APPAREL", "FASHION", "CLOTHING"):
+            default_categories = [
+                ("APPAREL_TOPS", "Tops, Shirts, Blouses & Knitwear"),
+                ("APPAREL_BOTTOMS", "Pants, Trousers, Jeans & Skirts"),
+                ("OUTERWEAR", "Jackets, Coats & Outerwear"),
+                ("FOOTWEAR", "Shoes, Boots, Sneakers & Sandals"),
+                ("ACCESSORIES", "Bags, Belts, Scarves & Headwear"),
+                ("RAW_FABRICS", "Fabrics, Linings, Trims & Textiles"),
+            ]
+        elif industry_clean in ("ELECTRONICS", "TECH"):
+            default_categories = [
+                ("COMPUTING_DEVICES", "Laptops, Tablets, PCs & Servers"),
+                ("PERIPHERALS_ACCESSORIES", "Keyboards, Mice, Monitors & Cables"),
+                ("MOBILE_AUDIO", "Smartphones, Headphones & Wearables"),
+                ("COMPONENTS_BOARDS", "PCBs, Microcontrollers & ICs"),
+                ("POWER_BATTERIES", "Power Supplies, Adapters & Batteries"),
+                ("NETWORKING_IOT", "Routers, Switches & IoT Modules"),
+            ]
+        elif industry_clean in ("INDUSTRIAL", "ENERGY", "MRO"):
+            default_categories = [
+                ("MECHANICAL_PARTS", "Mechanical Equipment & Rotation Spares"),
+                ("PIPES_TUBING", "Pipes, Tubing & High-Pressure Fittings"),
+                ("VALVES_PRESSURE", "Valves, Flanges & Pressure Control"),
+                ("ELECTRICAL_INSTRUMENT", "Electrical, Sensors & Instrumentation"),
+                ("TOOLS_HARDWARE", "Rig Tools, Hardware & Consumables"),
+                ("CHEMICALS_LUBRICANTS", "Fluids, Thread Compounds & Industrial Chemicals"),
+            ]
+        else: # GENERAL / RETAIL
+            default_categories = [
+                ("APPAREL_TEXTILES", "Apparel, Clothing, Footwear & Accessories"),
+                ("ELECTRONICS_GADGETS", "Electronics, Devices & Hardware"),
+                ("FINISHED_GOODS", "Packaged Goods & Retail Merchandise"),
+                ("PARTS_MATERIALS", "Raw Materials, Components & Spares"),
+                ("CONSUMABLES_PACKAGING", "Packaging, Supplies & Essentials"),
+                ("GENERAL_INVENTORY", "General Store Inventory"),
+            ]
+
         for name, desc in default_categories:
-            if not db.query(Category).filter_by(name=name).first():
-                db.add(Category(name=name, description=desc))
+            db.add(Category(name=name, description=desc))
 
-        # 3. Create initial company primary warehouse
+        # 3. Create initial company primary warehouse/store
         primary_loc = Location(
             code=wh_code_clean,
             name=wh_name_clean,
@@ -132,6 +181,7 @@ def init_clean_workspace(payload: InitCleanWorkspaceRequest, db: Session = Depen
         # 4. Update workspace settings
         set_setting_value(db, "company_name", company_clean)
         set_setting_value(db, "facility_name", f"{wh_name_clean} ({wh_code_clean})")
+        set_setting_value(db, "industry", industry_clean)
         set_setting_value(db, "is_demo_dataset", "false")
 
         db.commit()
@@ -139,6 +189,7 @@ def init_clean_workspace(payload: InitCleanWorkspaceRequest, db: Session = Depen
         return WorkspaceInfoResponse(
             company_name=company_clean,
             facility_name=f"{wh_name_clean} ({wh_code_clean})",
+            industry=industry_clean,
             is_demo_dataset=False,
             total_items=0,
             total_locations=1,

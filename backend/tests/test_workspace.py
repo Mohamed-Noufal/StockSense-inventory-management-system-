@@ -54,3 +54,29 @@ def test_clean_workspace_and_restore_demo(client: TestClient):
     items_restored = client.get("/api/v1/inventory/items")
     assert items_restored.status_code == 200
     assert len(items_restored.json()) >= 15
+
+def test_update_workspace_profile(client: TestClient):
+    resp = client.put("/api/v1/workspace/profile", json={
+        "company_name": "Zara Apparel Logistics",
+        "industry": "APPAREL"
+    })
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["company_name"] == "Zara Apparel Logistics"
+    assert data["industry"] == "APPAREL"
+
+def test_delete_location(client: TestClient):
+    # Create extra location
+    create_resp = client.post("/api/v1/inventory/locations", json={
+        "code": "YARD-TEMP-99",
+        "name": "Temporary Staging Yard",
+        "location_type": "YARD",
+        "is_default_replenishment": 0,
+    })
+    assert create_resp.status_code == 201
+    loc_id = create_resp.json()["id"]
+
+    # Delete extra location
+    del_resp = client.delete(f"/api/v1/inventory/locations/{loc_id}")
+    assert del_resp.status_code == 200
+    assert del_resp.json()["success"] is True

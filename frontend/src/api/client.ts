@@ -3,7 +3,8 @@ import {
   StockBalance, StockMovement, MovementCreatePayload, TransferCreatePayload,
   OperationsStats, IntegrityCheckResponse, Supplier, PurchaseOrder, POCreatePayload, POReceivePayload,
   AIRun, AIRecommendation, AIRunTriggerPayload, User, AlertItem, AlertAcknowledgePayload, AlertResolvePayload,
-  DocumentAttachment, ItemCreatePayload, Category, WorkspaceInfo, LocationCreatePayload
+  DocumentAttachment, ItemCreatePayload, Category, WorkspaceInfo, LocationCreatePayload,
+  InitCleanWorkspacePayload, UpdateWorkspaceProfilePayload
 } from '../types';
 
 const API_BASE = '/api/v1';
@@ -80,8 +81,17 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
+  deleteLocation: (locationId: number) =>
+    request<{ success: boolean; message: string }>(`/inventory/locations/${locationId}`, {
+      method: 'DELETE',
+    }),
   getWorkspaceInfo: () => request<WorkspaceInfo>('/workspace/info'),
-  initCleanWorkspace: (payload: { company_name: string; warehouse_name: string; warehouse_code: string }) =>
+  updateWorkspaceProfile: (payload: UpdateWorkspaceProfilePayload) =>
+    request<WorkspaceInfo>('/workspace/profile', {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+  initCleanWorkspace: (payload: InitCleanWorkspacePayload) =>
     request<WorkspaceInfo>('/workspace/init-clean', {
       method: 'POST',
       body: JSON.stringify(payload),

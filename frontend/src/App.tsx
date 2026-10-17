@@ -531,6 +531,7 @@ const App: React.FC = () => {
         health={health}
         isCollapsed={isCollapsed}
         onToggleCollapse={handleToggleCollapse}
+        onOpenSettings={() => setShowWorkspaceModal(true)}
       />
 
       <main className="main-content">

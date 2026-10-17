@@ -176,6 +176,25 @@ def create_location(payload: LocationCreate, db: Session = Depends(get_db)):
     db.refresh(new_loc)
     return new_loc
 
+@router.delete("/locations/{location_id}")
+def delete_location(location_id: int, db: Session = Depends(get_db)):
+    loc = db.query(Location).filter(Location.id == location_id).first()
+    if not loc:
+        raise HTTPException(status_code=404, detail="Location not found.")
+    
+    active_count = db.query(Location).filter(Location.is_active == 1).count()
+    if active_count <= 1:
+        raise HTTPException(status_code=400, detail="Cannot delete the primary storage location. A workspace must have at least one location.")
+    
+    stock_count = db.query(StockBalance).filter(StockBalance.location_id == location_id, StockBalance.quantity_on_hand > 0).count()
+    if stock_count > 0:
+        raise HTTPException(status_code=400, detail="Cannot delete location with active inventory balances. Please transfer or write off stock first.")
+    
+    db.query(StockBalance).filter(StockBalance.location_id == location_id).delete()
+    db.delete(loc)
+    db.commit()
+    return {"success": True, "message": f"Location '{loc.name}' removed successfully."}
+
 @router.get("/balances", response_model=List[StockBalanceResponse])
 def list_balances(
     item_id: Optional[int] = None, location_id: Optional[int] = None,

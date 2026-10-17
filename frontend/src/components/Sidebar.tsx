@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   LayoutDashboard, Box, ArrowLeftRight, ShoppingBag, Sparkles,
-  Users, ShieldCheck, PanelLeftClose, Activity
+  Users, ShieldCheck, PanelLeftClose, Activity, Settings
 } from 'lucide-react';
 import { HealthResponse } from '../types';
 import { useI18n } from '../i18n/I18nContext';
@@ -18,6 +18,7 @@ interface SidebarProps {
   health: HealthResponse | null;
   isCollapsed: boolean;
   onToggleCollapse: () => void;
+  onOpenSettings?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -32,6 +33,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   health,
   isCollapsed,
   onToggleCollapse,
+  onOpenSettings,
 }) => {
   const { t } = useI18n();
 
@@ -153,6 +155,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <span className="nav-badge">{usersCount}</span>
           )}
         </button>
+
+        {onOpenSettings && (
+          <button
+            className="nav-item"
+            onClick={onOpenSettings}
+            title={t('nav.settings') || 'Settings'}
+          >
+            <Settings className="nav-icon" />
+            {!isCollapsed && <span>{t('nav.settings') || 'Settings'}</span>}
+          </button>
+        )}
       </nav>
 
       {/* Bottom AI Promo Card matching reference design */}

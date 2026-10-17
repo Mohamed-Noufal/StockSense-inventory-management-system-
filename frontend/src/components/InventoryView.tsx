@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Building2, PackagePlus, Sparkles } from 'lucide-react';
+import { Building2, PackagePlus, Sparkles, Settings } from 'lucide-react';
 import { InventoryItem, StockMovement, PurchaseOrder } from '../types';
 import { api } from '../api/client';
 import { useI18n } from '../i18n/I18nContext';
@@ -219,15 +219,27 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
                 <span>{t('workspace.register_first_btn')}</span>
               </button>
               {onOpenWorkspace && (
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={onOpenWorkspace}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.65rem 1.25rem' }}
-                >
-                  <Sparkles style={{ width: 15, height: 15, color: '#818cf8' }} />
-                  <span>{t('workspace.load_sample_btn')}</span>
-                </button>
+                <>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={onOpenWorkspace}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.65rem 1.25rem' }}
+                  >
+                    <Sparkles style={{ width: 15, height: 15, color: '#818cf8' }} />
+                    <span>{t('workspace.load_sample_btn')}</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={onOpenWorkspace}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.65rem 1.25rem' }}
+                    title={t('workspace.manage_btn')}
+                  >
+                    <Settings style={{ width: 15, height: 15, color: '#10b981' }} />
+                    <span>{t('workspace.manage_btn')}</span>
+                  </button>
+                </>
               )}
             </div>
           </div>

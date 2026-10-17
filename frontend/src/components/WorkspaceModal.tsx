@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   X, Building2, MapPin, RotateCcw, Plus,
-  CheckCircle2, AlertTriangle, Loader2, Sparkles
+  CheckCircle2, AlertTriangle, Loader2, Sparkles, Trash2, Settings, ShieldAlert
 } from 'lucide-react';
 import { WorkspaceInfo, InventoryLocation, LocationCreatePayload } from '../types';
 import { api } from '../api/client';
@@ -19,13 +19,19 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
   locations,
 }) => {
   const { t, locale } = useI18n();
-  const [activeTab, setActiveTab] = useState<'setup' | 'locations' | 'data'>('setup');
+  const [activeTab, setActiveTab] = useState<'profile' | 'locations' | 'data'>('profile');
   const [workspaceInfo, setWorkspaceInfo] = useState<WorkspaceInfo | null>(null);
 
-  // Setup Clean Form State
+  // Profile Form State
   const [companyName, setCompanyName] = useState<string>('');
-  const [warehouseName, setWarehouseName] = useState<string>('');
-  const [warehouseCode, setWarehouseCode] = useState<string>('WH-01');
+  const [industry, setIndustry] = useState<string>('GENERAL');
+  const [submittingProfile, setSubmittingProfile] = useState<boolean>(false);
+
+  // Setup Clean Form State
+  const [cleanCompanyName, setCleanCompanyName] = useState<string>('');
+  const [cleanWarehouseName, setCleanWarehouseName] = useState<string>('');
+  const [cleanWarehouseCode, setCleanWarehouseCode] = useState<string>('WH-01');
+  const [cleanIndustry, setCleanIndustry] = useState<string>('GENERAL');
   const [showConfirmClean, setShowConfirmClean] = useState<boolean>(false);
   const [submittingClean, setSubmittingClean] = useState<boolean>(false);
 
@@ -35,6 +41,7 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
   const [locType, setLocType] = useState<'WAREHOUSE' | 'YARD' | 'RIG_SITE'>('WAREHOUSE');
   const [isDefaultReplenishment, setIsDefaultReplenishment] = useState<boolean>(false);
   const [submittingLoc, setSubmittingLoc] = useState<boolean>(false);
+  const [deletingLocId, setDeletingLocId] = useState<number | null>(null);
 
   // Restore Demo State
   const [submittingRestore, setSubmittingRestore] = useState<boolean>(false);
@@ -47,7 +54,9 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
     try {
       const info = await api.getWorkspaceInfo();
       setWorkspaceInfo(info);
-      if (!companyName) setCompanyName(info.company_name);
+      setCompanyName(info.company_name);
+      setIndustry(info.industry || 'GENERAL');
+      if (!cleanCompanyName) setCleanCompanyName(info.company_name);
     } catch (err: any) {
       console.error('Failed to load workspace info', err);
     }
@@ -57,26 +66,57 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
     fetchWorkspace();
   }, []);
 
-  const handleInitClean = async (e: React.FormEvent) => {
+  const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!companyName.trim() || !warehouseName.trim() || !warehouseCode.trim()) {
-      setError(locale === 'ar' ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please complete all required fields');
+    if (!companyName.trim()) {
+      setError(locale === 'ar' ? 'اسم الشركة / المتجر مطلوب' : 'Company or store name is required');
+      return;
+    }
+    setError(null);
+    setSubmittingProfile(true);
+    try {
+      const updated = await api.updateWorkspaceProfile({
+        company_name: companyName.trim(),
+        industry,
+      });
+      setWorkspaceInfo(updated);
+      setSuccess(locale === 'ar' ? 'تم حفظ تفاصيل المتجر بنجاح!' : 'Store details saved successfully!');
+      onWorkspaceUpdated();
+    } catch (err: any) {
+      setError(err.message || 'Failed to update store profile');
+    } finally {
+      setSubmittingProfile(false);
+    }
+  };
+
+  const handleInitClean = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!cleanCompanyName.trim() || !cleanWarehouseName.trim() || !cleanWarehouseCode.trim()) {
+      setError(locale === 'ar' ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please fill all required fields');
       return;
     }
     setError(null);
     setSubmittingClean(true);
     try {
       const res = await api.initCleanWorkspace({
-        company_name: companyName.trim(),
-        warehouse_name: warehouseName.trim(),
-        warehouse_code: warehouseCode.trim().toUpperCase(),
+        company_name: cleanCompanyName.trim(),
+        warehouse_name: cleanWarehouseName.trim(),
+        warehouse_code: cleanWarehouseCode.trim().toUpperCase(),
+        industry: cleanIndustry,
       });
       setWorkspaceInfo(res);
-      setSuccess(t('workspace.success_clean'));
+      setCompanyName(res.company_name);
+      setIndustry(res.industry || 'GENERAL');
+      setSuccess(
+        locale === 'ar'
+          ? 'تم تفريغ المستودع وبدء متجر نظيف بنجاح! تم الحفاظ على حسابات المستخدمين.'
+          : 'Clean workspace initialized! 0 items, ready for your products. User accounts preserved.'
+      );
       setShowConfirmClean(false);
       onWorkspaceUpdated();
+      fetchWorkspace();
     } catch (err: any) {
-      setError(err.message || 'Failed to initialize clean company workspace');
+      setError(err.message || 'Failed to initialize clean workspace');
     } finally {
       setSubmittingClean(false);
     }
@@ -101,7 +141,11 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
       setLocCode('');
       setLocName('');
       setIsDefaultReplenishment(false);
-      setSuccess(t('workspace.success_location'));
+      setSuccess(
+        locale === 'ar'
+          ? 'تمت إضافة موقع التخزين بنجاح!'
+          : 'Storage location added successfully!'
+      );
       onWorkspaceUpdated();
       fetchWorkspace();
     } catch (err: any) {
@@ -111,15 +155,40 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
     }
   };
 
+  const handleDeleteLocation = async (locId: number, locName: string) => {
+    setError(null);
+    setDeletingLocId(locId);
+    try {
+      await api.deleteLocation(locId);
+      setSuccess(
+        locale === 'ar'
+          ? `تم حذف الموقع "${locName}" بنجاح.`
+          : `Location "${locName}" removed successfully.`
+      );
+      onWorkspaceUpdated();
+      fetchWorkspace();
+    } catch (err: any) {
+      setError(err.message || 'Failed to remove location');
+    } finally {
+      setDeletingLocId(null);
+    }
+  };
+
   const handleRestoreDemo = async () => {
     setError(null);
     setSubmittingRestore(true);
     try {
       const res = await api.restoreDemoWorkspace();
       setWorkspaceInfo(res);
-      setSuccess(t('workspace.success_demo'));
+      setCompanyName(res.company_name);
+      setSuccess(
+        locale === 'ar'
+          ? 'تم تحميل المنتجات وسجل الحركات التجريبية بنجاح!'
+          : 'Demo products and 52-week ledger history restored successfully!'
+      );
       setShowConfirmRestore(false);
       onWorkspaceUpdated();
+      fetchWorkspace();
     } catch (err: any) {
       setError(err.message || 'Failed to restore demo dataset');
     } finally {
@@ -128,15 +197,48 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
   };
 
   return (
-    <div className="label-modal-backdrop" onClick={onClose}>
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.75)',
+        backdropFilter: 'blur(8px)',
+        zIndex: 9999,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '1rem',
+      }}
+      onClick={onClose}
+    >
       <div
-        className="label-modal-container"
-        style={{ maxWidth: '680px', background: '#0e0e11', border: '1px solid rgba(255, 255, 255, 0.1)' }}
+        style={{
+          width: '100%',
+          maxWidth: '660px',
+          maxHeight: '88vh',
+          backgroundColor: '#0c0c0e',
+          border: '1px solid rgba(255, 255, 255, 0.12)',
+          borderRadius: '12px',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.9)',
+        }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="label-modal-header" style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
-          <div className="label-modal-title" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+        {/* Sticky Header */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '1rem 1.25rem',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+            backgroundColor: '#111113',
+            flexShrink: 0,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
             <div
               style={{
                 width: 32,
@@ -150,7 +252,7 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                 border: '1px solid rgba(16, 185, 129, 0.25)',
               }}
             >
-              <Building2 size={16} />
+              <Settings size={16} />
             </div>
             <div>
               <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#f4f4f5' }}>
@@ -161,7 +263,13 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
               </div>
             </div>
           </div>
-          <button className="btn-icon" onClick={onClose} title={t('common.close')}>
+          <button
+            type="button"
+            className="btn-icon"
+            onClick={onClose}
+            title={t('common.close')}
+            style={{ color: '#a1a1aa' }}
+          >
             <X size={16} />
           </button>
         </div>
@@ -169,14 +277,15 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
         {/* Current Workspace Status Banner */}
         <div
           style={{
-            padding: '0.85rem 1.25rem',
-            background: 'rgba(18, 18, 22, 0.9)',
+            padding: '0.75rem 1.25rem',
+            background: 'rgba(18, 18, 22, 0.95)',
             borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             flexWrap: 'wrap',
             gap: '0.75rem',
+            flexShrink: 0,
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -185,12 +294,12 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.35rem',
-                fontSize: '0.74rem',
+                fontSize: '0.72rem',
                 fontWeight: 600,
                 color: workspaceInfo?.is_demo_dataset ? '#818cf8' : '#10b981',
                 padding: '0.2rem 0.55rem',
                 borderRadius: '9999px',
-                background: workspaceInfo?.is_demo_dataset ? 'rgba(99, 102, 241, 0.1)' : 'rgba(16, 185, 129, 0.1)',
+                background: workspaceInfo?.is_demo_dataset ? 'rgba(99, 102, 241, 0.12)' : 'rgba(16, 185, 129, 0.12)',
                 border: `1px solid ${workspaceInfo?.is_demo_dataset ? 'rgba(99, 102, 241, 0.25)' : 'rgba(16, 185, 129, 0.25)'}`,
               }}
             >
@@ -208,7 +317,7 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
             </span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', fontSize: '0.78rem', color: '#a1a1aa' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', fontSize: '0.76rem', color: '#a1a1aa' }}>
             <div>
               <span style={{ color: '#71717a' }}>{t('workspace.items_count')}: </span>
               <strong style={{ color: '#ffffff', fontFamily: 'monospace' }}>
@@ -232,11 +341,12 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
             gap: '0.35rem',
             borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
             background: '#09090b',
+            flexShrink: 0,
           }}
         >
           <button
             type="button"
-            onClick={() => { setActiveTab('setup'); setError(null); setSuccess(null); }}
+            onClick={() => { setActiveTab('profile'); setError(null); setSuccess(null); }}
             style={{
               padding: '0.45rem 0.85rem',
               fontSize: '0.8rem',
@@ -244,16 +354,16 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
               borderRadius: '6px',
               border: 'none',
               cursor: 'pointer',
-              display: 'flex',
+              display: 'inline-flex',
               alignItems: 'center',
               gap: '0.4rem',
-              background: activeTab === 'setup' ? '#27272a' : 'transparent',
-              color: activeTab === 'setup' ? '#ffffff' : '#71717a',
+              background: activeTab === 'profile' ? '#27272a' : 'transparent',
+              color: activeTab === 'profile' ? '#ffffff' : '#71717a',
               transition: 'all 0.15s ease',
             }}
           >
             <Building2 size={14} />
-            <span>{t('workspace.tab_setup')}</span>
+            <span>{t('workspace.tab_profile')}</span>
           </button>
 
           <button
@@ -266,7 +376,7 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
               borderRadius: '6px',
               border: 'none',
               cursor: 'pointer',
-              display: 'flex',
+              display: 'inline-flex',
               alignItems: 'center',
               gap: '0.4rem',
               background: activeTab === 'locations' ? '#27272a' : 'transparent',
@@ -288,7 +398,7 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
               borderRadius: '6px',
               border: 'none',
               cursor: 'pointer',
-              display: 'flex',
+              display: 'inline-flex',
               alignItems: 'center',
               gap: '0.4rem',
               background: activeTab === 'data' ? '#27272a' : 'transparent',
@@ -301,8 +411,14 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
           </button>
         </div>
 
-        {/* Modal Body */}
-        <div className="label-modal-body" style={{ padding: '1.25rem' }}>
+        {/* Scrollable Modal Body */}
+        <div
+          style={{
+            flex: 1,
+            overflowY: 'auto',
+            padding: '1.25rem 1.5rem',
+          }}
+        >
           {error && (
             <div
               style={{
@@ -343,30 +459,30 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
             </div>
           )}
 
-          {/* TAB 1: Company Setup (Initialize Blank Workspace) */}
-          {activeTab === 'setup' && (
+          {/* TAB 1: Store & Company Profile */}
+          {activeTab === 'profile' && (
             <div>
               <div
                 style={{
                   background: 'rgba(255, 255, 255, 0.02)',
                   border: '1px solid rgba(255, 255, 255, 0.08)',
                   borderRadius: '10px',
-                  padding: '1.15rem',
+                  padding: '1rem',
                   marginBottom: '1.25rem',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
                   <Building2 size={16} color="#10b981" />
                   <span style={{ fontSize: '0.88rem', fontWeight: 600, color: '#ffffff' }}>
-                    {t('workspace.init_clean_btn')}
+                    {t('workspace.profile_heading')}
                   </span>
                 </div>
-                <p style={{ fontSize: '0.78rem', color: '#a1a1aa', lineHeight: 1.55, margin: 0 }}>
-                  {t('workspace.init_clean_desc')}
+                <p style={{ fontSize: '0.78rem', color: '#a1a1aa', lineHeight: 1.5, margin: 0 }}>
+                  {t('workspace.profile_desc')}
                 </p>
               </div>
 
-              <form onSubmit={(e) => { e.preventDefault(); setShowConfirmClean(true); }}>
+              <form onSubmit={handleUpdateProfile}>
                 <div className="form-group" style={{ marginBottom: '1rem' }}>
                   <label className="form-label">{t('workspace.company_name_label')}</label>
                   <input
@@ -379,164 +495,151 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                   />
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
-                  <div className="form-group">
-                    <label className="form-label">{t('workspace.wh_name_label')}</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      value={warehouseName}
-                      onChange={(e) => setWarehouseName(e.target.value)}
-                      placeholder={t('workspace.wh_name_placeholder')}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">{t('workspace.wh_code_label')}</label>
-                    <input
-                      type="text"
-                      className="form-input font-mono"
-                      value={warehouseCode}
-                      onChange={(e) => setWarehouseCode(e.target.value.toUpperCase())}
-                      placeholder="WH-01"
-                      required
-                    />
-                  </div>
+                <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+                  <label className="form-label">{t('workspace.industry_label')}</label>
+                  <select
+                    className="form-select"
+                    value={industry}
+                    onChange={(e) => setIndustry(e.target.value)}
+                  >
+                    <option value="GENERAL">{t('workspace.industry_general')}</option>
+                    <option value="APPAREL">{t('workspace.industry_apparel')}</option>
+                    <option value="ELECTRONICS">{t('workspace.industry_electronics')}</option>
+                    <option value="INDUSTRIAL">{t('workspace.industry_industrial')}</option>
+                  </select>
                 </div>
 
-                {showConfirmClean ? (
-                  <div
-                    style={{
-                      background: 'rgba(239, 68, 68, 0.08)',
-                      border: '1px solid rgba(239, 68, 68, 0.25)',
-                      borderRadius: '8px',
-                      padding: '1rem',
-                      marginBottom: '1rem',
-                    }}
-                  >
-                    <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#fca5a5', marginBottom: '0.35rem' }}>
-                      {t('workspace.init_confirm_title')}
-                    </div>
-                    <p style={{ fontSize: '0.76rem', color: '#d4d4d8', lineHeight: 1.45, marginBottom: '0.85rem' }}>
-                      {t('workspace.init_confirm_desc')}
-                    </p>
-                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                      <button
-                        type="button"
-                        className="btn-secondary"
-                        onClick={() => setShowConfirmClean(false)}
-                        disabled={submittingClean}
-                      >
-                        {t('common.cancel')}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleInitClean}
-                        className="btn-primary"
-                        style={{ background: '#ef4444', borderColor: '#ef4444' }}
-                        disabled={submittingClean}
-                      >
-                        {submittingClean ? (
-                          <>
-                            <Loader2 size={14} className="animate-spin" />
-                            <span>{t('common.loading')}</span>
-                          </>
-                        ) : (
-                          <span>{t('workspace.init_clean_btn')}</span>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                ) : (
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                   <button
                     type="submit"
-                    className="btn-primary"
-                    style={{ width: '100%', justifyContent: 'center', padding: '0.75rem' }}
+                    className="btn btn-primary"
+                    disabled={submittingProfile}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.65rem 1.25rem' }}
                   >
-                    <Building2 size={15} />
-                    <span>{t('workspace.init_clean_btn')}</span>
+                    {submittingProfile ? (
+                      <>
+                        <Loader2 size={14} className="animate-spin" />
+                        <span>{t('common.loading')}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Building2 size={14} />
+                        <span>{t('workspace.save_profile_btn')}</span>
+                      </>
+                    )}
                   </button>
-                )}
+                </div>
               </form>
             </div>
           )}
 
-          {/* TAB 2: Warehouses & Locations */}
+          {/* TAB 2: Warehouses & Stores */}
           {activeTab === 'locations' && (
             <div>
-              {/* Existing Locations Table */}
+              {/* Existing Locations with Scroll & Delete */}
               <div style={{ marginBottom: '1.5rem' }}>
                 <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#d4d4d8', marginBottom: '0.6rem' }}>
                   {t('inventory.all_locations')} ({locations.length})
                 </div>
+
                 <div
                   style={{
                     background: '#121214',
                     border: '1px solid rgba(255, 255, 255, 0.08)',
                     borderRadius: '8px',
-                    overflow: 'hidden',
+                    maxHeight: '220px',
+                    overflowY: 'auto',
                   }}
                 >
-                  {locations.map((loc, idx) => (
-                    <div
-                      key={loc.id}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '0.65rem 0.85rem',
-                        borderBottom: idx < locations.length - 1 ? '1px solid rgba(255, 255, 255, 0.05)' : 'none',
-                        fontSize: '0.8rem',
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                        <span
-                          className="font-mono"
-                          style={{
-                            fontSize: '0.74rem',
-                            padding: '0.15rem 0.4rem',
-                            background: '#27272a',
-                            borderRadius: '4px',
-                            color: '#e4e4e7',
-                          }}
-                        >
-                          {loc.code}
-                        </span>
-                        <span style={{ color: '#ffffff', fontWeight: 500 }}>{loc.name}</span>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <span
-                          style={{
-                            fontSize: '0.68rem',
-                            padding: '0.1rem 0.4rem',
-                            borderRadius: '4px',
-                            background: 'rgba(255, 255, 255, 0.05)',
-                            color: '#a1a1aa',
-                          }}
-                        >
-                          {loc.location_type}
-                        </span>
-                        {loc.is_default_replenishment === 1 && (
+                  {locations.map((loc, idx) => {
+                    const isDeleting = deletingLocId === loc.id;
+                    return (
+                      <div
+                        key={loc.id}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '0.65rem 0.85rem',
+                          borderBottom: idx < locations.length - 1 ? '1px solid rgba(255, 255, 255, 0.05)' : 'none',
+                          fontSize: '0.8rem',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', minWidth: 0 }}>
+                          <span
+                            className="font-mono"
+                            style={{
+                              fontSize: '0.74rem',
+                              padding: '0.15rem 0.4rem',
+                              background: '#27272a',
+                              borderRadius: '4px',
+                              color: '#e4e4e7',
+                              flexShrink: 0,
+                            }}
+                          >
+                            {loc.code}
+                          </span>
+                          <span style={{ color: '#ffffff', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {loc.name}
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
                           <span
                             style={{
                               fontSize: '0.68rem',
                               padding: '0.1rem 0.4rem',
                               borderRadius: '4px',
-                              background: 'rgba(16, 185, 129, 0.12)',
-                              color: '#10b981',
-                              border: '1px solid rgba(16, 185, 129, 0.25)',
+                              background: 'rgba(255, 255, 255, 0.05)',
+                              color: '#a1a1aa',
                             }}
                           >
-                            Default
+                            {loc.location_type}
                           </span>
-                        )}
+                          {loc.is_default_replenishment === 1 && (
+                            <span
+                              style={{
+                                fontSize: '0.68rem',
+                                padding: '0.1rem 0.4rem',
+                                borderRadius: '4px',
+                                background: 'rgba(16, 185, 129, 0.12)',
+                                color: '#10b981',
+                                border: '1px solid rgba(16, 185, 129, 0.25)',
+                              }}
+                            >
+                              Default
+                            </span>
+                          )}
+
+                          {locations.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteLocation(loc.id, loc.name)}
+                              disabled={isDeleting}
+                              title={t('workspace.delete_location_btn')}
+                              style={{
+                                background: 'transparent',
+                                border: 'none',
+                                color: '#71717a',
+                                cursor: 'pointer',
+                                padding: '0.2rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                transition: 'color 0.15s ease',
+                              }}
+                              onMouseEnter={(e) => (e.currentTarget.style.color = '#ef4444')}
+                              onMouseLeave={(e) => (e.currentTarget.style.color = '#71717a')}
+                            >
+                              {isDeleting ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+                            </button>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
-              {/* Add New Location Form */}
+              {/* Add New Location Card */}
               <div
                 style={{
                   background: 'rgba(255, 255, 255, 0.02)',
@@ -561,7 +664,7 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                         className="form-input font-mono"
                         value={locCode}
                         onChange={(e) => setLocCode(e.target.value.toUpperCase())}
-                        placeholder="YARD-02"
+                        placeholder="STORE-02"
                         required
                       />
                     </div>
@@ -572,7 +675,7 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                         className="form-input"
                         value={locName}
                         onChange={(e) => setLocName(e.target.value)}
-                        placeholder="e.g. Field Supply Yard Beta"
+                        placeholder="e.g. Downtown Retail Store"
                         required
                       />
                     </div>
@@ -611,9 +714,9 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
 
                   <button
                     type="submit"
-                    className="btn-secondary"
+                    className="btn btn-secondary"
                     disabled={submittingLoc}
-                    style={{ width: '100%', justifyContent: 'center' }}
+                    style={{ width: '100%', justifyContent: 'center', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
                   >
                     {submittingLoc ? (
                       <>
@@ -632,16 +735,144 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
             </div>
           )}
 
-          {/* TAB 3: Data & Demo State (Restore Demo) */}
+          {/* TAB 3: Data & Reset (Empty Store / Load Demo) */}
           {activeTab === 'data' && (
-            <div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              {/* Card 1: Clear All Data (Start Fresh) */}
               <div
                 style={{
-                  background: 'rgba(99, 102, 241, 0.05)',
+                  background: 'rgba(239, 68, 68, 0.03)',
+                  border: '1px solid rgba(239, 68, 68, 0.2)',
+                  borderRadius: '10px',
+                  padding: '1.15rem',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
+                  <ShieldAlert size={16} color="#ef4444" />
+                  <span style={{ fontSize: '0.88rem', fontWeight: 600, color: '#ffffff' }}>
+                    {t('workspace.clean_fresh_title')}
+                  </span>
+                </div>
+                <p style={{ fontSize: '0.78rem', color: '#a1a1aa', lineHeight: 1.55, margin: '0 0 1rem 0' }}>
+                  {t('workspace.clean_fresh_desc')}
+                </p>
+
+                {showConfirmClean ? (
+                  <form onSubmit={handleInitClean}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                      <div className="form-group">
+                        <label className="form-label">{t('workspace.company_name_label')}</label>
+                        <input
+                          type="text"
+                          className="form-input"
+                          value={cleanCompanyName}
+                          onChange={(e) => setCleanCompanyName(e.target.value)}
+                          placeholder="e.g. Zara Boutique"
+                          required
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">{t('workspace.industry_label')}</label>
+                        <select
+                          className="form-select"
+                          value={cleanIndustry}
+                          onChange={(e) => setCleanIndustry(e.target.value)}
+                        >
+                          <option value="GENERAL">{t('workspace.industry_general')}</option>
+                          <option value="APPAREL">{t('workspace.industry_apparel')}</option>
+                          <option value="ELECTRONICS">{t('workspace.industry_electronics')}</option>
+                          <option value="INDUSTRIAL">{t('workspace.industry_industrial')}</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
+                      <div className="form-group">
+                        <label className="form-label">{t('workspace.wh_name_label')}</label>
+                        <input
+                          type="text"
+                          className="form-input"
+                          value={cleanWarehouseName}
+                          onChange={(e) => setCleanWarehouseName(e.target.value)}
+                          placeholder="e.g. Main Store"
+                          required
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">{t('workspace.wh_code_label')}</label>
+                        <input
+                          type="text"
+                          className="form-input font-mono"
+                          value={cleanWarehouseCode}
+                          onChange={(e) => setCleanWarehouseCode(e.target.value.toUpperCase())}
+                          placeholder="WH-01"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        onClick={() => setShowConfirmClean(false)}
+                        disabled={submittingClean}
+                      >
+                        {t('common.cancel')}
+                      </button>
+                      <button
+                        type="submit"
+                        className="btn btn-primary"
+                        style={{ background: '#ef4444', borderColor: '#ef4444', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
+                        disabled={submittingClean}
+                      >
+                        {submittingClean ? (
+                          <>
+                            <Loader2 size={14} className="animate-spin" />
+                            <span>{t('common.loading')}</span>
+                          </>
+                        ) : (
+                          <>
+                            <Trash2 size={14} />
+                            <span>{t('workspace.clean_fresh_confirm_btn')}</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCleanCompanyName(companyName || 'My Company');
+                      setCleanWarehouseName(locale === 'ar' ? 'المستودع الرئيسي' : 'Main Warehouse');
+                      setShowConfirmClean(true);
+                    }}
+                    className="btn btn-secondary"
+                    style={{
+                      borderColor: 'rgba(239, 68, 68, 0.4)',
+                      color: '#f87171',
+                      width: '100%',
+                      justifyContent: 'center',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      padding: '0.65rem',
+                    }}
+                  >
+                    <Trash2 size={15} />
+                    <span>{t('workspace.clean_fresh_btn')}</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Card 2: Load Demo Products (Preview) */}
+              <div
+                style={{
+                  background: 'rgba(99, 102, 241, 0.04)',
                   border: '1px solid rgba(99, 102, 241, 0.2)',
                   borderRadius: '10px',
                   padding: '1.15rem',
-                  marginBottom: '1.25rem',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
@@ -650,32 +881,15 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                     {t('workspace.restore_demo_title')}
                   </span>
                 </div>
-                <p style={{ fontSize: '0.78rem', color: '#a1a1aa', lineHeight: 1.55, margin: 0 }}>
+                <p style={{ fontSize: '0.78rem', color: '#a1a1aa', lineHeight: 1.55, margin: '0 0 1rem 0' }}>
                   {t('workspace.restore_demo_desc')}
                 </p>
-              </div>
 
-              {showConfirmRestore ? (
-                <div
-                  style={{
-                    background: 'rgba(239, 68, 68, 0.08)',
-                    border: '1px solid rgba(239, 68, 68, 0.25)',
-                    borderRadius: '8px',
-                    padding: '1rem',
-                  }}
-                >
-                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#fca5a5', marginBottom: '0.35rem' }}>
-                    {t('workspace.restore_demo_title')}?
-                  </div>
-                  <p style={{ fontSize: '0.76rem', color: '#d4d4d8', lineHeight: 1.45, marginBottom: '0.85rem' }}>
-                    {locale === 'ar'
-                      ? 'سيتم استبدال الأصناف الحالية بـ 15 صنفاً نموذجياً لقطاع الطاقة مع 52 أسبوعاً من سجل الحركات وأوامر الشراء للتجربة.'
-                      : 'This will repopulate 15 sample oilfield spares, 52-week demand history, and active purchase orders for demonstration.'}
-                  </p>
+                {showConfirmRestore ? (
                   <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                     <button
                       type="button"
-                      className="btn-secondary"
+                      className="btn btn-secondary"
                       onClick={() => setShowConfirmRestore(false)}
                       disabled={submittingRestore}
                     >
@@ -684,8 +898,9 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                     <button
                       type="button"
                       onClick={handleRestoreDemo}
-                      className="btn-primary"
+                      className="btn btn-primary"
                       disabled={submittingRestore}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
                     >
                       {submittingRestore ? (
                         <>
@@ -700,28 +915,43 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                       )}
                     </button>
                   </div>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  className="btn-primary"
-                  onClick={() => setShowConfirmRestore(true)}
-                  style={{ width: '100%', justifyContent: 'center', padding: '0.75rem' }}
-                >
-                  <RotateCcw size={15} />
-                  <span>{t('workspace.restore_demo_btn')}</span>
-                </button>
-              )}
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmRestore(true)}
+                    className="btn btn-secondary"
+                    style={{
+                      width: '100%',
+                      justifyContent: 'center',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      padding: '0.65rem',
+                      borderColor: 'rgba(99, 102, 241, 0.3)',
+                      color: '#a5b4fc',
+                    }}
+                  >
+                    <RotateCcw size={15} />
+                    <span>{t('workspace.restore_demo_btn')}</span>
+                  </button>
+                )}
+              </div>
             </div>
           )}
         </div>
 
-        {/* Footer */}
+        {/* Sticky Footer */}
         <div
-          className="label-modal-footer"
-          style={{ borderTop: '1px solid rgba(255, 255, 255, 0.06)', display: 'flex', justifyContent: 'flex-end' }}
+          style={{
+            padding: '0.75rem 1.25rem',
+            borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+            backgroundColor: '#09090b',
+            display: 'flex',
+            justifyContent: 'flex-end',
+            flexShrink: 0,
+          }}
         >
-          <button type="button" className="btn-secondary" onClick={onClose}>
+          <button type="button" className="btn btn-secondary" onClick={onClose}>
             {t('common.close')}
           </button>
         </div>

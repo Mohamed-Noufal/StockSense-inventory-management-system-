@@ -324,11 +324,24 @@ export interface DocumentAttachment {
 export interface WorkspaceInfo {
   company_name: string;
   facility_name: string;
+  industry?: string;
   is_demo_dataset: boolean;
   total_items: number;
   total_locations: number;
   total_stock_value_minor: number;
   currency: string;
+}
+
+export interface InitCleanWorkspacePayload {
+  company_name: string;
+  warehouse_name: string;
+  warehouse_code: string;
+  industry?: string;
+}
+
+export interface UpdateWorkspaceProfilePayload {
+  company_name: string;
+  industry?: string;
 }
 
 export interface LocationCreatePayload {

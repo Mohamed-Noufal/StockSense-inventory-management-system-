@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   Plus, Bell,
   ChevronDown, PanelLeft,
-  CheckCircle2, AlertTriangle, Users, ShieldCheck, Scan, LogOut, Globe, Building2
+  CheckCircle2, AlertTriangle, Users, ShieldCheck, Scan, LogOut, Globe, Settings
 } from 'lucide-react';
 import { IntegrityCheckResponse, User, WorkspaceInfo } from '../types';
 import { useI18n } from '../i18n/I18nContext';
@@ -157,25 +157,8 @@ export const Header: React.FC<HeaderProps> = ({
         </nav>
       </div>
 
-      {/* Right: Workspace Pill + Primary Action + Notifications + User Profile */}
+      {/* Right: Primary Action + Notifications + Language Switcher + User Profile */}
       <div className="header-actions">
-        {onOpenWorkspace && (
-          <button
-            type="button"
-            className="lang-toggle-btn"
-            onClick={onOpenWorkspace}
-            style={{
-              borderColor: workspaceInfo?.is_demo_dataset ? 'rgba(99, 102, 241, 0.35)' : 'rgba(16, 185, 129, 0.35)',
-              maxWidth: '220px',
-            }}
-            title={t('workspace.modal_title')}
-          >
-            <Building2 style={{ width: 14, height: 14, color: workspaceInfo?.is_demo_dataset ? '#818cf8' : '#10b981', flexShrink: 0 }} />
-            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {workspaceInfo?.company_name || t('workspace.company_badge')}
-            </span>
-          </button>
-        )}
 
         {/* Language Switcher */}
         <button
@@ -324,8 +307,8 @@ export const Header: React.FC<HeaderProps> = ({
                       setShowUserMenu(false);
                     }}
                   >
-                    <Building2 style={{ width: 14, height: 14 }} />
-                    <span>{t('workspace.modal_title')}</span>
+                    <Settings style={{ width: 14, height: 14 }} />
+                    <span>{t('nav.settings')}</span>
                   </button>
                 )}
                 {onLogout && (
