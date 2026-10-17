@@ -965,3 +965,89 @@ export function translateUserRole(role: string, locale: Locale): string {
   return map[role.toUpperCase()] || role;
 }
 
+export function translateRecommendationSummary(
+  textOrRec: any,
+  locale: Locale
+): string {
+  const text = typeof textOrRec === 'string' ? textOrRec : (textOrRec?.summary_text || '');
+
+  if (locale !== 'ar') {
+    if (typeof textOrRec !== 'string' && !text) {
+      return `Replenishment proposal for SKU ${textOrRec?.item_sku || ''}`;
+    }
+    return text;
+  }
+
+  // 1. Match full backend AI proposal template:
+  // "Replenishment proposed for CHOKE-VLV-111C74 (High-Pressure Choke Valve Assembly 2-1/16in). Current position is 3 (on-hand: 3, open POs: 0), which is below ROP threshold of 3. Recommending 1 units from preferred supplier to restore position to target 4 (service level: 95%)."
+  if (text) {
+    const fullMatch = text.match(
+      /Replenishment proposed for\s+([^\s]+)\s*\((.+?)\)\.\s*Current position is\s*(\d+)\s*\(on-hand:\s*(\d+),\s*open POs:\s*(\d+)\),\s*which is below ROP threshold of\s*(\d+)\.\s*Recommending\s*(\d+)\s*units from preferred supplier to restore position to target\s*(\d+)\s*\(service level:\s*(\d+)%\)\.?/i
+    );
+
+    if (fullMatch) {
+      const [, sku, itemName, curPos, onHand, openPOs, rop, recQty, target, sl] = fullMatch;
+      return `مقترح إعادة طلب للصنف ${sku.trim()} (${itemName.trim()}). الرصيد الحالي ${curPos} (المتوفر: ${onHand}، أوامر معلقة: ${openPOs})، وهو أقل من حد الطلب ${rop}. يُوصى بطلب ${recQty} وحدة من المورّد المفضل لاستعادة المخزون إلى المستوى المستهدف ${target} (مستوى الخدمة: ${sl}%).`;
+    }
+
+    // 2. Match partial backend pattern:
+    const partialMatch = text.match(
+      /Replenishment proposed for\s+([^\(]+?)(?:\s*\(([^\)]+?)\))?\.\s*Current position is\s*(\d+).*?below ROP threshold of\s*(\d+).*?Recommending\s*(\d+)\s*units/i
+    );
+
+    if (partialMatch) {
+      const [, sku, itemName, curPos, rop, recQty] = partialMatch;
+      const namePart = itemName ? ` (${itemName.trim()})` : '';
+      return `مقترح إعادة طلب للصنف ${sku.trim()}${namePart}. الرصيد الحالي ${curPos}، وهو أقل من حد الطلب ${rop}. يُوصى بطلب ${recQty} وحدة من المورّد المعتمد.`;
+    }
+
+    // 3. Simple proposal match:
+    const simpleMatch = text.match(/Replenishment proposal for SKU\s*([^\.]+)/i);
+    if (simpleMatch) {
+      return `مقترح إعادة تزويد وتوريد للصنف ${simpleMatch[1].trim()}`;
+    }
+  }
+
+  // 4. Object-based translation if recommendation object is provided:
+  if (typeof textOrRec === 'object' && textOrRec !== null && textOrRec.item_sku) {
+    const sku = textOrRec.item_sku;
+    const itemName = textOrRec.item_name || 'قطعة غيار';
+    const pos = textOrRec.inventory_position ?? textOrRec.on_hand ?? 0;
+    const onHand = textOrRec.on_hand ?? 0;
+    const onOrder = textOrRec.on_order ?? 0;
+    const rop = textOrRec.reorder_point ?? 0;
+    const recQty = textOrRec.suggested_qty ?? 1;
+    let target = rop + recQty;
+    let sl = 95;
+    if (textOrRec.explanation_json) {
+      try {
+        const exp = JSON.parse(textOrRec.explanation_json);
+        if (exp.order_up_to) target = exp.order_up_to;
+        if (exp.service_level) sl = Math.round(exp.service_level * 100);
+      } catch {}
+    }
+    return `مقترح إعادة طلب للصنف ${sku} (${itemName}). الرصيد الحالي ${pos} (المتوفر: ${onHand}، أوامر معلقة: ${onOrder})، وهو أقل من حد الطلب ${rop}. يُوصى بطلب ${recQty} وحدة من المورّد المفضل لاستعادة المخزون إلى المستوى المستهدف ${target} (مستوى الخدمة: ${sl}%).`;
+  }
+
+  return text || 'مقترح توريد ذكي من نظام التنبؤ بالطلب';
+}
+
+export function translateMovementReason(reason: string | undefined | null, locale: Locale): string {
+  if (!reason) return '';
+  if (locale !== 'ar') return reason;
+  const lower = reason.toLowerCase().trim();
+  if (lower.includes('field site transfer')) return 'تحويل موقع ميداني';
+  if (lower.includes('routine maintenance') || lower.includes('routine overhaul')) return 'صرف قطع غيار للصيانة الروتينية';
+  if (lower.includes('emergency') || lower.includes('breakdown')) return 'إصلاح عطل طارئ لمنصة الحفر';
+  if (lower.includes('initial stock') || lower.includes('initial warehouse')) return 'تهيئة المخزون الافتتاحي';
+  if (lower.includes('standard operational')) return 'معاملة مستودعية تشغيلية قياسية';
+  if (lower.includes('cycle count') || lower.includes('physical count')) return 'مطابقة الجرد الدوري الفعلي';
+  if (lower.includes('replenishment')) return 'إعادة تزويد المستودع';
+  if (lower.includes('supplier delivery') || lower.includes('vendor delivery')) return 'توريد مباشر من المورد';
+  if (lower.includes('manual receipt')) return 'استلام يدوي';
+  if (lower.includes('manual issue')) return 'صرف يدوي';
+  if (lower.includes('manual adjustment')) return 'تسوية جردية يدوية';
+  return reason;
+}
+
+

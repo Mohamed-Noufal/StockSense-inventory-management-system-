@@ -10,7 +10,13 @@ import {
   PurchaseOrder, AIRecommendation, User
 } from '../types';
 import { useI18n } from '../i18n/I18nContext';
-import { translateCategory, translateWarehouse, translateRelativeTime } from '../i18n/translations';
+import {
+  translateCategory,
+  translateWarehouse,
+  translateRelativeTime,
+  translateRecommendationSummary,
+  translateMovementReason,
+} from '../i18n/translations';
 
 export interface OverviewViewProps {
   items: InventoryItem[];
@@ -592,7 +598,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
              m.movement_type.includes('TRANSFER') ? `Transfer: ${m.item_sku || 'SKU'}` :
              `Adjusted: ${m.item_sku || 'SKU'}`),
         sub: locale === 'ar'
-          ? `${m.quantity} وحدة · ${translateWarehouse(m.location_code || 'Central Warehouse (Cairo Base)', locale)}${m.reason ? ` (${m.reason})` : ''}`
+          ? `${m.quantity} وحدة · ${translateWarehouse(m.location_code || 'Central Warehouse (Cairo Base)', locale)}${m.reason ? ` (${translateMovementReason(m.reason, locale)})` : ''}`
           : `${m.quantity} units · ${m.location_code || 'Warehouse'}${m.reason ? ` (${m.reason})` : ''}`,
         time: translateRelativeTime(`${idx * 2 + 1}h ago`, locale),
         color: m.movement_type === 'RECEIPT' ? '#10b981' : m.movement_type === 'ISSUE' ? '#ef4444' : '#a855f7',
@@ -902,9 +908,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                         {locale === 'ar' ? `إعادة طلب ${rec.suggested_qty} وحدة` : `Reorder ${rec.suggested_qty} units`}
                       </div>
                       <div className="ai-rec-desc">
-                        {locale === 'ar'
-                          ? (rec.summary_text || `مقترح إعادة تعبئة للصنف ${rec.item_sku || ''}`)
-                          : (rec.summary_text || `Replenishment proposal for SKU ${rec.item_sku}`)}
+                        {translateRecommendationSummary(rec, locale)}
                       </div>
                     </div>
                   </div>

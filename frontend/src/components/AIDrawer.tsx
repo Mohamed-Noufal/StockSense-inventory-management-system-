@@ -5,7 +5,12 @@ import {
 } from 'lucide-react';
 import { AIRecommendation } from '../types';
 import { useI18n } from '../i18n/I18nContext';
-import { translateUrgency, translateDemandPattern, translateWarehouse } from '../i18n/translations';
+import {
+  translateUrgency,
+  translateDemandPattern,
+  translateWarehouse,
+  translateRecommendationSummary,
+} from '../i18n/translations';
 
 interface AIDrawerProps {
   rec: AIRecommendation;
@@ -76,7 +81,7 @@ export const AIDrawer: React.FC<AIDrawerProps> = ({
               <Sparkles style={{ width: 13, height: 13 }} /> {locale === 'ar' ? 'القسم 1 — ملخص توصية التوريد' : 'Section 1 — Recommendation Summary'}
             </span>
             <div style={{ padding: '0.85rem 1rem', background: '#121214', border: '1px solid var(--border-default)', borderRadius: '6px', fontSize: '0.82rem', lineHeight: '1.5', color: '#ffffff' }}>
-              {rec.summary_text}
+              {translateRecommendationSummary(rec, locale)}
             </div>
           </div>
 

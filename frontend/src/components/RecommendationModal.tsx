@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Sparkles, CheckCircle, Ban, X } from 'lucide-react';
 import { AIRecommendation } from '../types';
 import { useI18n } from '../i18n/I18nContext';
-import { translateDemandPattern, translateWarehouse } from '../i18n/translations';
+import { translateDemandPattern, translateWarehouse, translateRecommendationSummary } from '../i18n/translations';
 
 interface RecommendationModalProps {
   rec: AIRecommendation;
@@ -64,7 +64,7 @@ export const RecommendationModal: React.FC<RecommendationModalProps> = ({
 
         <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div style={{ padding: '0.75rem 0.85rem', background: 'rgba(255, 255, 255, 0.04)', border: '1px solid var(--border-default)', borderRadius: '6px', fontSize: '0.8rem', lineHeight: '1.45', color: 'var(--text-primary)' }}>
-            <strong style={{ color: '#ffffff' }}>{locale === 'ar' ? 'التحليل التبريري للذكاء الاصطناعي:' : 'AI Rationale:'}</strong> {rec.summary_text}
+            <strong style={{ color: '#ffffff' }}>{locale === 'ar' ? 'التحليل التبريري للذكاء الاصطناعي:' : 'AI Rationale:'}</strong> {translateRecommendationSummary(rec, locale)}
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem', fontSize: '0.8rem' }}>
