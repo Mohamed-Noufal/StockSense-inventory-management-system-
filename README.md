@@ -5,10 +5,13 @@
 [![Docker](https://img.shields.io/badge/Container-Docker%20%26%20Compose-2496ED?logo=docker&logoColor=white)](https://www.docker.com)
 [![SQLite](https://img.shields.io/badge/Database-SQLite%20(WAL%20Mode)-003B57?logo=sqlite&logoColor=white)](https://sqlite.org)
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](https://python.org)
-[![Tests](https://img.shields.io/badge/Tests-40%2F40%20Passing%20(100%25)-brightgreen)](backend/tests)
+[![Tests](https://img.shields.io/badge/Tests-55%2F55%20Passing%20(100%25)-brightgreen)](backend/tests)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-> **StockSense** is an enterprise-grade, auditable inventory management and replenishment intelligence system engineered for spare parts and consumables in intermittent/lumpy demand operating environments (e.g., oilfield logistics, remote rigs, and heavy industrial maintenance). 
+> [!NOTE]
+> **Synthetic Dataset & Portfolio Notice**: StockSense is an open-source proof-of-concept and portfolio system designed for MRO and oilfield supply chain operations. All seed items, equipment codes, movement logs, and historical transactions are deterministically generated synthetic data for demonstration, benchmarking, and testing purposes.
+
+> **StockSense** is an auditable inventory management and replenishment intelligence system engineered for spare parts and consumables in intermittent/lumpy demand operating environments (e.g., oilfield logistics, remote rigs, and heavy industrial maintenance). 
 > 
 > Built on an **append-only stock movement ledger**, **zero-leakage intermittent demand forecasting (TSB / SBA / Croston)**, **human-in-the-loop replenishment approvals**, **hardware-agnostic barcode mobility**, and **legal A4 procurement/waybill print engines**.
 
@@ -17,10 +20,12 @@
 ## Table of Contents
 1. [Problem Statement & Enterprise Value](#1-problem-statement--enterprise-value)
 2. [Quick Start & Running the System](#2-quick-start--running-the-system)
-   - [Method 1: Docker Compose (Production Ready)](#method-1-docker-compose-production-ready)
+   - [Method 1: Docker Compose (Containerized POC)](#method-1-docker-compose-containerized-poc)
    - [Method 2: One-Command Unified Runner (Local)](#method-2-one-command-unified-runner-local)
-   - [Method 3: Running the Automated Test Suite](#method-3-running-the-automated-test-suite)
-   - [Method 4: Granular Manual Setup](#method-4-granular-manual-setup)
+   - [Method 3: Database Seeding Profiles](#method-3-database-seeding-profiles)
+   - [Method 4: Authentication & Demo Personas](#method-4-authentication--demo-personas)
+   - [Method 5: Running the Automated Test Suite](#method-5-running-the-automated-test-suite)
+   - [Method 6: Granular Manual Setup](#method-6-granular-manual-setup)
 3. [Key Capabilities & Differentiators](#3-key-capabilities--differentiators)
 4. [System Architecture & Data Flows](#4-system-architecture--data-flows)
 5. [AI Replenishment Engine & Mathematical Foundations](#5-ai-replenishment-engine--mathematical-foundations)
@@ -56,9 +61,9 @@ In mission-critical industries managing maintenance, repair, and operations (MRO
 
 ## 2. Quick Start & Running the System
 
-### Method 1: Docker Compose (Production Ready — Recommended)
+### Method 1: Docker Compose (Containerized POC — Recommended)
 
-The fastest and most robust way to start StockSense. Automatically initializes SQLite in WAL mode, seeds master data, compiles the React frontend into an Alpine Nginx container, and establishes reverse proxying:
+The fastest way to start StockSense. Automatically initializes SQLite in WAL mode, seeds master data, compiles the React frontend into an Alpine Nginx container with security headers, and establishes reverse proxying:
 
 ```bash
 # 1. Clone repository
@@ -73,10 +78,9 @@ docker compose up --build
 | Service | URL | Notes |
 |---|---|---|
 | **StockSense Web Application** | [http://localhost:3000](http://localhost:3000) (or [http://localhost:5173](http://localhost:5173)) | React 18 SPA via Nginx |
-| **FastAPI Backend API** | [http://localhost:8000](http://localhost:8000) | Python 3.12 + SQLite WAL |
-| **Interactive Swagger Docs** | [http://localhost:8000/docs](http://localhost:8000/docs) | OpenAPI 3.1 Interactive Explorer |
-| **ReDoc Technical Reference** | [http://localhost:8000/redoc](http://localhost:8000/redoc) | Clean formatted API schema |
-| **Backend Health Check** | [http://localhost:8000/api/v1/health](http://localhost:8000/api/v1/health) | Real-time service diagnostic |
+| **FastAPI Backend API** | [http://127.0.0.1:8000](http://127.0.0.1:8000) | Python 3.12 + SQLite WAL |
+| **Interactive Swagger Docs** | [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs) | OpenAPI 3.1 Interactive Explorer (Dev mode) |
+| **Backend Health Check** | [http://127.0.0.1:8000/api/v1/health](http://127.0.0.1:8000/api/v1/health) | Real-time service diagnostic |
 
 ---
 
@@ -94,7 +98,7 @@ cp .env.example .env
 
 The runner will automatically:
 1. Verify/create Python virtual environment (`.venv`) and install dependencies from `requirements.txt`.
-2. Initialize the SQLite database and seed test master data (`backend/scripts/seed_data.py`).
+2. Initialize the SQLite database and seed test master data (`backend/scripts/seed.py --profile demo`).
 3. Install frontend packages (`npm install`) if missing.
 4. Concurrently launch the **FastAPI backend** on port `8000` and the **Vite React frontend** on port `5173`.
 
@@ -107,18 +111,47 @@ The runner will automatically:
 
 ---
 
-### Method 3: Running the Automated Test Suite
+### Method 3: Database Seeding Profiles
 
-StockSense includes an end-to-end automated test harness covering stock ledger invariants, over-issue rejection, zero-leakage AI forecasting, and procurement receiving:
+StockSense includes a unified database seeder (`backend/scripts/seed.py`) with three distinct profiles:
 
 ```bash
-# Run complete test suite (40 tests, 100% passing)
+# 1. Complete Demo Dataset (15 SKUs, 52-week intermittent ledger history, POs, attachments)
+python backend/scripts/seed.py --profile demo
+
+# 2. Minimal Master Data (Categories, locations, suppliers, projects, users with 0 transactions)
+python backend/scripts/seed.py --profile minimal
+
+# 3. Clean Re-initialization (Drops existing tables and initializes empty schema)
+python backend/scripts/seed.py --profile empty --reset
+```
+
+---
+
+### Method 4: Authentication & Demo Personas
+
+StockSense enforces **Bearer JWT authentication** with **Role-Based Access Control (RBAC)**:
+
+- **Seeded Password**: All demo users share the default password: `stocksense123`
+- **1-Click Persona Switching**: In the top navigation header, you can instantly switch active personas without retyping:
+  - 👷 **John Doe** (`STOREKEEPER`): Receives goods, creates adjustments, scans waybills.
+  - 📋 **Sara Mansour** (`PROCUREMENT_OFFICER`): Reviews AI recommendations, approves draft purchase orders.
+  - 👔 **Khaled Hassan** (`MANAGER`): High-level operational analytics, cancellation authority, audit trail oversight.
+
+---
+
+### Method 5: Running the Automated Test Suite
+
+StockSense includes an end-to-end automated test harness covering stock ledger invariants, over-issue rejection, zero-leakage AI forecasting, empirical holdout evaluations, and JWT authentication:
+
+```bash
+# Run complete test suite (55 tests, 100% passing)
 .venv/bin/pytest backend/tests/ -v
 ```
 
 ---
 
-### Method 4: Granular Manual Setup
+### Method 6: Granular Manual Setup
 
 #### Step 1: Backend Setup (FastAPI & Python 3.12)
 ```bash
@@ -156,7 +189,7 @@ npm run dev
 ## 3. Key Capabilities & Differentiators
 
 - **Authoritative Append-Only Ledger**: Every receipt, issue, transfer, and cycle adjustment commits an immutable event to `stock_movements`. Real-time `stock_balances` act as transactionally synchronized read projections protected by `CHECK (quantity_on_hand >= 0)`.
-- **Zero-Mismatches Cryptographic Verification**: One-click internal consistency audit confirms $\sum \text{Ledger deltas} \equiv \text{Current Balance}$ across all items and warehouse locations with 100% mathematical certainty.
+- **Zero-Mismatches Ledger Integrity Verification**: One-click internal consistency audit confirms $\sum \text{Ledger deltas} \equiv \text{Current Balance}$ across all items and warehouse locations, detecting any state drift or concurrency discrepancy with 100% mathematical certainty.
 - **Teunter-Syntetos-Babai (TSB) & Syntetos-Boylan Approximation (SBA)**: Decouples demand probability from non-zero order size, eliminating Croston’s classical upward bias and detecting obsolescence risk.
 - **Strict Human-in-the-Loop (HITL) Protocol**: Probabilistic models never autonomously place purchase orders. The AI generates explainable recommendations with full risk breakdowns, routing approved proposals into atomic `DRAFT` purchase orders.
 - **High-Performance Architecture (No N+1 Queries)**: Optimized backend with 4-tier bulk in-memory joins ($O(1)$ dictionary lookups) and two-tier progressive UI hydration, eliminating layout shifts and rendering dashboard cards in **<35ms**.
