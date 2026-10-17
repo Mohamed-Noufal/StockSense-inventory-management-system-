@@ -88,3 +88,29 @@ def test_ai_run_and_recommendations_endpoint(client):
     assert rec_res.status_code == 200
     assert isinstance(rec_res.json(), list)
 
+def test_ai_model_report_endpoint(client):
+    res = client.get("/api/v1/ai/model-report")
+    assert res.status_code == 200
+    data = res.json()
+    assert "ai_run_status" in data
+    assert "forecast_evaluation" in data
+    assert "policy_comparison" in data
+    assert "synthetic_dataset_profile" in data
+
+    fe = data["forecast_evaluation"]
+    assert "overall_rmsse" in fe
+    assert "overall_mase" in fe
+    assert "forecast_bias" in fe
+    assert len(fe["by_pattern"]) > 0
+
+    pc = data["policy_comparison"]
+    assert "baseline_min_max" in pc
+    assert "stocksense_policy" in pc
+    assert pc["baseline_min_max"]["fill_rate_pct"] >= 0.0
+    assert pc["stocksense_policy"]["fill_rate_pct"] >= 0.0
+
+    sd = data["synthetic_dataset_profile"]
+    assert "zero_demand_weeks_pct" in sd
+    assert "disclaimer" in sd
+
+

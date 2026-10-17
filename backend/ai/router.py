@@ -170,63 +170,37 @@ def get_item_forecast(item_id: int = Query(...), horizon: int = Query(12, ge=1, 
 def get_model_report(db: Session = Depends(get_db)):
     """
     Fetch comprehensive empirical model evaluation and policy backtest comparison report.
+    Calculates actual MASE/RMSSE holdout metrics and real 52-week policy simulations.
     """
     from datetime import datetime, timezone
     from backend.app.models.items import Item
-    from backend.ai.models import ItemPolicy
+    from backend.ai.evaluator import evaluate_model_performance, simulate_inventory_policies, get_dataset_profile
 
     latest_run = db.query(AIRun).order_by(AIRun.id.desc()).first()
     items_count = db.query(Item).filter(Item.is_active == 1).count()
-    policies = db.query(ItemPolicy).filter_by(run_id=latest_run.id).all() if latest_run else []
 
-    pattern_counts = {}
-    for p in policies:
-        pattern_counts[p.demand_pattern] = pattern_counts.get(p.demand_pattern, 0) + 1
+    duration = 1.45
+    if latest_run and latest_run.started_at and latest_run.finished_at:
+        try:
+            start_dt = datetime.fromisoformat(latest_run.started_at.replace("Z", "+00:00"))
+            fin_dt = datetime.fromisoformat(latest_run.finished_at.replace("Z", "+00:00"))
+            duration = round(max(0.1, (fin_dt - start_dt).total_seconds()), 2)
+        except Exception:
+            duration = 1.45
+
+    forecast_evaluation = evaluate_model_performance(db)
+    policy_comparison = simulate_inventory_policies(db)
+    dataset_profile = get_dataset_profile(db)
 
     return {
         "ai_run_status": {
             "status": latest_run.status if latest_run else "SUCCEEDED",
             "last_run": latest_run.finished_at or latest_run.started_at if latest_run else datetime.now(timezone.utc).isoformat(),
-            "run_duration_seconds": 1.45,
+            "run_duration_seconds": duration,
             "items_evaluated": items_count,
             "model_version": latest_run.model_version if latest_run else "0.1.0",
         },
-        "forecast_evaluation": {
-            "overall_rmsse": 0.814,
-            "overall_mase": 0.692,
-            "forecast_bias": -0.012,
-            "sample_counts": items_count,
-            "by_pattern": [
-                {"pattern": "Intermittent", "rmsse": 0.785, "mase": 0.642, "bias": -0.009, "count": pattern_counts.get("intermittent", 112)},
-                {"pattern": "Lumpy", "rmsse": 0.912, "mase": 0.835, "bias": 0.021, "count": pattern_counts.get("lumpy", 48)},
-                {"pattern": "Smooth", "rmsse": 0.718, "mase": 0.589, "bias": -0.004, "count": pattern_counts.get("smooth", 64)},
-                {"pattern": "Erratic", "rmsse": 0.945, "mase": 0.881, "bias": -0.028, "count": pattern_counts.get("erratic", 24)},
-            ]
-        },
-        "policy_comparison": {
-            "baseline_min_max": {
-                "name": "Traditional Min/Max Baseline",
-                "fill_rate_pct": 88.4,
-                "unmet_demand_units": 142,
-                "stockout_weeks": 3.2,
-                "avg_inventory_value_usd": 524000,
-                "orders_count": 48
-            },
-            "stocksense_policy": {
-                "name": "StockSense AI Intermittent Policy",
-                "fill_rate_pct": 96.8,
-                "unmet_demand_units": 28,
-                "stockout_weeks": 0.6,
-                "avg_inventory_value_usd": 446000,
-                "orders_count": 36
-            }
-        },
-        "synthetic_dataset_profile": {
-            "total_items": items_count,
-            "zero_demand_weeks_pct": 64.2,
-            "demand_pattern_distribution": pattern_counts or {"intermittent": 112, "smooth": 64, "lumpy": 48, "erratic": 24},
-            "lead_time_distribution": "Mean 14.0 days (Std 3.8 days)",
-            "data_integrity_status": "Verified 100% Zero-Leakage (Strict Temporal Cutoff)",
-            "disclaimer": "All results are based on synthetic data and demonstrate system behavior under the stated assumptions. They are not evidence of achieved performance on the company's real inventory."
-        }
+        "forecast_evaluation": forecast_evaluation,
+        "policy_comparison": policy_comparison,
+        "synthetic_dataset_profile": dataset_profile
     }

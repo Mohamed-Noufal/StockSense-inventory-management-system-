@@ -92,12 +92,12 @@ def test_recommendation_listing_and_explainability(client):
         assert "reorder_point" in explanation
 
 def test_approve_recommendation_creates_draft_po(client):
-    # Trigger a run
-    client.post("/api/v1/ai/runs", json={"random_seed": 42, "service_level": 0.95})
+    # Trigger AI replenishment run
+    run_resp = client.post("/api/v1/ai/runs", json={"random_seed": 42, "service_level": 0.95})
+    assert run_resp.status_code == 200
 
     open_recs = client.get("/api/v1/ai/recommendations?status=OPEN").json()
-    if len(open_recs) == 0:
-        pytest.skip("No open recommendations to approve")
+    assert len(open_recs) > 0, "Expected at least one open recommendation"
 
     rec = open_recs[0]
     rec_id = rec["id"]
@@ -118,10 +118,11 @@ def test_approve_recommendation_creates_draft_po(client):
     assert "already" in retry_resp.json()["detail"].lower()
 
 def test_dismiss_recommendation(client):
-    client.post("/api/v1/ai/runs", json={"random_seed": 42, "service_level": 0.95})
+    run_resp = client.post("/api/v1/ai/runs", json={"random_seed": 42, "service_level": 0.95})
+    assert run_resp.status_code == 200
+
     open_recs = client.get("/api/v1/ai/recommendations?status=OPEN").json()
-    if len(open_recs) == 0:
-        pytest.skip("No open recommendations to dismiss")
+    assert len(open_recs) > 0, "Expected at least one open recommendation to dismiss"
 
     rec = open_recs[0]
     rec_id = rec["id"]
@@ -133,3 +134,4 @@ def test_dismiss_recommendation(client):
     assert dism_resp.status_code == 200
     updated = dism_resp.json()
     assert updated["status"] == "DISMISSED"
+

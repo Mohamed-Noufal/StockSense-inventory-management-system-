@@ -57,8 +57,10 @@ class AIService:
             return ai_run
         except Exception as e:
             db.rollback()
+            import logging
+            logging.getLogger("stocksense.ai").exception(f"AI run {ai_run.id} pipeline execution failed: {e}")
             ai_run.status = "FAILED"
-            ai_run.error = str(e)
+            ai_run.error = f"Pipeline execution encountered an internal error during item replenishment processing (run_id: {ai_run.id})"
             ai_run.finished_at = datetime.now(timezone.utc).isoformat()
             db.add(ai_run)
             db.commit()
@@ -129,12 +131,14 @@ class AIService:
                 )
             ]
         )
-        po = create_po(db, po_in, user_id=user_id)
+        # Atomically create PO and update recommendation status within a single transaction
+        po = create_po(db, po_in, user_id=user_id, commit=False)
         rec.status = "APPROVED"
         rec.decided_at = datetime.now(timezone.utc).isoformat()
         rec.decided_by_user_id = user_id
         db.commit()
         db.refresh(rec)
+        db.refresh(po)
         return po
 
     @staticmethod
