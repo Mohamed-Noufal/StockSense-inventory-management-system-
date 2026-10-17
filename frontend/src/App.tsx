@@ -24,6 +24,7 @@ import { WaybillModal } from './components/WaybillModal';
 import { BinLabelModal } from './components/BinLabelModal';
 import { BarcodeScannerModal } from './components/BarcodeScannerModal';
 import { NewItemModal } from './components/NewItemModal';
+import { LoginView } from './components/LoginView';
 import { useBarcodeScanner } from './hooks/useBarcodeScanner';
 
 const VALID_TABS = ['overview', 'inventory', 'ledger', 'procurement', 'ai', 'activity', 'users'] as const;
@@ -80,6 +81,18 @@ const App: React.FC = () => {
   const [aiRuns, setAiRuns] = useState<AIRun[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    return !!(typeof window !== 'undefined' && localStorage.getItem('stocksense_token'));
+  });
+  const [isVerifyingSession, setIsVerifyingSession] = useState<boolean>(true);
+
+  const handleLogout = () => {
+    localStorage.removeItem('stocksense_token');
+    localStorage.removeItem('stocksense_current_user_id');
+    setIsAuthenticated(false);
+    setCurrentUser(null);
+    setSuccessMsg('You have signed out successfully.');
+  };
   const [integrity, setIntegrity] = useState<IntegrityCheckResponse | null>(null);
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -114,6 +127,7 @@ const App: React.FC = () => {
       localStorage.setItem('stocksense_token', res.access_token);
       localStorage.setItem('stocksense_current_user_id', String(user.id));
       setCurrentUser(res.user);
+      setIsAuthenticated(true);
       setSuccessMsg(`Authenticated as ${res.user.full_name} (${res.user.role}) — JWT Issued`);
     } catch {
       setCurrentUser(user);
@@ -221,27 +235,7 @@ const App: React.FC = () => {
       setIntegrity(integData);
 
       if (usersData && usersData.length > 0) {
-        const token = localStorage.getItem('stocksense_token');
-        if (token) {
-          try {
-            const me = await api.getAuthMe();
-            setCurrentUser(me);
-          } catch {
-            const fallbackUser = usersData[0];
-            const res = await api.demoLogin({ user_id: fallbackUser.id });
-            localStorage.setItem('stocksense_token', res.access_token);
-            setCurrentUser(res.user);
-          }
-        } else {
-          try {
-            const defaultUser = usersData[0];
-            const res = await api.demoLogin({ user_id: defaultUser.id });
-            localStorage.setItem('stocksense_token', res.access_token);
-            setCurrentUser(res.user);
-          } catch {
-            setCurrentUser(usersData[0]);
-          }
-        }
+        setUsers(usersData);
       }
     } catch (err: any) {
       setError(err.message || 'Failed to fetch inventory data');
@@ -250,7 +244,27 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchData();
+    const initSession = async () => {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('stocksense_token') : null;
+      if (token) {
+        try {
+          const me = await api.getAuthMe();
+          setCurrentUser(me);
+          setIsAuthenticated(true);
+          await fetchData();
+        } catch {
+          localStorage.removeItem('stocksense_token');
+          setIsAuthenticated(false);
+          setCurrentUser(null);
+        }
+      } else {
+        setIsAuthenticated(false);
+        setCurrentUser(null);
+      }
+      setIsVerifyingSession(false);
+    };
+
+    initSession();
   }, []);
 
   // Auto-dismiss success notification banner after 5 seconds
@@ -415,6 +429,32 @@ const App: React.FC = () => {
     }
   };
 
+  if (isVerifyingSession) {
+    return (
+      <div className="login-viewport">
+        <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+          <div style={{ width: 18, height: 18, border: '2px solid rgba(255,255,255,0.2)', borderTopColor: '#10b981', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+          <span>Verifying StockSense secure session...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || !currentUser) {
+    return (
+      <LoginView
+        onLoginSuccess={(user, token) => {
+          localStorage.setItem('stocksense_token', token);
+          localStorage.setItem('stocksense_current_user_id', String(user.id));
+          setCurrentUser(user);
+          setIsAuthenticated(true);
+          setSuccessMsg(`Welcome, ${user.full_name} (${user.role.replace('_', ' ')})!`);
+          fetchData();
+        }}
+      />
+    );
+  }
+
   return (
     <div className="app-container">
       <Sidebar
@@ -446,6 +486,7 @@ const App: React.FC = () => {
           onSelectUser={handleSelectUser}
           onNavigateTab={(tab) => handleTabChange(tab as TabType)}
           onOpenScanner={() => setShowScannerModal(true)}
+          onLogout={handleLogout}
         />
 
         {error && (

@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   Plus, Bell,
   ChevronDown, PanelLeft,
-  CheckCircle2, AlertTriangle, Users, ShieldCheck, Scan
+  CheckCircle2, AlertTriangle, Users, ShieldCheck, Scan, LogOut
 } from 'lucide-react';
 import { IntegrityCheckResponse, User } from '../types';
 
@@ -20,6 +20,7 @@ interface HeaderProps {
   onSelectUser: (user: User) => void;
   onNavigateTab: (tab: any) => void;
   onOpenScanner?: () => void;
+  onLogout?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -36,6 +37,7 @@ export const Header: React.FC<HeaderProps> = ({
   onSelectUser,
   onNavigateTab,
   onOpenScanner,
+  onLogout,
 }) => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -243,7 +245,7 @@ export const Header: React.FC<HeaderProps> = ({
                 </div>
               </div>
 
-              <div className="user-popover-footer">
+              <div className="user-popover-footer" style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                 <button
                   className="popover-footer-link"
                   onClick={() => {
@@ -254,6 +256,19 @@ export const Header: React.FC<HeaderProps> = ({
                   <Users style={{ width: 14, height: 14 }} />
                   <span>Open Team Directory & Audit Roles</span>
                 </button>
+                {onLogout && (
+                  <button
+                    className="popover-footer-link"
+                    style={{ color: '#ef4444', borderTop: '1px solid var(--border-subtle)', paddingTop: '0.5rem', marginTop: '0.25rem' }}
+                    onClick={() => {
+                      setShowUserMenu(false);
+                      onLogout();
+                    }}
+                  >
+                    <LogOut style={{ width: 14, height: 14 }} />
+                    <span>Sign Out</span>
+                  </button>
+                )}
               </div>
             </div>
           )}
