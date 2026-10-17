@@ -2,9 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   Plus, Bell,
   ChevronDown, PanelLeft,
-  CheckCircle2, AlertTriangle, Users, ShieldCheck, Scan, LogOut, Globe
+  CheckCircle2, AlertTriangle, Users, ShieldCheck, Scan, LogOut, Globe, Building2
 } from 'lucide-react';
-import { IntegrityCheckResponse, User } from '../types';
+import { IntegrityCheckResponse, User, WorkspaceInfo } from '../types';
 import { useI18n } from '../i18n/I18nContext';
 import { translateUserRole } from '../i18n/translations';
 
@@ -23,6 +23,8 @@ interface HeaderProps {
   onNavigateTab: (tab: any) => void;
   onOpenScanner?: () => void;
   onLogout?: () => void;
+  workspaceInfo?: WorkspaceInfo | null;
+  onOpenWorkspace?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -40,6 +42,8 @@ export const Header: React.FC<HeaderProps> = ({
   onNavigateTab,
   onOpenScanner,
   onLogout,
+  workspaceInfo,
+  onOpenWorkspace,
 }) => {
   const { t, locale, toggleLocale } = useI18n();
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -147,14 +151,32 @@ export const Header: React.FC<HeaderProps> = ({
         )}
 
         <nav className="header-breadcrumbs" aria-label="Breadcrumb">
-          <span className="breadcrumb-org">StockSense</span>
+          <span className="breadcrumb-org">{workspaceInfo?.company_name || 'StockSense'}</span>
           <span className="breadcrumb-separator">/</span>
           <span className="breadcrumb-active">{tabLabels[activeTab] || 'Overview'}</span>
         </nav>
       </div>
 
-      {/* Right: Primary Action + Notifications + User Profile */}
+      {/* Right: Workspace Pill + Primary Action + Notifications + User Profile */}
       <div className="header-actions">
+        {onOpenWorkspace && (
+          <button
+            type="button"
+            className="lang-toggle-btn"
+            onClick={onOpenWorkspace}
+            style={{
+              borderColor: workspaceInfo?.is_demo_dataset ? 'rgba(99, 102, 241, 0.35)' : 'rgba(16, 185, 129, 0.35)',
+              maxWidth: '220px',
+            }}
+            title={t('workspace.modal_title')}
+          >
+            <Building2 style={{ width: 14, height: 14, color: workspaceInfo?.is_demo_dataset ? '#818cf8' : '#10b981', flexShrink: 0 }} />
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {workspaceInfo?.company_name || t('workspace.company_badge')}
+            </span>
+          </button>
+        )}
+
         {/* Language Switcher */}
         <button
           className="lang-toggle-btn"
@@ -294,6 +316,18 @@ export const Header: React.FC<HeaderProps> = ({
                   <Users style={{ width: 14, height: 14 }} />
                   <span>{t('header.team_directory')}</span>
                 </button>
+                {onOpenWorkspace && (
+                  <button
+                    className="popover-footer-link"
+                    onClick={() => {
+                      onOpenWorkspace();
+                      setShowUserMenu(false);
+                    }}
+                  >
+                    <Building2 style={{ width: 14, height: 14 }} />
+                    <span>{t('workspace.modal_title')}</span>
+                  </button>
+                )}
                 {onLogout && (
                   <button
                     className="popover-footer-link"

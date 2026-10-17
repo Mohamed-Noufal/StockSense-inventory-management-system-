@@ -5,7 +5,7 @@ import {
   HealthResponse, InventoryItem, InventoryLocation, StockBalance,
   StockMovement, IntegrityCheckResponse, PurchaseOrder,
   Supplier, POCreatePayload, POReceivePayload, AIRun, AIRecommendation, User,
-  AIRunTriggerPayload, AlertItem
+  AIRunTriggerPayload, AlertItem, WorkspaceInfo
 } from './types';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
@@ -24,6 +24,7 @@ import { WaybillModal } from './components/WaybillModal';
 import { BinLabelModal } from './components/BinLabelModal';
 import { BarcodeScannerModal } from './components/BarcodeScannerModal';
 import { NewItemModal } from './components/NewItemModal';
+import { WorkspaceModal } from './components/WorkspaceModal';
 import { LoginView } from './components/LoginView';
 import { useBarcodeScanner } from './hooks/useBarcodeScanner';
 import { useI18n } from './i18n/I18nContext';
@@ -107,6 +108,8 @@ const App: React.FC = () => {
 
   const [showNewItemModal, setShowNewItemModal] = useState<boolean>(false);
   const [newItemInitialSku, setNewItemInitialSku] = useState<string>('');
+  const [showWorkspaceModal, setShowWorkspaceModal] = useState<boolean>(false);
+  const [workspaceInfo, setWorkspaceInfo] = useState<WorkspaceInfo | null>(null);
 
   const handleOpenNewItemModal = (initialSku = '') => {
     setNewItemInitialSku(initialSku);
@@ -226,8 +229,8 @@ const App: React.FC = () => {
       // Unblock UI immediately so metrics and cards render instantly
       setLoading(false);
 
-      // Tier 2: Supporting Subsystems (AI, Health, Users, Alerts, Integrity)
-      const [hData, supData, recData, runData, usersData, alertsData, integData] = await Promise.all([
+      // Tier 2: Supporting Subsystems (AI, Health, Users, Alerts, Integrity, Workspace)
+      const [hData, supData, recData, runData, usersData, alertsData, integData, wsData] = await Promise.all([
         api.getHealth().catch(() => null),
         api.getSuppliers().catch(() => []),
         api.getAIRecommendations().catch(() => []),
@@ -235,6 +238,7 @@ const App: React.FC = () => {
         api.getUsers().catch(() => []),
         api.getAlerts().catch(() => []),
         api.getIntegrityCheck().catch(() => null),
+        api.getWorkspaceInfo().catch(() => null),
       ]);
 
       setHealth(hData);
@@ -244,6 +248,9 @@ const App: React.FC = () => {
       setUsers(usersData);
       setAlerts(alertsData);
       setIntegrity(integData);
+      if (wsData) {
+        setWorkspaceInfo(wsData);
+      }
 
       if (usersData && usersData.length > 0) {
         setUsers(usersData);
@@ -542,6 +549,8 @@ const App: React.FC = () => {
           onNavigateTab={(tab) => handleTabChange(tab as TabType)}
           onOpenScanner={() => setShowScannerModal(true)}
           onLogout={handleLogout}
+          workspaceInfo={workspaceInfo}
+          onOpenWorkspace={() => setShowWorkspaceModal(true)}
         />
 
         {error && (
@@ -588,6 +597,7 @@ const App: React.FC = () => {
               onNavigateTab={handleTabChange}
               onPrintLabel={(item) => setLabelPrintItem(item)}
               onAddNewItem={() => handleOpenNewItemModal('')}
+              onOpenWorkspace={() => setShowWorkspaceModal(true)}
             />
           )}
           {activeTab === 'ledger' && (
@@ -805,6 +815,21 @@ const App: React.FC = () => {
           item={labelPrintItem}
           location={locations.find((l) => l.name === labelPrintItem.warehouse_name) || locations[0]}
           onClose={() => setLabelPrintItem(null)}
+        />
+      )}
+
+      {showWorkspaceModal && (
+        <WorkspaceModal
+          locations={locations}
+          onClose={() => setShowWorkspaceModal(false)}
+          onWorkspaceUpdated={async () => {
+            await fetchData();
+            setSuccessMsg(
+              locale === 'ar'
+                ? 'تم تحديث مساحة العمل بنجاح!'
+                : 'Workspace updated successfully!'
+            );
+          }}
         />
       )}
     </div>

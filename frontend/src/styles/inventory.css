@@ -880,3 +880,60 @@
   color: #71717a;
 }
 
+/* Vercel-Style Clean Company Workspace Empty State */
+.empty-workspace-view {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 1.5rem;
+  width: 100%;
+}
+
+.empty-workspace-card {
+  max-width: 520px;
+  width: 100%;
+  background: #111113;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 16px;
+  padding: 2.75rem 2rem;
+  text-align: center;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.empty-workspace-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 14px;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.22);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+}
+
+.empty-workspace-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.02em;
+}
+
+.empty-workspace-desc {
+  font-size: 0.86rem;
+  color: #a1a1aa;
+  line-height: 1.6;
+  margin-bottom: 1.75rem;
+}
+
+.empty-workspace-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}
+
+

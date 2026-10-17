@@ -11,7 +11,7 @@ from backend.app.models.item_suppliers import ItemSupplier
 from backend.app.models.stock_balances import StockBalance
 from backend.app.models.stock_movements import StockMovement
 from backend.app.schemas.inventory import (
-    ItemCreate, ItemResponse, LocationResponse, StockBalanceResponse,
+    ItemCreate, ItemResponse, LocationCreate, LocationResponse, StockBalanceResponse,
     MovementCreate, TransferCreate, MovementResponse,
     OperationsStatsResponse, IntegrityCheckResponse
 )
@@ -148,6 +148,33 @@ def list_categories(db: Session = Depends(get_db)):
 @router.get("/locations", response_model=List[LocationResponse])
 def list_locations(db: Session = Depends(get_db)):
     return db.query(Location).filter(Location.is_active == 1).all()
+
+@router.post("/locations", response_model=LocationResponse, status_code=201)
+def create_location(payload: LocationCreate, db: Session = Depends(get_db)):
+    code_clean = payload.code.strip().upper()
+    name_clean = payload.name.strip()
+    if not code_clean or not name_clean:
+        raise HTTPException(status_code=400, detail="Location code and name are required.")
+    
+    existing = db.query(Location).filter_by(code=code_clean).first()
+    if existing:
+        raise HTTPException(status_code=400, detail=f"Location with code '{code_clean}' already exists.")
+    
+    # If is_default_replenishment is set, unset previous default
+    if payload.is_default_replenishment == 1:
+        db.query(Location).update({"is_default_replenishment": 0})
+    
+    new_loc = Location(
+        code=code_clean,
+        name=name_clean,
+        location_type=payload.location_type,
+        is_default_replenishment=payload.is_default_replenishment,
+        is_active=1
+    )
+    db.add(new_loc)
+    db.commit()
+    db.refresh(new_loc)
+    return new_loc
 
 @router.get("/balances", response_model=List[StockBalanceResponse])
 def list_balances(

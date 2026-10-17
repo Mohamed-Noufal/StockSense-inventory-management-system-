@@ -12,6 +12,8 @@ from backend.app.models.purchase_orders import PurchaseOrder, PurchaseOrderLine
 from backend.app.models.alerts import Alert
 from backend.app.models.attachments import DocumentAttachment
 
+from backend.app.models.workspace import WorkspaceSetting
+
 # Import AI models from unified backend.ai package
 from backend.ai.models import (
     AIRun,
@@ -36,6 +38,7 @@ __all__ = [
     "PurchaseOrderLine",
     "Alert",
     "DocumentAttachment",
+    "WorkspaceSetting",
     "AIRun",
     "Forecast",
     "BacktestResult",

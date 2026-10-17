@@ -321,5 +321,23 @@ export interface DocumentAttachment {
   download_url?: string;
 }
 
+export interface WorkspaceInfo {
+  company_name: string;
+  facility_name: string;
+  is_demo_dataset: boolean;
+  total_items: number;
+  total_locations: number;
+  total_stock_value_minor: number;
+  currency: string;
+}
+
+export interface LocationCreatePayload {
+  code: string;
+  name: string;
+  location_type: 'WAREHOUSE' | 'YARD' | 'RIG_SITE';
+  is_default_replenishment: number;
+}
+
+
 
 

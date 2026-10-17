@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { Building2, PackagePlus, Sparkles } from 'lucide-react';
 import { InventoryItem, StockMovement, PurchaseOrder } from '../types';
 import { api } from '../api/client';
+import { useI18n } from '../i18n/I18nContext';
 import { InventoryKpiCards } from './InventoryKpiCards';
 import { InventoryToolbar } from './InventoryToolbar';
 import { InventoryTable } from './InventoryTable';
@@ -14,181 +16,10 @@ interface InventoryViewProps {
   onNavigateTab?: (tab: any) => void;
   onPrintLabel?: (item: InventoryItem) => void;
   onAddNewItem?: () => void;
+  onOpenWorkspace?: () => void;
 }
 
-// Canonical mock reference items representing the oilfield catalogue
-const REFERENCE_MOCK_ITEMS: InventoryItem[] = [
-  {
-    id: 101,
-    sku: 'HP-001',
-    name: 'Hydraulic Pump',
-    description: 'High-pressure axial piston hydraulic pump',
-    category_id: 1,
-    category_name: 'Mechanical Parts',
-    warehouse_name: 'Main Warehouse',
-    uom: 'pcs',
-    unit_cost_minor: 450000,
-    criticality: 'CRITICAL',
-    is_active: 1,
-    total_on_hand: 8,
-    reserved_qty: 2,
-    available_qty: 6,
-    reorder_point: 10,
-  },
-  {
-    id: 102,
-    sku: 'PV-042',
-    name: 'Pressure Valve',
-    description: 'Forged high-pressure check valve 5000psi',
-    category_id: 2,
-    category_name: 'Pipes & Tubes',
-    warehouse_name: 'Main Warehouse',
-    uom: 'pcs',
-    unit_cost_minor: 65000,
-    criticality: 'STANDARD',
-    is_active: 1,
-    total_on_hand: 45,
-    reserved_qty: 5,
-    available_qty: 40,
-    reorder_point: 15,
-  },
-  {
-    id: 103,
-    sku: 'DB-034',
-    name: 'Drill Bit 3/4"',
-    description: 'Tungsten carbide PDC rotary drill bit',
-    category_id: 3,
-    category_name: 'Tools & Equipment',
-    warehouse_name: 'Field Warehouse',
-    uom: 'pcs',
-    unit_cost_minor: 125000,
-    criticality: 'CRITICAL',
-    is_active: 1,
-    total_on_hand: 12,
-    reserved_qty: 0,
-    available_qty: 12,
-    reorder_point: 8,
-  },
-  {
-    id: 104,
-    sku: 'LO-005',
-    name: 'Lubricant Oil 5L',
-    description: 'ISO VG 46 synthetic gear and pump lubricant',
-    category_id: 4,
-    category_name: 'Chemicals',
-    warehouse_name: 'Main Warehouse',
-    uom: 'can',
-    unit_cost_minor: 3800,
-    criticality: 'LOW',
-    is_active: 1,
-    total_on_hand: 3,
-    reserved_qty: 0,
-    available_qty: 3,
-    reorder_point: 10,
-  },
-  {
-    id: 105,
-    sku: 'FC-012',
-    name: 'Filter Cartridge',
-    description: 'Diesel fuel coalescer element 10-micron',
-    category_id: 5,
-    category_name: 'Filters',
-    warehouse_name: 'Field Warehouse',
-    uom: 'pcs',
-    unit_cost_minor: 8500,
-    criticality: 'STANDARD',
-    is_active: 1,
-    total_on_hand: 28,
-    reserved_qty: 4,
-    available_qty: 24,
-    reorder_point: 12,
-  },
-  {
-    id: 106,
-    sku: 'GS-018',
-    name: 'Gasket Set',
-    description: 'API Ring Type Joint R-45 soft iron gasket',
-    category_id: 1,
-    category_name: 'Mechanical Parts',
-    warehouse_name: 'Main Warehouse',
-    uom: 'set',
-    unit_cost_minor: 3500,
-    criticality: 'STANDARD',
-    is_active: 1,
-    total_on_hand: 0,
-    reserved_qty: 0,
-    available_qty: 0,
-    reorder_point: 10,
-  },
-  {
-    id: 107,
-    sku: 'DF-073',
-    name: 'Drilling Fluid Additive',
-    description: 'Water-based drilling mud viscosity modifier',
-    category_id: 4,
-    category_name: 'Chemicals',
-    warehouse_name: 'Free Zone',
-    uom: 'drum',
-    unit_cost_minor: 22000,
-    criticality: 'LOW',
-    is_active: 1,
-    total_on_hand: 56,
-    reserved_qty: 8,
-    available_qty: 48,
-    reorder_point: 20,
-  },
-  {
-    id: 108,
-    sku: 'EM-022',
-    name: 'Electric Motor',
-    description: 'Explosion-proof 3-phase induction motor 15HP',
-    category_id: 6,
-    category_name: 'Electrical',
-    warehouse_name: 'Main Warehouse',
-    uom: 'pcs',
-    unit_cost_minor: 320000,
-    criticality: 'CRITICAL',
-    is_active: 1,
-    total_on_hand: 14,
-    reserved_qty: 2,
-    available_qty: 12,
-    reorder_point: 6,
-  },
-  {
-    id: 109,
-    sku: 'HH-006',
-    name: 'High Pressure Hose',
-    description: 'Armored choke and kill flexible hose 3-inch 10k',
-    category_id: 2,
-    category_name: 'Pipes & Tubes',
-    warehouse_name: 'Field Warehouse',
-    uom: 'length',
-    unit_cost_minor: 210000,
-    criticality: 'CRITICAL',
-    is_active: 1,
-    total_on_hand: 6,
-    reserved_qty: 1,
-    available_qty: 5,
-    reorder_point: 8,
-  },
-  {
-    id: 110,
-    sku: 'SH-009',
-    name: 'Safety Helmet',
-    description: 'ANSI Z89.1 Type 1 industrial safety hard hat',
-    category_id: 7,
-    category_name: 'PPE',
-    warehouse_name: 'Main Warehouse',
-    uom: 'pcs',
-    unit_cost_minor: 2800,
-    criticality: 'LOW',
-    is_active: 1,
-    total_on_hand: 120,
-    reserved_qty: 10,
-    available_qty: 110,
-    reorder_point: 25,
-  },
-];
+// Items loaded from live database
 
 export const InventoryView: React.FC<InventoryViewProps> = ({
   items: backendItems,
@@ -198,17 +29,16 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
   onNavigateTab = () => {},
   onPrintLabel,
   onAddNewItem,
+  onOpenWorkspace,
 }) => {
+  const { t } = useI18n();
   // Use real backend items directly from database
   const allItems = useMemo(() => {
-    if (backendItems && backendItems.length > 0) {
-      return backendItems;
-    }
-    return REFERENCE_MOCK_ITEMS;
+    return backendItems || [];
   }, [backendItems]);
 
   // Selected item state
-  const [selectedItem, setSelectedItem] = useState<InventoryItem>(allItems[0]);
+  const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(allItems[0] || null);
 
   // Sync selectedItem when allItems loads
   useEffect(() => {
@@ -345,17 +175,16 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
   };
 
   // Live KPI aggregates computed from authoritative items and orders
-  const totalItemsCount = backendItems.length > 0
-    ? backendItems.length
-    : (loading ? 0 : REFERENCE_MOCK_ITEMS.length);
+  const totalItemsCount = backendItems.length;
 
-  const totalStockValue = backendItems.length > 0
-    ? backendItems.reduce((sum, itm) => sum + (itm.total_on_hand * itm.unit_cost_minor) / 100, 0)
-    : (loading ? 0 : REFERENCE_MOCK_ITEMS.reduce((sum, itm) => sum + (itm.total_on_hand * itm.unit_cost_minor) / 100, 0));
+  const totalStockValue = backendItems.reduce(
+    (sum, itm) => sum + (itm.total_on_hand * itm.unit_cost_minor) / 100,
+    0
+  );
 
-  const lowStockCount = backendItems.length > 0
-    ? backendItems.filter((itm) => itm.total_on_hand <= (itm.reorder_point ?? 10)).length
-    : (loading ? 0 : REFERENCE_MOCK_ITEMS.filter((itm) => itm.total_on_hand <= (itm.reorder_point ?? 10)).length);
+  const lowStockCount = backendItems.filter(
+    (itm) => itm.total_on_hand <= (itm.reorder_point ?? 10)
+  ).length;
 
   const openPOCount = orders.filter((o) => o.status === 'DRAFT' || o.status === 'APPROVED').length;
 
@@ -370,66 +199,100 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
         loading={loading}
       />
 
-      {/* 3. Split Layout Workstation */}
-      <div className="inventory-split-layout">
-        {/* Left Column: Toolbar + Data Table (~68% width) */}
-        <div className="inventory-left-column">
-          <InventoryToolbar
-            searchQuery={searchQuery}
-            onSearchChange={(q) => {
-              setSearchQuery(q);
-              setCurrentPage(1);
-            }}
-            categoryFilter={categoryFilter}
-            onCategoryChange={(c) => {
-              setCategoryFilter(c);
-              setCurrentPage(1);
-            }}
-            locationFilter={locationFilter}
-            onLocationChange={(l) => {
-              setLocationFilter(l);
-              setCurrentPage(1);
-            }}
-            statusFilter={statusFilter}
-            onStatusChange={(s) => {
-              setStatusFilter(s);
-              setCurrentPage(1);
-            }}
-            categories={availableCategories}
-            locations={availableLocations}
-            onExport={handleExportCSV}
-            onAddNewItem={onAddNewItem}
-          />
-
-          <InventoryTable
-            items={paginatedItems}
-            selectedItem={selectedItem}
-            onSelectItem={(item) => setSelectedItem(item)}
-            onAction={onAction}
-            currentPage={currentPage}
-            onPageChange={(p) => setCurrentPage(p)}
-            pageSize={pageSize}
-            onPageSizeChange={(sz) => {
-              setPageSize(sz);
-              setCurrentPage(1);
-            }}
-            totalItemsCount={totalItemsCount}
-          />
+      {/* 3. Split Layout Workstation OR Clean Workspace Empty State */}
+      {!loading && backendItems.length === 0 ? (
+        <div className="empty-workspace-view">
+          <div className="empty-workspace-card">
+            <div className="empty-workspace-icon">
+              <Building2 style={{ width: 32, height: 32, color: '#10b981' }} />
+            </div>
+            <h2 className="empty-workspace-title">{t('workspace.empty_inventory_title')}</h2>
+            <p className="empty-workspace-desc">{t('workspace.empty_inventory_desc')}</p>
+            <div className="empty-workspace-actions">
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={onAddNewItem}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.65rem 1.25rem' }}
+              >
+                <PackagePlus style={{ width: 16, height: 16 }} />
+                <span>{t('workspace.register_first_btn')}</span>
+              </button>
+              {onOpenWorkspace && (
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={onOpenWorkspace}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.65rem 1.25rem' }}
+                >
+                  <Sparkles style={{ width: 15, height: 15, color: '#818cf8' }} />
+                  <span>{t('workspace.load_sample_btn')}</span>
+                </button>
+              )}
+            </div>
+          </div>
         </div>
-
-        {/* Right Column: Selected Item Inspection & Movement (~32% width) */}
-        <div className="inventory-right-column">
-          {selectedItem && (
-            <InventoryItemDetail
-              item={selectedItem}
-              movements={itemMovements}
-              onNavigateTab={onNavigateTab}
-              onCreateMovement={(itemId) => onAction(itemId, 'ISSUE')}
-              onPrintLabel={onPrintLabel}
+      ) : (
+        <div className="inventory-split-layout">
+          {/* Left Column: Toolbar + Data Table (~68% width) */}
+          <div className="inventory-left-column">
+            <InventoryToolbar
+              searchQuery={searchQuery}
+              onSearchChange={(q) => {
+                setSearchQuery(q);
+                setCurrentPage(1);
+              }}
+              categoryFilter={categoryFilter}
+              onCategoryChange={(c) => {
+                setCategoryFilter(c);
+                setCurrentPage(1);
+              }}
+              locationFilter={locationFilter}
+              onLocationChange={(l) => {
+                setLocationFilter(l);
+                setCurrentPage(1);
+              }}
+              statusFilter={statusFilter}
+              onStatusChange={(s) => {
+                setStatusFilter(s);
+                setCurrentPage(1);
+              }}
+              categories={availableCategories}
+              locations={availableLocations}
+              onExport={handleExportCSV}
+              onAddNewItem={onAddNewItem}
             />
-          )}
+
+            <InventoryTable
+              items={paginatedItems}
+              selectedItem={selectedItem || allItems[0]}
+              onSelectItem={(item) => setSelectedItem(item)}
+              onAction={onAction}
+              currentPage={currentPage}
+              onPageChange={(p) => setCurrentPage(p)}
+              pageSize={pageSize}
+              onPageSizeChange={(sz) => {
+                setPageSize(sz);
+                setCurrentPage(1);
+              }}
+              totalItemsCount={totalItemsCount}
+            />
+          </div>
+
+          {/* Right Column: Selected Item Inspection & Movement (~32% width) */}
+          <div className="inventory-right-column">
+            {selectedItem && (
+              <InventoryItemDetail
+                item={selectedItem}
+                movements={itemMovements}
+                onNavigateTab={onNavigateTab}
+                onCreateMovement={(itemId) => onAction(itemId, 'ISSUE')}
+                onPrintLabel={onPrintLabel}
+              />
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

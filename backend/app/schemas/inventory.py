@@ -28,6 +28,12 @@ class ItemResponse(ItemBase):
     supplier_skus: List[str] = []
     model_config = ConfigDict(from_attributes=True)
 
+class LocationCreate(BaseModel):
+    code: str
+    name: str
+    location_type: str = "WAREHOUSE"
+    is_default_replenishment: int = 0
+
 class LocationResponse(BaseModel):
     id: int
     code: str

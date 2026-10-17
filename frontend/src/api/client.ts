@@ -3,7 +3,7 @@ import {
   StockBalance, StockMovement, MovementCreatePayload, TransferCreatePayload,
   OperationsStats, IntegrityCheckResponse, Supplier, PurchaseOrder, POCreatePayload, POReceivePayload,
   AIRun, AIRecommendation, AIRunTriggerPayload, User, AlertItem, AlertAcknowledgePayload, AlertResolvePayload,
-  DocumentAttachment, ItemCreatePayload, Category
+  DocumentAttachment, ItemCreatePayload, Category, WorkspaceInfo, LocationCreatePayload
 } from '../types';
 
 const API_BASE = '/api/v1';
@@ -75,6 +75,21 @@ export const api = {
     }),
   getCategories: () => request<Category[]>('/inventory/categories'),
   getLocations: () => request<InventoryLocation[]>('/inventory/locations'),
+  createLocation: (payload: LocationCreatePayload) =>
+    request<InventoryLocation>('/inventory/locations', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  getWorkspaceInfo: () => request<WorkspaceInfo>('/workspace/info'),
+  initCleanWorkspace: (payload: { company_name: string; warehouse_name: string; warehouse_code: string }) =>
+    request<WorkspaceInfo>('/workspace/init-clean', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  restoreDemoWorkspace: () =>
+    request<WorkspaceInfo>('/workspace/restore-demo', {
+      method: 'POST',
+    }),
   getBalances: (itemId?: number, locationId?: number) => {
     const params = new URLSearchParams();
     if (itemId) params.append('item_id', String(itemId));

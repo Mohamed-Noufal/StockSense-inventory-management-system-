@@ -1,0 +1,56 @@
+from fastapi.testclient import TestClient
+
+def test_get_workspace_info(client: TestClient):
+    resp = client.get("/api/v1/workspace/info")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "company_name" in data
+    assert "facility_name" in data
+    assert "total_items" in data
+    assert "total_locations" in data
+
+def test_create_location(client: TestClient):
+    payload = {
+        "code": "TEST-LOC-01",
+        "name": "Test Yard Location",
+        "location_type": "YARD",
+        "is_default_replenishment": 0,
+    }
+    resp = client.post("/api/v1/inventory/locations", json=payload)
+    if resp.status_code == 400:
+        assert "already exists" in resp.json()["detail"]
+    else:
+        assert resp.status_code == 201
+        assert resp.json()["code"] == "TEST-LOC-01"
+
+def test_clean_workspace_and_restore_demo(client: TestClient):
+    # 1. Initialize clean company workspace
+    clean_payload = {
+        "company_name": "Al-Maha Energy Supplies",
+        "warehouse_name": "Dammam Central Depot",
+        "warehouse_code": "DAM-01",
+    }
+    clean_resp = client.post("/api/v1/workspace/init-clean", json=clean_payload)
+    assert clean_resp.status_code == 200
+    clean_data = clean_resp.json()
+    assert clean_data["company_name"] == "Al-Maha Energy Supplies"
+    assert clean_data["total_items"] == 0
+    assert clean_data["total_locations"] == 1
+    assert clean_data["is_demo_dataset"] is False
+
+    # Verify inventory is indeed empty
+    items_resp = client.get("/api/v1/inventory/items")
+    assert items_resp.status_code == 200
+    assert len(items_resp.json()) == 0
+
+    # 2. Restore oilfield demo dataset
+    restore_resp = client.post("/api/v1/workspace/restore-demo")
+    assert restore_resp.status_code == 200
+    restore_data = restore_resp.json()
+    assert restore_data["is_demo_dataset"] is True
+    assert restore_data["total_items"] >= 15
+
+    # Verify demo items restored
+    items_restored = client.get("/api/v1/inventory/items")
+    assert items_restored.status_code == 200
+    assert len(items_restored.json()) >= 15
