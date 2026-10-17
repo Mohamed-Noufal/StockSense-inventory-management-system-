@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Any, Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
@@ -19,11 +19,6 @@ def _get_or_create_balance(db: Session, item_id: int, location_id: int) -> Stock
     return balance
 
 def post_movement(db: Session, m_in: MovementCreate, commit: bool = True) -> StockMovement:
-    if m_in.idempotency_key:
-        existing = db.query(StockMovement).filter_by(idempotency_key=m_in.idempotency_key).first()
-        if existing:
-            return existing
-
     item = db.query(Item).filter_by(id=m_in.item_id).first()
     if not item:
         raise HTTPException(status_code=404, detail=f"Item ID {m_in.item_id} not found")
@@ -43,18 +38,64 @@ def post_movement(db: Session, m_in: MovementCreate, commit: bool = True) -> Sto
         direction = (m_in.adjustment_direction or "SURPLUS").upper()
         signed_qty = -abs(m_in.quantity) if direction == "SHRINKAGE" else abs(m_in.quantity)
 
-    balance = _get_or_create_balance(db, m_in.item_id, m_in.location_id)
-
-    if signed_qty < 0 and (balance.quantity_on_hand + signed_qty < 0):
-        raise HTTPException(
-            status_code=400,
-            detail=f"Insufficient stock for {item.sku} at {loc.code}. Available: {balance.quantity_on_hand}, requested: {abs(signed_qty)}"
-        )
-
-    balance.quantity_on_hand += signed_qty
-    balance.updated_at = datetime.now(timezone.utc).isoformat()
+    # B-2: Idempotency check with payload fingerprint verification
+    if m_in.idempotency_key:
+        existing = db.query(StockMovement).filter_by(idempotency_key=m_in.idempotency_key).first()
+        if existing:
+            if (
+                existing.item_id != m_in.item_id
+                or existing.location_id != m_in.location_id
+                or existing.quantity != signed_qty
+            ):
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"Idempotency conflict: key '{m_in.idempotency_key}' previously used with different movement parameters."
+                )
+            return existing
 
     now_iso = datetime.now(timezone.utc).isoformat()
+
+    # B-3: Atomic balance update protected against concurrency races
+    if signed_qty < 0:
+        affected = (
+            db.query(StockBalance)
+            .filter(
+                StockBalance.item_id == m_in.item_id,
+                StockBalance.location_id == m_in.location_id,
+                StockBalance.quantity_on_hand >= abs(signed_qty),
+            )
+            .update(
+                {
+                    StockBalance.quantity_on_hand: StockBalance.quantity_on_hand + signed_qty,
+                    StockBalance.updated_at: now_iso,
+                },
+                synchronize_session=False,
+            )
+        )
+        if affected == 0:
+            current_q = (
+                db.query(StockBalance.quantity_on_hand)
+                .filter_by(item_id=m_in.item_id, location_id=m_in.location_id)
+                .scalar()
+                or 0
+            )
+            raise HTTPException(
+                status_code=400,
+                detail=f"Insufficient stock for {item.sku} at {loc.code}. Available: {current_q}, requested: {abs(signed_qty)}"
+            )
+    else:
+        _get_or_create_balance(db, m_in.item_id, m_in.location_id)
+        db.query(StockBalance).filter(
+            StockBalance.item_id == m_in.item_id,
+            StockBalance.location_id == m_in.location_id,
+        ).update(
+            {
+                StockBalance.quantity_on_hand: StockBalance.quantity_on_hand + signed_qty,
+                StockBalance.updated_at: now_iso,
+            },
+            synchronize_session=False,
+        )
+
     reason_text = m_in.reason or ""
     if m_in.destination_label and m_type == "ISSUE" and m_in.destination_label not in reason_text:
         reason_text = f"To: {m_in.destination_label}" + (f" - {reason_text}" if reason_text else "")
@@ -93,22 +134,71 @@ def transfer_stock(db: Session, t_in: TransferCreate) -> Dict[str, Any]:
     if not from_loc or not to_loc:
         raise HTTPException(status_code=404, detail="Source or destination location not found")
 
-    from_bal = _get_or_create_balance(db, t_in.item_id, t_in.from_location_id)
-    if from_bal.quantity_on_hand < t_in.quantity:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Insufficient stock at {from_loc.code}. Available: {from_bal.quantity_on_hand}, transfer requested: {t_in.quantity}"
-        )
+    # B-2: Check transfer idempotency
+    if t_in.idempotency_key:
+        existing_out = db.query(StockMovement).filter_by(idempotency_key=f"{t_in.idempotency_key}_out").first()
+        if existing_out:
+            if (
+                existing_out.item_id != t_in.item_id
+                or existing_out.location_id != t_in.from_location_id
+                or abs(existing_out.quantity) != t_in.quantity
+            ):
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"Idempotency conflict: transfer key '{t_in.idempotency_key}' previously used with different parameters."
+                )
+            existing_in = db.query(StockMovement).filter_by(idempotency_key=f"{t_in.idempotency_key}_in").first()
+            return {
+                "transfer_group_id": existing_out.transfer_group_id,
+                "out_id": existing_out.id,
+                "in_id": existing_in.id if existing_in else None,
+                "quantity": abs(existing_out.quantity),
+            }
 
-    to_bal = _get_or_create_balance(db, t_in.item_id, t_in.to_location_id)
-    transfer_group_id = str(uuid.uuid4())
     now_iso = datetime.now(timezone.utc).isoformat()
 
-    from_bal.quantity_on_hand -= t_in.quantity
-    from_bal.updated_at = now_iso
-    to_bal.quantity_on_hand += t_in.quantity
-    to_bal.updated_at = now_iso
+    # B-3: Atomic decrement at origin
+    affected = (
+        db.query(StockBalance)
+        .filter(
+            StockBalance.item_id == t_in.item_id,
+            StockBalance.location_id == t_in.from_location_id,
+            StockBalance.quantity_on_hand >= t_in.quantity,
+        )
+        .update(
+            {
+                StockBalance.quantity_on_hand: StockBalance.quantity_on_hand - t_in.quantity,
+                StockBalance.updated_at: now_iso,
+            },
+            synchronize_session=False,
+        )
+    )
+    if affected == 0:
+        avail = (
+            db.query(StockBalance.quantity_on_hand)
+            .filter_by(item_id=t_in.item_id, location_id=t_in.from_location_id)
+            .scalar()
+            or 0
+        )
+        raise HTTPException(
+            status_code=400,
+            detail=f"Insufficient stock at {from_loc.code}. Available: {avail}, transfer requested: {t_in.quantity}"
+        )
 
+    # Atomic increment at destination
+    _get_or_create_balance(db, t_in.item_id, t_in.to_location_id)
+    db.query(StockBalance).filter(
+        StockBalance.item_id == t_in.item_id,
+        StockBalance.location_id == t_in.to_location_id,
+    ).update(
+        {
+            StockBalance.quantity_on_hand: StockBalance.quantity_on_hand + t_in.quantity,
+            StockBalance.updated_at: now_iso,
+        },
+        synchronize_session=False,
+    )
+
+    transfer_group_id = str(uuid.uuid4())
     mov_out = StockMovement(
         item_id=t_in.item_id, location_id=t_in.from_location_id,
         movement_type="TRANSFER_OUT", quantity=-t_in.quantity,
@@ -129,26 +219,51 @@ def transfer_stock(db: Session, t_in: TransferCreate) -> Dict[str, Any]:
     return {"transfer_group_id": transfer_group_id, "out_id": mov_out.id, "in_id": mov_in.id, "quantity": t_in.quantity}
 
 def get_operations_stats(db: Session, days: int = 7) -> Dict[str, Any]:
-    issues = db.query(func.count(StockMovement.id)).filter(StockMovement.movement_type == "ISSUE").scalar() or 0
-    transfers = db.query(func.count(StockMovement.id)).filter(StockMovement.movement_type == "TRANSFER_OUT").scalar() or 0
-    receipts = db.query(func.count(StockMovement.id)).filter(StockMovement.movement_type == "RECEIPT").scalar() or 0
-    adjustments = db.query(func.count(StockMovement.id)).filter(StockMovement.movement_type == "ADJUSTMENT").scalar() or 0
+    now = datetime.now(timezone.utc)
+    current_cutoff = (now - timedelta(days=days)).isoformat()
+    prior_cutoff = (now - timedelta(days=days * 2)).isoformat()
 
-    base_issues = 42
-    base_transfers = 18
-    base_receipts = 27
-    base_adjustments = 3
+    def _get_counts_and_trend(m_type: str) -> tuple[int, float]:
+        curr = (
+            db.query(func.count(StockMovement.id))
+            .filter(
+                StockMovement.movement_type == m_type,
+                StockMovement.occurred_at >= current_cutoff,
+            )
+            .scalar()
+            or 0
+        )
+        prev = (
+            db.query(func.count(StockMovement.id))
+            .filter(
+                StockMovement.movement_type == m_type,
+                StockMovement.occurred_at >= prior_cutoff,
+                StockMovement.occurred_at < current_cutoff,
+            )
+            .scalar()
+            or 0
+        )
+        if prev > 0:
+            trend = round(((curr - prev) / prev) * 100.0, 1)
+        else:
+            trend = 0.0 if curr == 0 else 100.0
+        return curr, trend
+
+    issues, issues_trend = _get_counts_and_trend("ISSUE")
+    transfers, transfers_trend = _get_counts_and_trend("TRANSFER_OUT")
+    receipts, receipts_trend = _get_counts_and_trend("RECEIPT")
+    adjustments, adjustments_trend = _get_counts_and_trend("ADJUSTMENT")
 
     return {
         "timeframe_days": days,
-        "issues_count": max(base_issues, issues),
-        "issues_trend_pct": 12.0,
-        "transfers_count": max(base_transfers, transfers),
-        "transfers_trend_pct": 8.0,
-        "receipts_count": max(base_receipts, receipts),
-        "receipts_trend_pct": 21.0,
-        "adjustments_count": max(base_adjustments, adjustments),
-        "adjustments_trend_pct": -50.0,
+        "issues_count": issues,
+        "issues_trend_pct": issues_trend,
+        "transfers_count": transfers,
+        "transfers_trend_pct": transfers_trend,
+        "receipts_count": receipts,
+        "receipts_trend_pct": receipts_trend,
+        "adjustments_count": adjustments,
+        "adjustments_trend_pct": adjustments_trend,
     }
 
 from backend.app.models.categories import Category
@@ -223,6 +338,4 @@ def create_item(db: Session, payload: ItemCreate) -> Item:
     db.commit()
     db.refresh(item)
     return item
-
-from backend.app.services.integrity_service import run_integrity_check
 

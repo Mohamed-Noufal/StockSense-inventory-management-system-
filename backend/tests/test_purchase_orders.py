@@ -162,3 +162,67 @@ def test_cancel_po_restrictions(client, po_fixtures):
     blocked_cancel = client.post(f"/api/v1/po/{po2['id']}/cancel")
     assert blocked_cancel.status_code == 400
     assert "Cannot cancel PO with received goods" in blocked_cancel.json()["detail"]
+
+def test_po_receive_idempotency_retry_does_not_double_count(client, po_fixtures):
+    payload = {
+        "supplier_id": po_fixtures["supplier_id"],
+        "lines": [{"item_id": po_fixtures["item_id"], "destination_location_id": po_fixtures["location_id"], "qty_ordered": 20, "unit_price_minor": 5000}]
+    }
+    po = client.post("/api/v1/po", json=payload).json()
+    client.post(f"/api/v1/po/{po['id']}/approve")
+    line_id = po["lines"][0]["id"]
+
+    bal_before = client.get(f"/api/v1/inventory/balances?item_id={po_fixtures['item_id']}&location_id={po_fixtures['location_id']}").json()
+    initial_stock = bal_before[0]["quantity_on_hand"] if bal_before else 0
+
+    idempotency_key = "test_idem_rcv_001"
+    # First receive call
+    rcv1 = client.post(
+        f"/api/v1/po/{po['id']}/receive",
+        json={"po_line_id": line_id, "quantity_received": 6, "idempotency_key": idempotency_key}
+    )
+    assert rcv1.status_code == 200
+    assert rcv1.json()["lines"][0]["qty_received"] == 6
+
+    # Verify inventory increased by exactly 6
+    bal_after1 = client.get(f"/api/v1/inventory/balances?item_id={po_fixtures['item_id']}&location_id={po_fixtures['location_id']}").json()
+    assert bal_after1[0]["quantity_on_hand"] == initial_stock + 6
+
+    # Idempotent retry: exact same request with same idempotency_key
+    rcv2 = client.post(
+        f"/api/v1/po/{po['id']}/receive",
+        json={"po_line_id": line_id, "quantity_received": 6, "idempotency_key": idempotency_key}
+    )
+    assert rcv2.status_code == 200
+    # Must NOT double-count: qty_received remains 6
+    assert rcv2.json()["lines"][0]["qty_received"] == 6
+
+    # Inventory balance must NOT double-count: still initial + 6
+    bal_after2 = client.get(f"/api/v1/inventory/balances?item_id={po_fixtures['item_id']}&location_id={po_fixtures['location_id']}").json()
+    assert bal_after2[0]["quantity_on_hand"] == initial_stock + 6
+
+def test_po_receive_idempotency_conflict_rejected(client, po_fixtures):
+    payload = {
+        "supplier_id": po_fixtures["supplier_id"],
+        "lines": [{"item_id": po_fixtures["item_id"], "destination_location_id": po_fixtures["location_id"], "qty_ordered": 20, "unit_price_minor": 5000}]
+    }
+    po = client.post("/api/v1/po", json=payload).json()
+    client.post(f"/api/v1/po/{po['id']}/approve")
+    line_id = po["lines"][0]["id"]
+
+    idempotency_key = "test_idem_conflict_002"
+    # Initial request
+    rcv1 = client.post(
+        f"/api/v1/po/{po['id']}/receive",
+        json={"po_line_id": line_id, "quantity_received": 4, "idempotency_key": idempotency_key}
+    )
+    assert rcv1.status_code == 200
+
+    # Conflicting retry: same key with different quantity
+    rcv2 = client.post(
+        f"/api/v1/po/{po['id']}/receive",
+        json={"po_line_id": line_id, "quantity_received": 8, "idempotency_key": idempotency_key}
+    )
+    assert rcv2.status_code == 409
+    assert "idempotency conflict" in rcv2.json()["detail"].lower()
+

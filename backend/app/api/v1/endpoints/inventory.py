@@ -16,8 +16,9 @@ from backend.app.schemas.inventory import (
     OperationsStatsResponse, IntegrityCheckResponse
 )
 from backend.app.services.inventory_service import (
-    create_item, post_movement, transfer_stock, run_integrity_check, get_operations_stats
+    create_item, post_movement, transfer_stock, get_operations_stats
 )
+from backend.app.services.integrity_service import run_integrity_check
 
 router = APIRouter()
 

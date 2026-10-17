@@ -24,9 +24,13 @@ COPY backend/ /app/backend/
 COPY config/ /app/config/
 COPY scripts/ /app/scripts/
 
-# Ensure runtime directories exist
-RUN mkdir -p /app/data/attachments && \
-    chmod +x /app/scripts/docker_entrypoint.sh
+# Ensure runtime directories exist and non-root execution (S-8)
+RUN useradd -m -u 1000 appuser && \
+    mkdir -p /app/data/attachments && \
+    chmod +x /app/scripts/docker_entrypoint.sh && \
+    chown -R appuser:appuser /app
+
+USER appuser
 
 EXPOSE 8000
 

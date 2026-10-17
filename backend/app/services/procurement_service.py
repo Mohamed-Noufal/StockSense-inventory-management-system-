@@ -6,16 +6,23 @@ from backend.app.models.purchase_orders import PurchaseOrder, PurchaseOrderLine
 from backend.app.models.suppliers import Supplier
 from backend.app.models.items import Item
 from backend.app.models.locations import Location
+from backend.app.models.stock_movements import StockMovement
 from backend.app.schemas.purchase_orders import POCreate, POReceivePayload
 from backend.app.schemas.inventory import MovementCreate
 from backend.app.services.inventory_service import post_movement
 
 def _next_po_number(db: Session) -> str:
-    count = db.query(PurchaseOrder).count() + 1
+    from sqlalchemy import func
+    max_id = db.query(func.max(PurchaseOrder.id)).scalar() or 0
     now = datetime.now(timezone.utc)
-    return f"PO-{now.strftime('%Y%m')}-{count:03d}"
+    candidate = f"PO-{now.strftime('%Y%m')}-{(max_id + 1):03d}"
+    idx = max_id + 1
+    while db.query(PurchaseOrder.id).filter_by(po_number=candidate).first():
+        idx += 1
+        candidate = f"PO-{now.strftime('%Y%m')}-{idx:03d}"
+    return candidate
 
-def create_po(db: Session, po_in: POCreate, user_id: Optional[int] = None) -> PurchaseOrder:
+def create_po(db: Session, po_in: POCreate, user_id: Optional[int] = None, commit: bool = True) -> PurchaseOrder:
     supplier = db.query(Supplier).filter_by(id=po_in.supplier_id).first()
     if not supplier or not supplier.is_active:
         raise HTTPException(status_code=404, detail=f"Active supplier ID {po_in.supplier_id} not found")
@@ -54,8 +61,11 @@ def create_po(db: Session, po_in: POCreate, user_id: Optional[int] = None) -> Pu
         )
         db.add(line)
 
-    db.commit()
-    db.refresh(po)
+    if commit:
+        db.commit()
+        db.refresh(po)
+    else:
+        db.flush()
     return po
 
 def approve_po(db: Session, po_id: int, user_id: Optional[int] = None) -> PurchaseOrder:
@@ -86,6 +96,21 @@ def receive_po_line(db: Session, po_id: int, payload: POReceivePayload) -> Purch
     if not line:
         raise HTTPException(status_code=404, detail=f"PO line {payload.po_line_id} not found on PO {po_id}")
 
+    # B-1 & B-2: Idempotency safety - verify key and prevent double-incrementing qty_received
+    if payload.idempotency_key:
+        existing_mov = db.query(StockMovement).filter_by(idempotency_key=payload.idempotency_key).first()
+        if existing_mov:
+            if (
+                existing_mov.item_id != line.item_id
+                or existing_mov.reference_id != line.id
+                or abs(existing_mov.quantity) != payload.quantity_received
+            ):
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"Idempotency conflict: key '{payload.idempotency_key}' previously used with different receipt parameters."
+                )
+            return po
+
     remaining = line.qty_ordered - line.qty_received
     if payload.quantity_received > remaining:
         raise HTTPException(
@@ -93,10 +118,14 @@ def receive_po_line(db: Session, po_id: int, payload: POReceivePayload) -> Purch
             detail=f"Over-receipt rejected: requested {payload.quantity_received} units, but only {remaining} remain."
         )
 
-    dest_loc = payload.destination_location_id or line.destination_location_id
+    dest_loc_id = payload.destination_location_id or line.destination_location_id
+    dest_loc = db.query(Location).filter_by(id=dest_loc_id).first()
+    if not dest_loc or not dest_loc.is_active:
+        raise HTTPException(status_code=404, detail=f"Active destination location {dest_loc_id} not found")
+
     m_in = MovementCreate(
         item_id=line.item_id,
-        location_id=dest_loc,
+        location_id=dest_loc.id,
         movement_type="RECEIPT",
         quantity=payload.quantity_received,
         reference_type="PO_LINE",

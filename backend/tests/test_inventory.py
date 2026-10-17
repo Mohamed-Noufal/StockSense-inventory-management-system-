@@ -145,16 +145,39 @@ def test_post_adjustment_movement(client, seeded_fixtures):
     assert resp2.status_code == 201
     assert resp2.json()["quantity"] == -2
 
-def test_operations_stats(client):
+def test_operations_stats(client, seeded_fixtures):
+    # Initial stats
     resp = client.get("/api/v1/inventory/operations/stats?days=7")
     assert resp.status_code == 200
     data = resp.json()
     assert data["timeframe_days"] == 7
-    assert data["issues_count"] >= 42
-    assert data["transfers_count"] >= 18
-    assert data["receipts_count"] >= 27
-    assert data["adjustments_count"] >= 3
+    assert "issues_count" in data
+    assert "transfers_count" in data
+    assert "receipts_count" in data
+    assert "adjustments_count" in data
     assert "issues_trend_pct" in data
+    initial_issues = data["issues_count"]
+
+    # Post stock receipt and issue movement
+    client.post("/api/v1/inventory/movements", json={
+        "item_id": seeded_fixtures["item_id"],
+        "location_id": seeded_fixtures["loc1_id"],
+        "movement_type": "RECEIPT",
+        "quantity": 10,
+    })
+    client.post("/api/v1/inventory/movements", json={
+        "item_id": seeded_fixtures["item_id"],
+        "location_id": seeded_fixtures["loc1_id"],
+        "movement_type": "ISSUE",
+        "quantity": 2,
+    })
+
+    # Stats for days=7 must reflect the new issue
+    resp2 = client.get("/api/v1/inventory/operations/stats?days=7")
+    assert resp2.status_code == 200
+    data2 = resp2.json()
+    assert data2["issues_count"] >= initial_issues + 1
+
 
 def test_ledger_enriched_fields(client, seeded_fixtures):
     resp = client.get(f"/api/v1/inventory/ledger?item_id={seeded_fixtures['item_id']}&limit=10")
@@ -213,3 +236,71 @@ def test_create_item_and_alias_resolution(client, seeded_fixtures):
     assert found is not None
     if sup_id:
         assert test_sup_sku in found["supplier_skus"]
+
+def test_movement_idempotency_conflict_rejected(client, seeded_fixtures):
+    key = f"mov_idem_{uuid.uuid4().hex[:8]}"
+    payload1 = {
+        "item_id": seeded_fixtures["item_id"],
+        "location_id": seeded_fixtures["loc1_id"],
+        "movement_type": "RECEIPT",
+        "quantity": 10,
+        "idempotency_key": key,
+    }
+    resp1 = client.post("/api/v1/inventory/movements", json=payload1)
+    assert resp1.status_code == 201
+
+    # Exact retry returns same movement
+    retry_resp = client.post("/api/v1/inventory/movements", json=payload1)
+    assert retry_resp.status_code == 201
+    assert retry_resp.json()["id"] == resp1.json()["id"]
+
+    # Conflicting parameters with same key returns 409
+    payload_conflict = {
+        "item_id": seeded_fixtures["item_id"],
+        "location_id": seeded_fixtures["loc1_id"],
+        "movement_type": "RECEIPT",
+        "quantity": 25,  # different quantity
+        "idempotency_key": key,
+    }
+    conflict_resp = client.post("/api/v1/inventory/movements", json=payload_conflict)
+    assert conflict_resp.status_code == 409
+    assert "idempotency conflict" in conflict_resp.json()["detail"].lower()
+
+def test_transfer_idempotency_retry_and_conflict(client, seeded_fixtures):
+    # Ensure source has stock
+    client.post("/api/v1/inventory/movements", json={
+        "item_id": seeded_fixtures["item_id"],
+        "location_id": seeded_fixtures["loc1_id"],
+        "movement_type": "RECEIPT",
+        "quantity": 50,
+    })
+
+    key = f"xfer_idem_{uuid.uuid4().hex[:8]}"
+    payload1 = {
+        "item_id": seeded_fixtures["item_id"],
+        "from_location_id": seeded_fixtures["loc1_id"],
+        "to_location_id": seeded_fixtures["loc2_id"],
+        "quantity": 5,
+        "idempotency_key": key,
+    }
+    resp1 = client.post("/api/v1/inventory/transfer", json=payload1)
+    assert resp1.status_code == 201
+    group_id = resp1.json()["transfer_group_id"]
+
+    # Exact retry returns same transfer details
+    retry_resp = client.post("/api/v1/inventory/transfer", json=payload1)
+    assert retry_resp.status_code == 201
+    assert retry_resp.json()["transfer_group_id"] == group_id
+
+    # Conflicting retry returns 409
+    conflict_payload = {
+        "item_id": seeded_fixtures["item_id"],
+        "from_location_id": seeded_fixtures["loc1_id"],
+        "to_location_id": seeded_fixtures["loc2_id"],
+        "quantity": 10,  # changed quantity
+        "idempotency_key": key,
+    }
+    conflict_resp = client.post("/api/v1/inventory/transfer", json=conflict_payload)
+    assert conflict_resp.status_code == 409
+    assert "idempotency conflict" in conflict_resp.json()["detail"].lower()
+

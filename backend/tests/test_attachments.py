@@ -69,7 +69,7 @@ async def test_invalid_entity_type_rejected():
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         files = {
-            "file": ("test.txt", io.BytesIO(b"data"), "text/plain")
+            "file": ("test.pdf", io.BytesIO(b"%PDF-1.4 test"), "application/pdf")
         }
         data = {
             "entity_type": "INVALID_ENTITY",
@@ -77,3 +77,83 @@ async def test_invalid_entity_type_rejected():
         }
         res = await ac.post("/api/v1/attachments/upload", files=files, data=data)
         assert res.status_code == 400
+
+@pytest.mark.asyncio
+async def test_disallowed_extension_rejected():
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        files = {
+            "file": ("malicious_script.sh", io.BytesIO(b"#!/bin/bash\nrm -rf /"), "application/pdf")
+        }
+        data = {
+            "entity_type": "MOVEMENT",
+            "entity_id": 1,
+        }
+        res = await ac.post("/api/v1/attachments/upload", files=files, data=data)
+        assert res.status_code == 400
+        assert "extension" in res.json()["detail"].lower()
+
+@pytest.mark.asyncio
+async def test_disallowed_mime_type_rejected():
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        files = {
+            "file": ("test.pdf", io.BytesIO(b"%PDF-1.4 test"), "text/html")
+        }
+        data = {
+            "entity_type": "MOVEMENT",
+            "entity_id": 1,
+        }
+        res = await ac.post("/api/v1/attachments/upload", files=files, data=data)
+        assert res.status_code == 400
+        assert "content-type" in res.json()["detail"].lower()
+
+@pytest.mark.asyncio
+async def test_magic_bytes_mismatch_rejected():
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        # File claims to be .pdf but has plain text content
+        files = {
+            "file": ("fake_document.pdf", io.BytesIO(b"Hello world, I am not a real PDF file!"), "application/pdf")
+        }
+        data = {
+            "entity_type": "MOVEMENT",
+            "entity_id": 1,
+        }
+        res = await ac.post("/api/v1/attachments/upload", files=files, data=data)
+        assert res.status_code == 400
+        assert "signature does not match" in res.json()["detail"].lower()
+
+@pytest.mark.asyncio
+async def test_path_traversal_access_denied():
+    from backend.app.core.database import SessionLocal
+    from backend.app.models.attachments import DocumentAttachment
+    from datetime import timezone, datetime
+
+    db = SessionLocal()
+    try:
+        # Simulate an injected attachment with malicious traversal path
+        malicious_doc = DocumentAttachment(
+            entity_type="PURCHASE_ORDER",
+            entity_id=9999,
+            filename="system_passwd.txt",
+            file_type="text/plain",
+            file_size_bytes=100,
+            file_path="/etc/passwd",
+            description="Malicious path traversal target",
+            uploaded_by_name="Attacker",
+            created_at=datetime.now(timezone.utc).isoformat()
+        )
+        db.add(malicious_doc)
+        db.commit()
+        db.refresh(malicious_doc)
+        doc_id = malicious_doc.id
+    finally:
+        db.close()
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        res = await ac.get(f"/api/v1/attachments/{doc_id}/file")
+        assert res.status_code == 403
+        assert "outside permitted directory" in res.json()["detail"].lower()
+

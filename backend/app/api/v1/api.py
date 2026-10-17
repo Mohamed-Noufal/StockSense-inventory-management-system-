@@ -1,8 +1,9 @@
 from fastapi import APIRouter
-from backend.app.api.v1.endpoints import health, inventory, purchase_orders, users, alerts, attachments
+from backend.app.api.v1.endpoints import health, inventory, purchase_orders, users, alerts, attachments, auth
 from backend.ai.router import router as ai_router
 
 api_router = APIRouter()
+api_router.include_router(auth.router, prefix="/auth", tags=["Authentication & RBAC"])
 api_router.include_router(health.router, tags=["Health & System"])
 api_router.include_router(inventory.router, prefix="/inventory", tags=["Inventory & Ledger"])
 api_router.include_router(purchase_orders.router, prefix="/po", tags=["Procurement & POs"])

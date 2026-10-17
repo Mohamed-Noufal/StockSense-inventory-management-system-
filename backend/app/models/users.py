@@ -9,6 +9,7 @@ class User(Base):
     full_name = Column(String, nullable=False)
     email = Column(String, unique=True, nullable=False)
     role = Column(String, nullable=False)
+    hashed_password = Column(String, nullable=True)
     is_active = Column(Integer, nullable=False, default=1)
     created_at = Column(String, nullable=False, default=lambda: datetime.now(timezone.utc).isoformat())
     updated_at = Column(String, nullable=False, default=lambda: datetime.now(timezone.utc).isoformat())

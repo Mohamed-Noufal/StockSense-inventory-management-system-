@@ -11,7 +11,7 @@ services:
     container_name: stocksense-backend
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     volumes:
       # Persistent named volume for SQLite database & uploaded document attachments
       - stocksense-data:/app/data

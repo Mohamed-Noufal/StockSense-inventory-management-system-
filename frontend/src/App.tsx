@@ -108,10 +108,18 @@ const App: React.FC = () => {
     });
   };
 
-  const handleSelectUser = (user: User) => {
-    setCurrentUser(user);
-    localStorage.setItem('stocksense_current_user_id', String(user.id));
-    setSuccessMsg(`Active identity switched to ${user.full_name} (${user.role}) for audit logging`);
+  const handleSelectUser = async (user: User) => {
+    try {
+      const res = await api.demoLogin({ user_id: user.id });
+      localStorage.setItem('stocksense_token', res.access_token);
+      localStorage.setItem('stocksense_current_user_id', String(user.id));
+      setCurrentUser(res.user);
+      setSuccessMsg(`Authenticated as ${res.user.full_name} (${res.user.role}) — JWT Issued`);
+    } catch {
+      setCurrentUser(user);
+      localStorage.setItem('stocksense_current_user_id', String(user.id));
+      setSuccessMsg(`Active identity switched to ${user.full_name} (${user.role})`);
+    }
   };
 
   // Modals
@@ -213,9 +221,27 @@ const App: React.FC = () => {
       setIntegrity(integData);
 
       if (usersData && usersData.length > 0) {
-        const savedUserId = localStorage.getItem('stocksense_current_user_id');
-        const matched = savedUserId ? usersData.find((u: User) => String(u.id) === savedUserId) : null;
-        setCurrentUser((prev) => prev || matched || usersData[0]);
+        const token = localStorage.getItem('stocksense_token');
+        if (token) {
+          try {
+            const me = await api.getAuthMe();
+            setCurrentUser(me);
+          } catch {
+            const fallbackUser = usersData[0];
+            const res = await api.demoLogin({ user_id: fallbackUser.id });
+            localStorage.setItem('stocksense_token', res.access_token);
+            setCurrentUser(res.user);
+          }
+        } else {
+          try {
+            const defaultUser = usersData[0];
+            const res = await api.demoLogin({ user_id: defaultUser.id });
+            localStorage.setItem('stocksense_token', res.access_token);
+            setCurrentUser(res.user);
+          } catch {
+            setCurrentUser(usersData[0]);
+          }
+        }
       }
     } catch (err: any) {
       setError(err.message || 'Failed to fetch inventory data');

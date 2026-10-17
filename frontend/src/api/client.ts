@@ -16,15 +16,24 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('stocksense_token') : null;
+  const headers = new Headers(options?.headers);
+  if (!headers.has('Accept')) headers.set('Accept', 'application/json');
+  if (!headers.has('Content-Type') && !(options?.body instanceof FormData)) {
+    headers.set('Content-Type', 'application/json');
+  }
+  if (token && !headers.has('Authorization')) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+
   const res = await fetch(`${API_BASE}${path}`, {
-    headers: {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    },
     ...options,
+    headers,
   });
   if (!res.ok) {
+    if (res.status === 401 && typeof window !== 'undefined') {
+      localStorage.removeItem('stocksense_token');
+    }
     let errMsg = `Request failed with status ${res.status}`;
     try {
       const errData = await res.json();
@@ -38,6 +47,17 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  login: (payload: { email: string; password: string }) =>
+    request<{ access_token: string; token_type: string; user: User }>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  demoLogin: (payload: { role?: string; user_id?: number }) =>
+    request<{ access_token: string; token_type: string; user: User }>('/auth/demo-login', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  getAuthMe: () => request<User>('/auth/me'),
   getHealth: () => request<HealthResponse>('/health'),
   getReadiness: () => request<ReadyResponse>('/ready'),
   getUsers: () => request<User[]>('/users'),
