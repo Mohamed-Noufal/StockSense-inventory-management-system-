@@ -9,6 +9,7 @@ import {
   InventoryItem, InventoryLocation, StockMovement,
   PurchaseOrder, AIRecommendation, User
 } from '../types';
+import { useI18n } from '../i18n/I18nContext';
 
 export interface OverviewViewProps {
   items: InventoryItem[];
@@ -415,6 +416,8 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   onOpenMovementModal,
   onInspectRec,
 }) => {
+  const { t, locale } = useI18n();
+
   // Live computed metrics directly from authoritative database props
   const totalItemsCount = items.length;
 
@@ -433,7 +436,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   ).length;
 
   // Format Currency
-  const formattedStockValue = new Intl.NumberFormat('en-US', {
+  const formattedStockValue = new Intl.NumberFormat(locale === 'ar' ? 'ar-SA' : 'en-US', {
     style: 'currency',
     currency: 'USD',
     maximumFractionDigits: 0,
@@ -583,12 +586,12 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
             <Package style={{ width: 20, height: 20 }} />
           </div>
           <div className="kpi-body">
-            <span className="kpi-label">Total Items</span>
+            <span className="kpi-label">{t('overview.total_items')}</span>
             <span className="kpi-value">{loading && totalItemsCount === 0 ? '—' : totalItemsCount}</span>
             <div className="kpi-trend positive">
               <ArrowUpRight style={{ width: 14, height: 14 }} />
               <span>12%</span>
-              <span className="kpi-trend-sub">vs. last month</span>
+              <span className="kpi-trend-sub">{t('overview.vs_last_month')}</span>
             </div>
           </div>
         </div>
@@ -599,12 +602,12 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
             <DollarSign style={{ width: 20, height: 20 }} />
           </div>
           <div className="kpi-body">
-            <span className="kpi-label">Total Stock Value</span>
+            <span className="kpi-label">{t('overview.stock_valuation')}</span>
             <span className="kpi-value">{loading && totalItemsCount === 0 ? '—' : formattedStockValue}</span>
             <div className="kpi-trend positive">
               <ArrowUpRight style={{ width: 14, height: 14 }} />
               <span>8%</span>
-              <span className="kpi-trend-sub">vs. last month</span>
+              <span className="kpi-trend-sub">{t('overview.vs_last_month')}</span>
             </div>
           </div>
         </div>
@@ -615,12 +618,12 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
             <AlertTriangle style={{ width: 20, height: 20 }} />
           </div>
           <div className="kpi-body">
-            <span className="kpi-label">Low Stock Items</span>
+            <span className="kpi-label">{t('overview.low_stock')}</span>
             <span className="kpi-value">{loading && totalItemsCount === 0 ? '—' : lowStockCount}</span>
             <div className="kpi-trend positive">
               <ArrowDownRight style={{ width: 14, height: 14 }} />
               <span>32%</span>
-              <span className="kpi-trend-sub">vs. last month</span>
+              <span className="kpi-trend-sub">{t('overview.vs_last_month')}</span>
             </div>
           </div>
         </div>
@@ -631,7 +634,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
             <ClipboardList style={{ width: 20, height: 20 }} />
           </div>
           <div className="kpi-body">
-            <span className="kpi-label">Open POs</span>
+            <span className="kpi-label">{t('overview.open_pos')}</span>
             <span className="kpi-value">{loading && totalItemsCount === 0 ? '—' : openPOCount}</span>
             <div className="kpi-trend positive">
               <ArrowUpRight style={{ width: 14, height: 14 }} />
@@ -648,8 +651,8 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
         <div className="overview-card">
           <div className="overview-card-header">
             <div className="overview-card-title-group">
-              <h3 className="overview-card-title">Stock Levels</h3>
-              <p className="overview-card-sub">Current quantity across all warehouses</p>
+              <h3 className="overview-card-title">{t('overview.stock_levels_title')}</h3>
+              <p className="overview-card-sub">{t('overview.stock_levels_desc')}</p>
             </div>
 
             <div className="chart-legend-inline">
@@ -675,7 +678,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
         <div className="overview-card">
           <div className="overview-card-header">
             <div className="overview-card-title-group">
-              <h3 className="overview-card-title">Stock by Category</h3>
+              <h3 className="overview-card-title">{t('overview.stock_by_category')}</h3>
               <p className="overview-card-sub">Balance distribution across catalog</p>
             </div>
           </div>
@@ -692,7 +695,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
             <div className="overview-card-title-group">
               <h3 className="overview-card-title">
                 <AlertTriangle style={{ width: 16, height: 16, color: '#ef4444' }} />
-                <span>Low Stock Items</span>
+                <span>{t('overview.critical_attention')}</span>
               </h3>
             </div>
             <button

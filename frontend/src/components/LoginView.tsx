@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
 import {
   ShieldCheck, ArrowRight, Lock, Mail,
-  UserCheck, Sparkles, AlertCircle, Database, Layers
+  UserCheck, Sparkles, AlertCircle, Database, Layers, Globe
 } from 'lucide-react';
 import { api } from '../api/client';
 import { User } from '../types';
+import { useI18n } from '../i18n/I18nContext';
 
 interface LoginViewProps {
   onLoginSuccess: (user: User, token: string) => void;
 }
 
 export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
+  const { t, locale, toggleLocale } = useI18n();
   const [mode, setMode] = useState<'demo' | 'credentials'>('demo');
   const [email, setEmail] = useState('john.doe@stocksense.oilfield');
   const [password, setPassword] = useState('stocksense123');
@@ -21,30 +23,33 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
   const demoPersonas = [
     {
       id: 1,
-      name: 'John Doe',
+      name: t('login.persona_storekeeper'),
       email: 'john.doe@stocksense.oilfield',
       role: 'STOREKEEPER',
-      initials: 'JD',
+      roleLabel: t('login.persona_storekeeper_role'),
+      initials: locale === 'ar' ? 'أف' : 'JD',
       badgeColor: '#10b981',
-      desc: 'Warehouse dock receiving, issue dispatch, scanner mobility',
+      desc: t('login.persona_storekeeper_desc'),
     },
     {
       id: 2,
-      name: 'Sara Mansour',
+      name: t('login.persona_procurement'),
       email: 'sara.mansour@stocksense.oilfield',
       role: 'PROCUREMENT_OFFICER',
-      initials: 'SM',
+      roleLabel: t('login.persona_procurement_role'),
+      initials: locale === 'ar' ? 'سم' : 'SM',
       badgeColor: '#6366f1',
-      desc: 'AI replenishment review, PO approval & vendor lead-times',
+      desc: t('login.persona_procurement_desc'),
     },
     {
       id: 3,
-      name: 'Khaled Hassan',
+      name: t('login.persona_manager'),
       email: 'khaled.hassan@stocksense.oilfield',
       role: 'MANAGER',
-      initials: 'KH',
+      roleLabel: t('login.persona_manager_role'),
+      initials: locale === 'ar' ? 'خح' : 'KH',
       badgeColor: '#f59e0b',
-      desc: 'Inventory valuation analytics, audit logs & system governance',
+      desc: t('login.persona_manager_desc'),
     },
   ];
 
@@ -88,15 +93,26 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
   return (
     <div className="login-viewport">
       <div className="login-card">
+        {/* Language Switcher Bar */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.75rem' }}>
+          <button
+            type="button"
+            className="lang-toggle-btn"
+            onClick={toggleLocale}
+            title={locale === 'en' ? 'التبديل إلى العربية' : 'Switch to English'}
+          >
+            <Globe style={{ width: 14, height: 14, color: '#10b981' }} />
+            <span>{t('header.language')}</span>
+          </button>
+        </div>
+
         {/* Header & Brand */}
         <div className="login-header">
           <div className="login-logo-badge">
             <Layers style={{ width: 26, height: 26 }} />
           </div>
-          <h1 className="login-title">StockSense</h1>
-          <p className="login-subtitle">
-            AI-Assisted MRO & Oilfield Inventory Intelligence
-          </p>
+          <h1 className="login-title">{t('login.title')}</h1>
+          <p className="login-subtitle">{t('login.subtitle')}</p>
         </div>
 
         {/* Mode Selector Tabs */}
@@ -110,7 +126,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
             }}
           >
             <Sparkles style={{ width: 14, height: 14 }} />
-            <span>1-Click Demo Personas</span>
+            <span>{t('login.tab_demo')}</span>
           </button>
           <button
             type="button"
@@ -121,7 +137,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
             }}
           >
             <Lock style={{ width: 14, height: 14 }} />
-            <span>Email & Password</span>
+            <span>{t('login.tab_credentials')}</span>
           </button>
         </div>
 
@@ -154,13 +170,13 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                   <div className="persona-info">
                     <div className="persona-name-row">
                       <span className="persona-name">{p.name}</span>
-                      <span className="persona-role-badge">{p.role.replace('_', ' ')}</span>
+                      <span className="persona-role-badge">{p.roleLabel}</span>
                     </div>
                     <div className="persona-desc">{p.desc}</div>
                   </div>
                   <div className="persona-arrow">
                     {isCurrentLoading ? (
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Entering...</span>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{t('login.entering')}</span>
                     ) : (
                       <ArrowRight style={{ width: 16, height: 16 }} />
                     )}
@@ -175,7 +191,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
         {mode === 'credentials' && (
           <form className="login-form" onSubmit={handleCredentialsSubmit}>
             <div className="form-group">
-              <label className="form-label">Email Address</label>
+              <label className="form-label">{t('login.email_label')}</label>
               <div className="form-input-wrapper">
                 <Mail style={{ width: 14, height: 14 }} className="form-input-icon" />
                 <input
@@ -190,7 +206,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Password</label>
+              <label className="form-label">{t('login.password_label')}</label>
               <div className="form-input-wrapper">
                 <Lock style={{ width: 14, height: 14 }} className="form-input-icon" />
                 <input
@@ -203,13 +219,13 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                 />
               </div>
               <div className="form-input-hint">
-                Default demo password: <code style={{ color: 'var(--text-primary)' }}>stocksense123</code>
+                {t('login.password_hint')} <code style={{ color: 'var(--text-primary)' }}>stocksense123</code>
               </div>
             </div>
 
             <button type="submit" className="login-submit-btn" disabled={loading}>
               <UserCheck style={{ width: 16, height: 16 }} />
-              <span>{loading ? 'Authenticating...' : 'Sign In with JWT'}</span>
+              <span>{loading ? t('login.authenticating') : t('login.signin_btn')}</span>
             </button>
           </form>
         )}
@@ -218,15 +234,15 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
         <div className="login-footer-badges">
           <div className="footer-badge-item">
             <ShieldCheck style={{ width: 13, height: 13, color: '#10b981' }} />
-            <span>HS256 Bearer JWT</span>
+            <span>{t('login.jwt_badge')}</span>
           </div>
           <div className="footer-badge-item">
             <Database style={{ width: 13, height: 13, color: '#6366f1' }} />
-            <span>SQLite WAL Ledger</span>
+            <span>{t('login.wal_badge')}</span>
           </div>
           <div className="footer-badge-item">
             <Sparkles style={{ width: 13, height: 13, color: '#f59e0b' }} />
-            <span>Zero-Leakage AI</span>
+            <span>{t('login.ai_badge')}</span>
           </div>
         </div>
       </div>

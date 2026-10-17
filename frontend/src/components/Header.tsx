@@ -2,9 +2,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   Plus, Bell,
   ChevronDown, PanelLeft,
-  CheckCircle2, AlertTriangle, Users, ShieldCheck, Scan, LogOut
+  CheckCircle2, AlertTriangle, Users, ShieldCheck, Scan, LogOut, Globe
 } from 'lucide-react';
 import { IntegrityCheckResponse, User } from '../types';
+import { useI18n } from '../i18n/I18nContext';
 
 interface HeaderProps {
   activeTab: string;
@@ -39,6 +40,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenScanner,
   onLogout,
 }) => {
+  const { t, locale, toggleLocale } = useI18n();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
 
@@ -60,14 +62,14 @@ export const Header: React.FC<HeaderProps> = ({
   }, []);
 
   const tabLabels: Record<string, string> = {
-    overview: 'Overview',
-    inventory: 'Inventory',
-    operations: 'Operations',
-    ledger: 'Operations',
-    procurement: 'Procurement',
-    ai: 'AI & Replenishment',
-    activity: 'Activity & Integrity',
-    users: 'Users & Roles',
+    overview: t('nav.overview'),
+    inventory: t('nav.inventory'),
+    operations: t('nav.operations'),
+    ledger: t('nav.operations'),
+    procurement: t('nav.procurement'),
+    ai: t('nav.ai'),
+    activity: t('nav.activity'),
+    users: t('nav.users'),
   };
 
   const getInitials = (name: string) => {
@@ -127,6 +129,16 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Right: Primary Action + Notifications + User Profile */}
       <div className="header-actions">
+        {/* Language Switcher */}
+        <button
+          className="lang-toggle-btn"
+          onClick={toggleLocale}
+          title={locale === 'en' ? 'التبديل إلى العربية' : 'Switch to English'}
+        >
+          <Globe style={{ width: 14, height: 14, color: '#10b981' }} />
+          <span>{t('header.language')}</span>
+        </button>
+
         {onOpenScanner && (
           <button
             className="btn btn-secondary"
@@ -135,12 +147,12 @@ export const Header: React.FC<HeaderProps> = ({
             title="Scan Barcode (F2)"
           >
             <Scan style={{ width: 14, height: 14 }} />
-            <span>Scan SKU</span>
+            <span>{t('header.scan_sku')}</span>
           </button>
         )}
         <button className="btn btn-primary" onClick={onOpenModal}>
           <Plus style={{ width: 14, height: 14 }} />
-          <span>Record Movement</span>
+          <span>{t('header.new_tx')}</span>
         </button>
 
         {/* Notifications Dropdown */}
@@ -217,7 +229,7 @@ export const Header: React.FC<HeaderProps> = ({
 
               <div className="user-switcher-section">
                 <div className="user-switcher-label">
-                  <span>Switch Employee (Audit Actor)</span>
+                  <span>{t('header.switch_employee')}</span>
                 </div>
                 <div className="user-switcher-list">
                   {users.map((u) => {
@@ -238,7 +250,7 @@ export const Header: React.FC<HeaderProps> = ({
                           <div className="user-switch-name">{u.full_name}</div>
                           <div className="user-switch-role">{u.role}</div>
                         </div>
-                        {isSelected && <span style={{ color: '#10b981', fontSize: '0.75rem', fontWeight: 500 }}>✓ Active</span>}
+                        {isSelected && <span style={{ color: '#10b981', fontSize: '0.75rem', fontWeight: 500 }}>✓ {t('header.active')}</span>}
                       </button>
                     );
                   })}
@@ -254,7 +266,7 @@ export const Header: React.FC<HeaderProps> = ({
                   }}
                 >
                   <Users style={{ width: 14, height: 14 }} />
-                  <span>Open Team Directory & Audit Roles</span>
+                  <span>{t('header.team_directory')}</span>
                 </button>
                 {onLogout && (
                   <button
@@ -266,7 +278,7 @@ export const Header: React.FC<HeaderProps> = ({
                     }}
                   >
                     <LogOut style={{ width: 14, height: 14 }} />
-                    <span>Sign Out</span>
+                    <span>{t('header.sign_out')}</span>
                   </button>
                 )}
               </div>

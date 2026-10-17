@@ -4,6 +4,7 @@ import {
   Users, ShieldCheck, PanelLeftClose, Activity
 } from 'lucide-react';
 import { HealthResponse } from '../types';
+import { useI18n } from '../i18n/I18nContext';
 
 interface SidebarProps {
   activeTab: 'overview' | 'inventory' | 'ledger' | 'procurement' | 'ai' | 'activity' | 'users';
@@ -32,6 +33,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isCollapsed,
   onToggleCollapse,
 }) => {
+  const { t } = useI18n();
+
   return (
     <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}>
       {/* Sidebar Header with Logo & Collapse Toggle */}
@@ -47,10 +50,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {!isCollapsed && (
           <div className="sidebar-logo-text">
             <div className="sidebar-logo-title-row">
-              <h1>StockSense</h1>
-              <span className="sidebar-version-badge">POC</span>
+              <h1>{t('brand.name')}</h1>
+              <span className="sidebar-version-badge">{t('brand.poc')}</span>
             </div>
-            <span className="sidebar-logo-sub">AI Inventory Engine</span>
+            <span className="sidebar-logo-sub">{t('brand.tagline')}</span>
           </div>
         )}
         {!isCollapsed && (
@@ -73,7 +76,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           title="Overview Dashboard"
         >
           <LayoutDashboard className="nav-icon" />
-          {!isCollapsed && <span>Overview</span>}
+          {!isCollapsed && <span>{t('nav.overview')}</span>}
         </button>
 
         <button
@@ -82,7 +85,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           title="Inventory Master & Availability"
         >
           <Box className="nav-icon" />
-          {!isCollapsed && <span>Inventory</span>}
+          {!isCollapsed && <span>{t('nav.inventory')}</span>}
           {itemsCount > 0 && !isCollapsed && (
             <span className="nav-badge">{itemsCount}</span>
           )}
@@ -94,7 +97,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           title="Stock Operations & Movement Ledger"
         >
           <ArrowLeftRight className="nav-icon" />
-          {!isCollapsed && <span>Operations</span>}
+          {!isCollapsed && <span>{t('nav.operations')}</span>}
           {ledgerCount > 0 && !isCollapsed && (
             <span className="nav-badge">{ledgerCount}</span>
           )}
@@ -106,7 +109,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           title="Purchase Orders & Procurement"
         >
           <ShoppingBag className="nav-icon" />
-          {!isCollapsed && <span>Purchase Orders</span>}
+          {!isCollapsed && <span>{t('nav.procurement')}</span>}
           {poCount > 0 && !isCollapsed && (
             <span className="nav-badge">{poCount}</span>
           )}
@@ -118,7 +121,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           title="AI & Replenishment Intelligence"
         >
           <Sparkles className="nav-icon" />
-          {!isCollapsed && <span>AI & Replenishment</span>}
+          {!isCollapsed && <span>{t('nav.ai')}</span>}
           {aiCount > 0 && !isCollapsed && (
             <span className="nav-badge ai-badge">{aiCount}</span>
           )}
@@ -130,7 +133,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           title="Activity & Integrity Center"
         >
           <Activity className="nav-icon" />
-          {!isCollapsed && <span>Activity & Integrity</span>}
+          {!isCollapsed && <span>{t('nav.activity')}</span>}
           {activityCount !== undefined && activityCount > 0 && !isCollapsed && (
             <span className="nav-badge" style={{ background: '#f59e0b', color: '#000000' }}>{activityCount}</span>
           )}
@@ -145,7 +148,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           title="Team & Audit Roles"
         >
           <Users className="nav-icon" />
-          {!isCollapsed && <span>Team & Roles</span>}
+          {!isCollapsed && <span>{t('nav.users')}</span>}
           {usersCount > 0 && !isCollapsed && (
             <span className="nav-badge">{usersCount}</span>
           )}
