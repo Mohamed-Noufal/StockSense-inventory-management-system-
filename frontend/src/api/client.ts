@@ -52,6 +52,11 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
+  registerUser: (payload: { full_name: string; email: string; role: string; password?: string }) =>
+    request<User>('/users', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
   demoLogin: (payload: { role?: string; user_id?: number }) =>
     request<{ access_token: string; token_type: string; user: User }>('/auth/demo-login', {
       method: 'POST',

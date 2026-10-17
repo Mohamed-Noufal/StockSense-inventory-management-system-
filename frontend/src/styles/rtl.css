@@ -3,10 +3,95 @@
    Optimized for MENA Energy & Oilfield Supply Chain Workstations
    ========================================================================== */
 
+/* Optical scale: Arabic glyphs have lower optical x-height than Latin.
+   Bumping root font-size from 14px to 15px restores perfect optical parity */
+html[dir="rtl"] {
+  font-size: 15px;
+}
+
 html[dir="rtl"],
 body[dir="rtl"] {
-  font-family: 'Cairo', 'IBM Plex Sans Arabic', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'IBM Plex Sans Arabic', 'Cairo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   direction: rtl;
+  text-align: right;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Arabic Typography Hierarchy:
+   - Cairo for prominent titles, banners, and modal headings
+   - IBM Plex Sans Arabic for dense UI grids, inputs, tables, and system metrics */
+[dir="rtl"] h1,
+[dir="rtl"] h2,
+[dir="rtl"] h3,
+[dir="rtl"] h4,
+[dir="rtl"] .login-hero-title,
+[dir="rtl"] .login-form-title,
+[dir="rtl"] .page-title,
+[dir="rtl"] .modal-title {
+  font-family: 'Cairo', 'IBM Plex Sans Arabic', sans-serif;
+  letter-spacing: normal !important;
+  line-height: 1.35;
+}
+
+/* CRITICAL: Arabic cursive ligatures break when letter-spacing/tracking is applied */
+[dir="rtl"] *,
+[dir="rtl"] *::before,
+[dir="rtl"] *::after {
+  letter-spacing: normal !important;
+}
+
+/* Numeric, SKU, and Monetary Data Isolation:
+   MENA oilfield parts, serials, and ledger hashes must render in Western ASCII LTR */
+[dir="rtl"] .sku-cell,
+[dir="rtl"] code,
+[dir="rtl"] pre,
+[dir="rtl"] .font-mono,
+[dir="rtl"] .telemetry-stat-value,
+[dir="rtl"] .financial-val,
+[dir="rtl"] input[type="number"],
+[dir="rtl"] input[type="password"] {
+  direction: ltr;
+  unicode-bidi: isolate;
+  text-align: left;
+}
+
+[dir="rtl"] input[type="email"] {
+  direction: ltr;
+  unicode-bidi: isolate;
+  text-align: left;
+}
+
+/* Form inputs & icons */
+[dir="rtl"] .form-input-icon {
+  right: 0.85rem;
+  left: auto;
+}
+
+[dir="rtl"] .form-input {
+  padding-right: 2.5rem;
+  padding-left: 0.85rem;
+  text-align: right;
+  line-height: 1.5;
+}
+
+[dir="rtl"] .form-input.ltr-field {
+  direction: ltr;
+  text-align: left;
+  padding-right: 0.85rem;
+  padding-left: 2.5rem;
+}
+
+[dir="rtl"] .form-input.ltr-field ~ .form-input-icon {
+  left: 0.85rem;
+  right: auto;
+}
+
+[dir="rtl"] .form-select {
+  padding-right: 0.85rem;
+  padding-left: 2rem;
+  background-position: left 0.75rem center;
   text-align: right;
 }
 
@@ -48,27 +133,25 @@ body[dir="rtl"] {
   text-align: right;
 }
 
-/* Login Portal RTL */
-[dir="rtl"] .persona-card {
+/* Split-screen login hero RTL adjustments */
+[dir="rtl"] .login-hero-panel {
+  border-right: none;
+  border-left: 1px solid var(--border-subtle);
+}
+
+[dir="rtl"] .telemetry-card {
   text-align: right;
 }
 
-[dir="rtl"] .persona-arrow svg {
-  transform: rotate(180deg);
+[dir="rtl"] .telemetry-card-header {
+  flex-direction: row;
 }
 
-[dir="rtl"] .persona-card:hover .persona-arrow svg {
-  transform: rotate(180deg) translateX(-2px);
+[dir="rtl"] .login-demo-bar {
+  text-align: right;
 }
 
-[dir="rtl"] .form-input-icon {
-  right: 0.75rem;
-  left: auto;
-}
-
-[dir="rtl"] .form-input {
-  padding-right: 2.25rem;
-  padding-left: 0.75rem;
+[dir="rtl"] .demo-role-btn {
   text-align: right;
 }
 
@@ -76,22 +159,23 @@ body[dir="rtl"] {
 .lang-toggle-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.35rem 0.65rem;
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
+  gap: 0.45rem;
+  padding: 0.4rem 0.75rem;
+  background: rgba(24, 24, 27, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--radius-md);
   color: var(--text-secondary);
-  font-size: 0.78rem;
+  font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   user-select: none;
+  backdrop-filter: blur(8px);
 }
 
 .lang-toggle-btn:hover {
-  background: var(--bg-card-hover);
-  border-color: var(--border-hover);
+  background: rgba(39, 39, 42, 0.9);
+  border-color: rgba(255, 255, 255, 0.2);
   color: var(--text-primary);
   transform: translateY(-1px);
 }
@@ -101,9 +185,9 @@ body[dir="rtl"] {
 }
 
 .lang-badge-pill {
-  font-size: 0.68rem;
+  font-size: 0.7rem;
   font-weight: 700;
-  padding: 0.1rem 0.3rem;
+  padding: 0.1rem 0.35rem;
   border-radius: var(--radius-sm);
   background: rgba(16, 185, 129, 0.12);
   color: #10b981;
@@ -139,3 +223,4 @@ body[dir="rtl"] {
 [dir="rtl"] .low-stock-detail {
   text-align: left;
 }
+
