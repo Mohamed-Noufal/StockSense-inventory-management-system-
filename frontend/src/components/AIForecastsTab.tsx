@@ -2,12 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { TrendingUp, AlertCircle, RefreshCw } from 'lucide-react';
 import { InventoryItem } from '../types';
 import { api } from '../api/client';
+import { useI18n } from '../i18n/I18nContext';
+import { translateDemandPattern } from '../i18n/translations';
 
 interface AIForecastsTabProps {
   items: InventoryItem[];
 }
 
 export const AIForecastsTab: React.FC<AIForecastsTabProps> = ({ items }) => {
+  const { locale } = useI18n();
   const [selectedItemId, setSelectedItemId] = useState<number>(items[0]?.id || 1);
   const [horizon, setHorizon] = useState<number>(8);
   const [loading, setLoading] = useState<boolean>(true);
@@ -21,7 +24,7 @@ export const AIForecastsTab: React.FC<AIForecastsTabProps> = ({ items }) => {
       const data = await api.getItemForecast(itemId, h);
       setForecastData(data);
     } catch (err: any) {
-      setError(err?.message || 'Failed to fetch forecast from model engine');
+      setError(err?.message || (locale === 'ar' ? 'فشل جلب التنبؤ من محرك النماذج' : 'Failed to fetch forecast from model engine'));
     } finally {
       setLoading(false);
     }
@@ -65,7 +68,9 @@ export const AIForecastsTab: React.FC<AIForecastsTabProps> = ({ items }) => {
       {/* Top Controls Toolbar */}
       <div className="ai-forecast-toolbar">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1, maxWidth: 480 }}>
-          <label className="form-label" style={{ margin: 0, whiteSpace: 'nowrap' }}>Select Part:</label>
+          <label className="form-label" style={{ margin: 0, whiteSpace: 'nowrap' }}>
+            {locale === 'ar' ? 'اختر الصنف:' : 'Select Part:'}
+          </label>
           <select
             className="form-select"
             value={selectedItemId}
@@ -74,14 +79,16 @@ export const AIForecastsTab: React.FC<AIForecastsTabProps> = ({ items }) => {
           >
             {items.map((itm) => (
               <option key={itm.id} value={itm.id}>
-                {itm.sku} — {itm.name} (Stock: {itm.total_on_hand})
+                {itm.sku} — {itm.name} {locale === 'ar' ? `(الرصيد: ${itm.total_on_hand})` : `(Stock: ${itm.total_on_hand})`}
               </option>
             ))}
           </select>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>Horizon:</span>
+          <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+            {locale === 'ar' ? 'أفق التنبؤ:' : 'Horizon:'}
+          </span>
           {[4, 8, 12].map((h) => (
             <button
               key={h}
@@ -90,7 +97,7 @@ export const AIForecastsTab: React.FC<AIForecastsTabProps> = ({ items }) => {
               style={{ padding: '0.25rem 0.6rem', fontSize: '0.72rem' }}
               onClick={() => setHorizon(h)}
             >
-              {h} Weeks
+              {locale === 'ar' ? `${h} أسابيع` : `${h} Weeks`}
             </button>
           ))}
         </div>
@@ -111,25 +118,37 @@ export const AIForecastsTab: React.FC<AIForecastsTabProps> = ({ items }) => {
             <div>
               <h3 style={{ fontSize: '0.95rem', fontWeight: 600, color: '#ffffff', margin: 0, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                 <TrendingUp style={{ width: 16, height: 16, color: '#38bdf8' }} />
-                <span>Observed Demand vs Forward Quantile Forecast</span>
+                <span>
+                  {locale === 'ar'
+                    ? 'الطلب الفعلي التاريخي مقابل التنبؤ الاحتمالي المستقبلي'
+                    : 'Observed Demand vs Forward Quantile Forecast'}
+                </span>
               </h3>
               <p style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', margin: '0.2rem 0 0' }}>
-                Showing last {observedCount} observed weeks and +{points.length} forecast weeks with P50 and P90 uncertainty bounds.
+                {locale === 'ar'
+                  ? `عرض آخر ${observedCount} أسبوعاً مسجلاً و+${points.length} أسبوعاً متوقعاً مع حدود عدم اليقين P50 و P90.`
+                  : `Showing last ${observedCount} observed weeks and +${points.length} forecast weeks with P50 and P90 uncertainty bounds.`}
               </p>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.72rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                 <span style={{ width: 10, height: 10, background: '#3b82f6', borderRadius: 2 }} />
-                <span style={{ color: 'var(--text-secondary)' }}>Observed History</span>
+                <span style={{ color: 'var(--text-secondary)' }}>
+                  {locale === 'ar' ? 'الطلب التاريخي الفعلي' : 'Observed History'}
+                </span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                 <span style={{ width: 10, height: 10, background: '#10b981', borderRadius: 2 }} />
-                <span style={{ color: 'var(--text-secondary)' }}>Forecast P50</span>
+                <span style={{ color: 'var(--text-secondary)' }}>
+                  {locale === 'ar' ? 'التنبؤ المتوقع (P50)' : 'Forecast P50'}
+                </span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                 <span style={{ width: 10, height: 10, background: 'rgba(56, 189, 248, 0.25)', borderRadius: 2 }} />
-                <span style={{ color: 'var(--text-secondary)' }}>P90 Upper Ribbon</span>
+                <span style={{ color: 'var(--text-secondary)' }}>
+                  {locale === 'ar' ? 'نطاق الأمان الأعلى (P90)' : 'P90 Upper Ribbon'}
+                </span>
               </div>
             </div>
           </div>
@@ -137,7 +156,7 @@ export const AIForecastsTab: React.FC<AIForecastsTabProps> = ({ items }) => {
           {loading ? (
             <div style={{ height: 240, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', gap: '0.5rem' }}>
               <RefreshCw className="animate-spin" style={{ width: 16, height: 16 }} />
-              <span>Fetching model forecast & demand series...</span>
+              <span>{locale === 'ar' ? 'جاري جلب تنبؤ النموذج وسلاسل الطلب...' : 'Fetching model forecast & demand series...'}</span>
             </div>
           ) : (
             <div className="ai-timeline-container">
@@ -173,7 +192,7 @@ export const AIForecastsTab: React.FC<AIForecastsTabProps> = ({ items }) => {
                   fontSize="8"
                   fontWeight="600"
                 >
-                  TODAY (CUTOFF)
+                  {locale === 'ar' ? 'اليوم (نقطة القطع)' : 'TODAY (CUTOFF)'}
                 </text>
 
                 {/* Historical Observed Demand Bars */}
@@ -243,52 +262,66 @@ export const AIForecastsTab: React.FC<AIForecastsTabProps> = ({ items }) => {
         <div className="ai-forecast-side-card">
           <div style={{ borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.65rem' }}>
             <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              Forecasting Model Rationale
+              {locale === 'ar' ? 'منطق نموذج التنبؤ الرياضي' : 'Forecasting Model Rationale'}
             </span>
             <div style={{ fontSize: '1.05rem', fontWeight: 700, color: '#38bdf8', marginTop: 2 }}>
-              {forecastData?.selected_method || 'TSB'} Algorithm
+              {locale === 'ar' ? `خوارزمية ${forecastData?.selected_method || 'TSB'}` : `${forecastData?.selected_method || 'TSB'} Algorithm`}
             </div>
-            <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', textTransform: 'capitalize' }}>
-              Pattern: {forecastData?.demand_pattern || 'Intermittent'}
+            <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+              {locale === 'ar'
+                ? `نمط الطلب: ${translateDemandPattern(forecastData?.demand_pattern || 'INTERMITTENT', locale)}`
+                : `Pattern: ${forecastData?.demand_pattern || 'Intermittent'}`}
             </div>
           </div>
 
           <div style={{ padding: '0.75rem', background: '#121214', border: '1px solid var(--border-subtle)', borderRadius: '6px', fontSize: '0.78rem', lineHeight: '1.45', color: '#ffffff' }}>
-            {forecastData?.method_rationale || 'TSB was selected for this intermittent-demand series because it estimates both the probability of demand occurring and the expected size when it occurs.'}
+            {locale === 'ar'
+              ? 'تم اختيار خوارزمية TSB لسلاسل الطلب المتقطع نظراً لقدرتها الفائقة على تقدير احتمالية حدوث الطلب وحجمه المتوقع عند حدوثه بدقة متناهية.'
+              : (forecastData?.method_rationale || 'TSB was selected for this intermittent-demand series because it estimates both the probability of demand occurring and the expected size when it occurs.')}
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', fontSize: '0.78rem' }}>
             <div className="card" style={{ padding: '0.55rem 0.75rem' }}>
-              <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Weekly Mean</div>
+              <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                {locale === 'ar' ? 'المتوسط الأسبوعي' : 'Weekly Mean'}
+              </div>
               <div style={{ fontWeight: 600, color: '#ffffff', fontSize: '0.95rem', marginTop: 2 }}>
-                {forecastData?.forecast_mean !== undefined ? Number(forecastData.forecast_mean).toFixed(2) : '—'} units
+                {forecastData?.forecast_mean !== undefined ? Number(forecastData.forecast_mean).toFixed(2) : '—'} {locale === 'ar' ? 'وحدة' : 'units'}
               </div>
             </div>
 
             <div className="card" style={{ padding: '0.55rem 0.75rem' }}>
-              <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Safety Stock</div>
+              <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                {locale === 'ar' ? 'مخزون الأمان' : 'Safety Stock'}
+              </div>
               <div style={{ fontWeight: 600, color: '#34d399', fontSize: '0.95rem', marginTop: 2 }}>
-                {forecastData?.policy?.safety_stock || 0} units
+                {forecastData?.policy?.safety_stock || 0} {locale === 'ar' ? 'وحدة' : 'units'}
               </div>
             </div>
 
             <div className="card" style={{ padding: '0.55rem 0.75rem' }}>
-              <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Reorder Point</div>
+              <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                {locale === 'ar' ? 'نقطة إعادة الطلب' : 'Reorder Point'}
+              </div>
               <div style={{ fontWeight: 600, color: '#fbbf24', fontSize: '0.95rem', marginTop: 2 }}>
-                {forecastData?.policy?.reorder_point || 0} units
+                {forecastData?.policy?.reorder_point || 0} {locale === 'ar' ? 'وحدة' : 'units'}
               </div>
             </div>
 
             <div className="card" style={{ padding: '0.55rem 0.75rem' }}>
-              <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Order-Up-To</div>
+              <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                {locale === 'ar' ? 'الحد الأعلى للطلب' : 'Order-Up-To'}
+              </div>
               <div style={{ fontWeight: 600, color: '#60a5fa', fontSize: '0.95rem', marginTop: 2 }}>
-                {forecastData?.policy?.order_up_to || 0} units
+                {forecastData?.policy?.order_up_to || 0} {locale === 'ar' ? 'وحدة' : 'units'}
               </div>
             </div>
           </div>
 
           <div style={{ padding: '0.65rem 0.85rem', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--border-subtle)', borderRadius: '6px', fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-            Data Cutoff: {forecastData?.data_cutoff ? new Date(forecastData.data_cutoff).toUTCString() : 'Active'} • 52 Weeks History
+            {locale === 'ar'
+              ? `تاريخ القطع: ${forecastData?.data_cutoff ? new Date(forecastData.data_cutoff).toISOString().slice(0, 10) : 'نشط'} • سجل 52 أسبوعاً`
+              : `Data Cutoff: ${forecastData?.data_cutoff ? new Date(forecastData.data_cutoff).toUTCString() : 'Active'} • 52 Weeks History`}
           </div>
         </div>
       </div>

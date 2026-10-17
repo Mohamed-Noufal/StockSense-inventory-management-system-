@@ -13,6 +13,8 @@ import { AIDismissModal } from './AIDismissModal';
 import { AIRunModal } from './AIRunModal';
 import { AIForecastsTab } from './AIForecastsTab';
 import { AIModelReportTab } from './AIModelReportTab';
+import { useI18n } from '../i18n/I18nContext';
+import { translateUrgency, translateDemandPattern, translateWarehouse } from '../i18n/translations';
 
 export interface AIInsightsViewProps {
   recommendations: AIRecommendation[];
@@ -46,6 +48,8 @@ export const AIInsightsView: React.FC<AIInsightsViewProps> = ({
   loading,
   runningAi,
 }) => {
+  const { t, locale } = useI18n();
+
   // Tabs
   const [activeTab, setActiveTab] = useState<TabType>('RECOMMENDATIONS');
 
@@ -175,13 +179,14 @@ export const AIInsightsView: React.FC<AIInsightsViewProps> = ({
 
   // Urgency badge helper
   const renderUrgencyBadge = (urgency: string) => {
+    const label = translateUrgency(urgency, locale);
     switch (urgency) {
       case 'CRITICAL':
-        return <span className="urgency-badge urgency-badge-critical">Critical Risk</span>;
+        return <span className="urgency-badge urgency-badge-critical">{label}</span>;
       case 'HIGH':
-        return <span className="urgency-badge urgency-badge-high">High Urgency</span>;
+        return <span className="urgency-badge urgency-badge-high">{label}</span>;
       default:
-        return <span className="urgency-badge urgency-badge-normal">Normal</span>;
+        return <span className="urgency-badge urgency-badge-normal">{label}</span>;
     }
   };
 
@@ -192,10 +197,10 @@ export const AIInsightsView: React.FC<AIInsightsViewProps> = ({
         <div className="ai-header-title-box">
           <h1>
             <Sparkles style={{ width: 22, height: 22, color: 'var(--accent-blue)' }} />
-            AI & Replenishment Intelligence
+            {t('ai.title')}
           </h1>
           <p>
-            Autonomous demand pattern classification, Croston/SBA/TSB models & policy replenishment engine
+            {t('ai.subtitle')}
           </p>
         </div>
 
@@ -203,13 +208,13 @@ export const AIInsightsView: React.FC<AIInsightsViewProps> = ({
           <div className="ai-engine-meta-strip">
             <span className={`ai-status-pulse ${runningAi ? 'running' : ''}`} />
             <span style={{ fontWeight: 600, color: '#ffffff' }}>
-              {runningAi ? 'RUNNING PIPELINE' : 'TSB ENGINE ACTIVE'}
+              {runningAi ? t('ai.running_pipeline') : t('ai.engine_active')}
             </span>
             <span style={{ color: 'var(--text-muted)' }}>•</span>
             <span>
               {latestRun
-                ? `Last Run #${latestRun.id} (${latestRun.status})`
-                : 'No prior runs recorded'}
+                ? (locale === 'ar' ? `آخر تحليل #${latestRun.id} (${latestRun.status})` : `Last Run #${latestRun.id} (${latestRun.status})`)
+                : (locale === 'ar' ? 'لا توجد تحليلات سابقة' : 'No prior runs recorded')}
             </span>
             <span style={{ color: 'var(--text-muted)' }}>•</span>
             <span
@@ -219,10 +224,10 @@ export const AIInsightsView: React.FC<AIInsightsViewProps> = ({
                 alignItems: 'center',
                 gap: '0.25rem',
               }}
-              title="Historical movements originate from synthetic 52-week ledger"
+              title={locale === 'ar' ? 'الحركات التاريخية مستمدة من سجل نموذجي يمتد لـ 52 أسبوعاً' : 'Historical movements originate from synthetic 52-week ledger'}
             >
               <Info style={{ width: 12, height: 12 }} />
-              Synthetic Dataset (34-40 wk zero demand)
+              {locale === 'ar' ? 'بيانات تاريخية (نموذج 52 أسبوعاً)' : 'Synthetic Dataset (34-40 wk zero demand)'}
             </span>
           </div>
 
@@ -237,7 +242,7 @@ export const AIInsightsView: React.FC<AIInsightsViewProps> = ({
             ) : (
               <Play style={{ width: 14, height: 14, fill: '#000000' }} />
             )}
-            <span>{runningAi ? 'Analyzing Ledger...' : 'Run Forecast & Analysis'}</span>
+            <span>{runningAi ? t('ai.analyzing') : t('ai.run_btn')}</span>
           </button>
         </div>
       </div>
@@ -249,12 +254,12 @@ export const AIInsightsView: React.FC<AIInsightsViewProps> = ({
           onClick={() => handleCardClick('OPEN')}
         >
           <div className="ai-summary-card-header">
-            <span className="ai-summary-card-title">Open Recommendations</span>
+            <span className="ai-summary-card-title">{t('ai.open_recs')}</span>
             <Boxes style={{ width: 16, height: 16, color: 'var(--accent-blue)' }} />
           </div>
           <div className="ai-summary-card-value">{metrics.openCount}</div>
           <div className="ai-summary-card-sub">
-            ${metrics.proposedSpend.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} estimated spend
+            ${metrics.proposedSpend.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} {locale === 'ar' ? 'قيمة شراء مقترحة' : 'estimated spend'}
           </div>
         </div>
 
@@ -263,14 +268,14 @@ export const AIInsightsView: React.FC<AIInsightsViewProps> = ({
           onClick={() => handleCardClick('CRITICAL')}
         >
           <div className="ai-summary-card-header">
-            <span className="ai-summary-card-title">Critical Replenishment Risks</span>
+            <span className="ai-summary-card-title">{t('ai.critical_risks')}</span>
             <AlertTriangle style={{ width: 16, height: 16, color: '#ef4444' }} />
           </div>
           <div className="ai-summary-card-value" style={{ color: metrics.criticalCount > 0 ? '#ef4444' : '#ffffff' }}>
             {metrics.criticalCount}
           </div>
           <div className="ai-summary-card-sub">
-            Stockout imminent within current lead time
+            {t('ai.critical_risks_sub')}
           </div>
         </div>
 
@@ -279,14 +284,14 @@ export const AIInsightsView: React.FC<AIInsightsViewProps> = ({
           onClick={() => handleCardClick('BELOW_ROP')}
         >
           <div className="ai-summary-card-header">
-            <span className="ai-summary-card-title">Items Below Reorder Point</span>
+            <span className="ai-summary-card-title">{t('ai.below_rop')}</span>
             <ShieldAlert style={{ width: 16, height: 16, color: '#f59e0b' }} />
           </div>
           <div className="ai-summary-card-value" style={{ color: metrics.belowRopCount > 0 ? '#f59e0b' : '#ffffff' }}>
             {metrics.belowRopCount}
           </div>
           <div className="ai-summary-card-sub">
-            Inventory position &lt; safety stock + demand
+            {t('ai.below_rop_sub')}
           </div>
         </div>
 
@@ -295,14 +300,14 @@ export const AIInsightsView: React.FC<AIInsightsViewProps> = ({
           onClick={() => handleCardClick('LOW_CONFIDENCE')}
         >
           <div className="ai-summary-card-header">
-            <span className="ai-summary-card-title">Low-Confidence Forecasts</span>
+            <span className="ai-summary-card-title">{t('ai.low_conf')}</span>
             <TrendingUp style={{ width: 16, height: 16, color: '#8b5cf6' }} />
           </div>
           <div className="ai-summary-card-value" style={{ color: metrics.lowConfidenceCount > 0 ? '#a78bfa' : '#ffffff' }}>
             {metrics.lowConfidenceCount}
           </div>
           <div className="ai-summary-card-sub">
-            Confidence &lt; 60% due to erratic zero counts
+            {t('ai.low_conf_sub')}
           </div>
         </div>
       </div>
@@ -314,7 +319,7 @@ export const AIInsightsView: React.FC<AIInsightsViewProps> = ({
           onClick={() => setActiveTab('RECOMMENDATIONS')}
         >
           <Boxes style={{ width: 15, height: 15 }} />
-          <span>Recommendations ({recommendations.length})</span>
+          <span>{t('ai.tab_recs')} ({recommendations.length})</span>
         </button>
 
         <button
@@ -322,7 +327,7 @@ export const AIInsightsView: React.FC<AIInsightsViewProps> = ({
           onClick={() => setActiveTab('FORECASTS')}
         >
           <TrendingUp style={{ width: 15, height: 15 }} />
-          <span>Forecasts & Observed Demand</span>
+          <span>{t('ai.tab_forecasts')}</span>
         </button>
 
         <button
@@ -330,7 +335,7 @@ export const AIInsightsView: React.FC<AIInsightsViewProps> = ({
           onClick={() => setActiveTab('REPORT')}
         >
           <FileCheck style={{ width: 15, height: 15 }} />
-          <span>AI Model Backtest Report</span>
+          <span>{t('ai.tab_report')}</span>
         </button>
       </div>
 
@@ -341,10 +346,10 @@ export const AIInsightsView: React.FC<AIInsightsViewProps> = ({
           <div className="card" style={{ padding: '0.85rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1, minWidth: 260 }}>
               <div style={{ position: 'relative', width: '100%', maxWidth: 360 }}>
-                <Search style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', width: 14, height: 14, color: 'var(--text-muted)' }} />
+                <Search style={{ position: 'absolute', left: locale === 'ar' ? undefined : 10, right: locale === 'ar' ? 10 : undefined, top: '50%', transform: 'translateY(-50%)', width: 14, height: 14, color: 'var(--text-muted)' }} />
                 <input
                   type="text"
-                  placeholder="Filter by SKU, spare name, or location..."
+                  placeholder={t('ai.search_placeholder')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   style={{
@@ -352,7 +357,7 @@ export const AIInsightsView: React.FC<AIInsightsViewProps> = ({
                     background: '#09090b',
                     border: '1px solid var(--border-default)',
                     borderRadius: 'var(--radius-sm)',
-                    padding: '0.45rem 2rem 0.45rem 2rem',
+                    padding: locale === 'ar' ? '0.45rem 2rem 0.45rem 0.75rem' : '0.45rem 0.75rem 0.45rem 2rem',
                     fontSize: '0.8rem',
                     color: '#ffffff',
                     outline: 'none',
@@ -361,7 +366,7 @@ export const AIInsightsView: React.FC<AIInsightsViewProps> = ({
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery('')}
-                    style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+                    style={{ position: 'absolute', right: locale === 'ar' ? undefined : 8, left: locale === 'ar' ? 8 : undefined, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
                   >
                     <X style={{ width: 14, height: 14 }} />
                   </button>
@@ -371,47 +376,61 @@ export const AIInsightsView: React.FC<AIInsightsViewProps> = ({
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
               <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center', background: '#09090b', padding: '0.2rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-default)' }}>
-                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', paddingLeft: '0.5rem', paddingRight: '0.25rem' }}>Urgency:</span>
-                {['ALL', 'CRITICAL', 'HIGH', 'NORMAL'].map((u) => (
-                  <button
-                    key={u}
-                    onClick={() => { setUrgencyFilter(u); setActiveCardFilter('ALL'); }}
-                    style={{
-                      background: urgencyFilter === u ? '#27272a' : 'transparent',
-                      border: 'none',
-                      color: urgencyFilter === u ? '#ffffff' : 'var(--text-secondary)',
-                      fontSize: '0.72rem',
-                      padding: '0.25rem 0.55rem',
-                      borderRadius: 'var(--radius-sm)',
-                      cursor: 'pointer',
-                      fontWeight: urgencyFilter === u ? 600 : 400,
-                    }}
-                  >
-                    {u}
-                  </button>
-                ))}
+                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', paddingLeft: '0.5rem', paddingRight: '0.25rem' }}>{t('ai.urgency_label')}</span>
+                {['ALL', 'CRITICAL', 'HIGH', 'NORMAL'].map((u) => {
+                  const label = u === 'ALL'
+                    ? (locale === 'ar' ? 'الكل' : 'ALL')
+                    : translateUrgency(u, locale);
+                  return (
+                    <button
+                      key={u}
+                      onClick={() => { setUrgencyFilter(u); setActiveCardFilter('ALL'); }}
+                      style={{
+                        background: urgencyFilter === u ? '#27272a' : 'transparent',
+                        border: 'none',
+                        color: urgencyFilter === u ? '#ffffff' : 'var(--text-secondary)',
+                        fontSize: '0.72rem',
+                        padding: '0.25rem 0.55rem',
+                        borderRadius: 'var(--radius-sm)',
+                        cursor: 'pointer',
+                        fontWeight: urgencyFilter === u ? 600 : 400,
+                      }}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
               </div>
 
               <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center', background: '#09090b', padding: '0.2rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-default)' }}>
-                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', paddingLeft: '0.5rem', paddingRight: '0.25rem' }}>Status:</span>
-                {['ALL', 'OPEN', 'APPROVED', 'DISMISSED'].map((st) => (
-                  <button
-                    key={st}
-                    onClick={() => { setStatusFilter(st); setActiveCardFilter('ALL'); }}
-                    style={{
-                      background: statusFilter === st ? '#27272a' : 'transparent',
-                      border: 'none',
-                      color: statusFilter === st ? '#ffffff' : 'var(--text-secondary)',
-                      fontSize: '0.72rem',
-                      padding: '0.25rem 0.55rem',
-                      borderRadius: 'var(--radius-sm)',
-                      cursor: 'pointer',
-                      fontWeight: statusFilter === st ? 600 : 400,
-                    }}
-                  >
-                    {st}
-                  </button>
-                ))}
+                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', paddingLeft: '0.5rem', paddingRight: '0.25rem' }}>{t('ai.status_label')}</span>
+                {['ALL', 'OPEN', 'APPROVED', 'DISMISSED'].map((st) => {
+                  const label = st === 'ALL'
+                    ? (locale === 'ar' ? 'الكل' : 'ALL')
+                    : st === 'OPEN'
+                    ? (locale === 'ar' ? 'مفتوح' : 'OPEN')
+                    : st === 'APPROVED'
+                    ? (locale === 'ar' ? 'معتمد' : 'APPROVED')
+                    : (locale === 'ar' ? 'مستبعد' : 'DISMISSED');
+                  return (
+                    <button
+                      key={st}
+                      onClick={() => { setStatusFilter(st); setActiveCardFilter('ALL'); }}
+                      style={{
+                        background: statusFilter === st ? '#27272a' : 'transparent',
+                        border: 'none',
+                        color: statusFilter === st ? '#ffffff' : 'var(--text-secondary)',
+                        fontSize: '0.72rem',
+                        padding: '0.25rem 0.55rem',
+                        borderRadius: 'var(--radius-sm)',
+                        cursor: 'pointer',
+                        fontWeight: statusFilter === st ? 600 : 400,
+                      }}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -421,14 +440,14 @@ export const AIInsightsView: React.FC<AIInsightsViewProps> = ({
             <table className="data-table">
               <thead>
                 <tr>
-                  <th style={{ width: '130px' }}>Urgency</th>
-                  <th>Spare Item & SKU</th>
-                  <th>Demand Pattern</th>
-                  <th>Stock Position vs ROP</th>
-                  <th style={{ textAlign: 'right' }}>Suggested Order</th>
-                  <th>Confidence</th>
-                  <th>Status</th>
-                  <th style={{ textAlign: 'right', width: '200px' }}>Actions</th>
+                  <th style={{ width: '130px' }}>{t('ai.col_urgency')}</th>
+                  <th>{t('ai.col_item')}</th>
+                  <th>{t('ai.col_pattern')}</th>
+                  <th>{t('ai.col_stock_vs_rop')}</th>
+                  <th style={{ textAlign: 'right' }}>{t('ai.col_suggested')}</th>
+                  <th>{t('ai.col_confidence')}</th>
+                  <th>{t('ai.col_status')}</th>
+                  <th style={{ textAlign: 'right', width: '200px' }}>{t('ai.col_actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -436,17 +455,17 @@ export const AIInsightsView: React.FC<AIInsightsViewProps> = ({
                   <tr>
                     <td colSpan={8} style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
                       <RefreshCw className="animate-spin" style={{ width: 18, height: 18, margin: '0 auto 0.5rem' }} />
-                      <div>Loading replenishment recommendations...</div>
+                      <div>{t('ai.analyzing')}</div>
                     </td>
                   </tr>
                 ) : filteredRecs.length === 0 ? (
                   <tr>
                     <td colSpan={8} style={{ textAlign: 'center', padding: '3.5rem', color: 'var(--text-muted)' }}>
                       <div style={{ fontSize: '0.9rem', color: '#ffffff', marginBottom: '0.25rem' }}>
-                        No recommendations match the active filter criteria.
+                        {t('ai.empty_filter')}
                       </div>
                       <div style={{ fontSize: '0.76rem' }}>
-                        Try clearing filters or click &apos;Run Forecast &amp; Analysis&apos; to evaluate live inventory positions.
+                        {t('ai.empty_filter_sub')}
                       </div>
                     </td>
                   </tr>
@@ -487,7 +506,7 @@ export const AIInsightsView: React.FC<AIInsightsViewProps> = ({
                             </span>
                             <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>•</span>
                             <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                              {rec.location_code || 'Central Warehouse'}
+                              {translateWarehouse(rec.location_code || 'Central Warehouse (Cairo Base)', locale)}
                             </span>
                           </div>
                         </td>
@@ -506,7 +525,7 @@ export const AIInsightsView: React.FC<AIInsightsViewProps> = ({
                               color: 'var(--accent-blue)',
                             }}
                           >
-                            {pattern}
+                            {translateDemandPattern(pattern, locale)}
                           </span>
                         </td>
 
@@ -515,22 +534,22 @@ export const AIInsightsView: React.FC<AIInsightsViewProps> = ({
                             <span style={{ fontWeight: 700, color: isBelowRop ? '#ef4444' : '#10b981', fontVariantNumeric: 'tabular-nums' }}>
                               {rec.on_hand}
                             </span>
-                            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>on hand</span>
+                            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{locale === 'ar' ? 'رصيد حالي' : 'on hand'}</span>
                             {rec.on_order > 0 && (
                               <span style={{ fontSize: '0.72rem', color: '#f59e0b' }}>
-                                (+{rec.on_order} ordered)
+                                (+{rec.on_order} {locale === 'ar' ? 'قيد التوريد' : 'ordered'})
                               </span>
                             )}
-                            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>/ ROP {rop}</span>
+                            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>/ {locale === 'ar' ? 'حد الطلب' : 'ROP'} {rop}</span>
                           </div>
                         </td>
 
                         <td style={{ textAlign: 'right' }}>
                           <div style={{ fontWeight: 700, color: '#ffffff', fontVariantNumeric: 'tabular-nums' }}>
-                            {rec.suggested_qty} units
+                            {rec.suggested_qty} {locale === 'ar' ? 'وحدة' : 'units'}
                           </div>
                           <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
-                            ~${estSpend.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            ~${estSpend.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </div>
                         </td>
 
@@ -562,17 +581,17 @@ export const AIInsightsView: React.FC<AIInsightsViewProps> = ({
                         <td>
                           {rec.status === 'OPEN' && (
                             <span style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem', borderRadius: 4, background: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.3)' }}>
-                              OPEN
+                              {locale === 'ar' ? 'مفتوح' : 'OPEN'}
                             </span>
                           )}
                           {rec.status === 'APPROVED' && (
                             <span style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem', borderRadius: 4, background: 'rgba(16, 185, 129, 0.1)', color: '#34d399', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
-                              PO CREATED
+                              {locale === 'ar' ? 'تم إنشاء أمر الشراء' : 'PO CREATED'}
                             </span>
                           )}
                           {rec.status === 'DISMISSED' && (
                             <span style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem', borderRadius: 4, background: 'rgba(113, 113, 122, 0.1)', color: '#a1a1aa', border: '1px solid rgba(113, 113, 122, 0.3)' }}>
-                              DISMISSED
+                              {locale === 'ar' ? 'مستبعد' : 'DISMISSED'}
                             </span>
                           )}
                         </td>
@@ -586,9 +605,9 @@ export const AIInsightsView: React.FC<AIInsightsViewProps> = ({
                                 onInspectRec?.(rec);
                               }}
                               style={{ padding: '0.25rem 0.55rem', fontSize: '0.72rem' }}
-                              title="Why this item? Open full explanation drawer"
+                              title={locale === 'ar' ? 'لماذا هذا الصنف؟ فتح تفاصيل التفسير والنموذج' : 'Why this item? Open full explanation drawer'}
                             >
-                              Explain
+                              {t('ai.btn_explain')}
                             </button>
 
                             {rec.status === 'OPEN' && (
@@ -598,15 +617,15 @@ export const AIInsightsView: React.FC<AIInsightsViewProps> = ({
                                   onClick={() => setApprovingRec(rec)}
                                   style={{ padding: '0.25rem 0.55rem', fontSize: '0.72rem' }}
                                 >
-                                  Approve
+                                  {t('ai.btn_approve')}
                                 </button>
                                 <button
                                   className="btn btn-secondary"
                                   onClick={() => setDismissingRec(rec)}
                                   style={{ padding: '0.25rem 0.55rem', fontSize: '0.72rem', color: 'var(--text-muted)' }}
-                                  title="Dismiss proposal"
+                                  title={locale === 'ar' ? 'استبعاد المقترح' : 'Dismiss proposal'}
                                 >
-                                  Dismiss
+                                  {t('ai.btn_dismiss')}
                                 </button>
                               </>
                             )}
@@ -622,7 +641,7 @@ export const AIInsightsView: React.FC<AIInsightsViewProps> = ({
                                 style={{ padding: '0.25rem 0.55rem', fontSize: '0.72rem', color: '#10b981', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
                               >
                                 <CheckCircle style={{ width: 13, height: 13 }} />
-                                {rec.created_po_number ? rec.created_po_number : 'Approved'}
+                                {rec.created_po_number ? rec.created_po_number : (locale === 'ar' ? 'معتمد' : 'Approved')}
                               </button>
                             )}
                           </div>

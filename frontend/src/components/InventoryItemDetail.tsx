@@ -3,6 +3,8 @@ import { Layers, MapPin, ArrowRight, Box, Sparkles, ShieldCheck, Tag } from 'luc
 import { InventoryItem, StockMovement } from '../types';
 import { ItemPartThumbnail } from './ItemPartThumbnail';
 import { StockTrendChart, TrendDataPoint } from './StockTrendChart';
+import { useI18n } from '../i18n/I18nContext';
+import { translateCategory, translateWarehouse, translateMovementType } from '../i18n/translations';
 
 interface InventoryItemDetailProps {
   item: InventoryItem;
@@ -19,6 +21,7 @@ export const InventoryItemDetail: React.FC<InventoryItemDetailProps> = ({
   onCreateMovement,
   onPrintLabel,
 }) => {
+  const { t, locale } = useI18n();
   const [activeTab, setActiveTab] = useState<'overview' | 'levels' | 'movements' | 'details'>('overview');
 
   // Compute stock state
@@ -93,12 +96,12 @@ export const InventoryItemDetail: React.FC<InventoryItemDetailProps> = ({
 
   const getStatusBadge = () => {
     if (onHand <= 0) {
-      return <span className="status-pill status-out">Out of Stock</span>;
+      return <span className="status-pill status-out">{t('inventory.out_of_stock')}</span>;
     }
     if (onHand <= reorderPoint) {
-      return <span className="status-pill status-low">Low Stock</span>;
+      return <span className="status-pill status-low">{t('inventory.low_stock_pill')}</span>;
     }
-    return <span className="status-pill status-in">In Stock</span>;
+    return <span className="status-pill status-in">{t('inventory.in_stock')}</span>;
   };
 
   // Baseline audit movements matching reference mock
@@ -162,11 +165,11 @@ export const InventoryItemDetail: React.FC<InventoryItemDetailProps> = ({
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.45rem', flexWrap: 'wrap' }}>
               <span className="detail-meta-chip">
                 <Layers style={{ width: 11, height: 11, color: 'var(--text-secondary)' }} />
-                <span>{item.category_name || 'Mechanical Parts'}</span>
+                <span>{translateCategory(item.category_name || 'Mechanical Parts', locale)}</span>
               </span>
               <span className="detail-meta-chip">
                 <MapPin style={{ width: 11, height: 11, color: '#10b981' }} />
-                <span>{item.warehouse_name || 'Main Warehouse'}</span>
+                <span>{translateWarehouse(item.warehouse_name || 'Central Warehouse (Cairo Base)', locale)}</span>
               </span>
             </div>
           </div>
@@ -179,44 +182,44 @@ export const InventoryItemDetail: React.FC<InventoryItemDetailProps> = ({
           className={`detail-tab ${activeTab === 'overview' ? 'active' : ''}`}
           onClick={() => setActiveTab('overview')}
         >
-          Overview
+          {t('inventory.tab_overview')}
         </button>
         <button
           className={`detail-tab ${activeTab === 'levels' ? 'active' : ''}`}
           onClick={() => setActiveTab('levels')}
         >
-          Stock Levels
+          {t('inventory.tab_levels')}
         </button>
         <button
           className={`detail-tab ${activeTab === 'movements' ? 'active' : ''}`}
           onClick={() => setActiveTab('movements')}
         >
-          Movements
+          {t('inventory.tab_movements')}
         </button>
         <button
           className={`detail-tab ${activeTab === 'details' ? 'active' : ''}`}
           onClick={() => setActiveTab('details')}
         >
-          Details
+          {t('inventory.tab_details')}
         </button>
       </div>
 
       {/* 3. Metric Numbers Grid (4 tiles) */}
       <div className="detail-metrics-grid">
         <div className="detail-metric-tile">
-          <span className="metric-tile-label">On Hand</span>
+          <span className="metric-tile-label">{t('inventory.col_on_hand')}</span>
           <span className="metric-tile-value">{onHand}</span>
         </div>
         <div className="detail-metric-tile">
-          <span className="metric-tile-label">Reserved</span>
+          <span className="metric-tile-label">{t('inventory.col_reserved')}</span>
           <span className="metric-tile-value">{reserved}</span>
         </div>
         <div className="detail-metric-tile">
-          <span className="metric-tile-label">Available</span>
+          <span className="metric-tile-label">{t('inventory.col_available')}</span>
           <span className="metric-tile-value">{available}</span>
         </div>
         <div className="detail-metric-tile">
-          <span className="metric-tile-label">Reorder Point</span>
+          <span className="metric-tile-label">{t('overview.col_reorder')}</span>
           <span className="metric-tile-value" style={{ color: '#f59e0b' }}>
             {reorderPoint}
           </span>
@@ -237,24 +240,24 @@ export const InventoryItemDetail: React.FC<InventoryItemDetailProps> = ({
           <div className="recent-movements-section">
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
               <h4 style={{ fontSize: '0.8rem', fontWeight: 600, color: '#f8fafc', letterSpacing: '-0.01em', margin: 0 }}>
-                Recent Movements
+                {t('inventory.recent_movements')}
               </h4>
               <button
                 className="view-all-link"
                 onClick={() => onNavigateTab('ledger')}
                 title="View full audit ledger"
               >
-                <span>View all</span>
+                <span>{t('overview.view_all')}</span>
                 <ArrowRight style={{ width: 12, height: 12 }} />
               </button>
             </div>
 
             <div className="mini-movements-table">
               <div className="mini-table-header">
-                <span style={{ flex: '1.2' }}>Date</span>
-                <span style={{ flex: '1' }}>Type</span>
-                <span style={{ flex: '0.8', textAlign: 'right' }}>Quantity</span>
-                <span style={{ flex: '1.1', textAlign: 'right' }}>Reference</span>
+                <span style={{ flex: '1.2' }}>{t('inventory.col_date')}</span>
+                <span style={{ flex: '1' }}>{t('inventory.col_type')}</span>
+                <span style={{ flex: '0.8', textAlign: 'right' }}>{t('inventory.col_qty')}</span>
+                <span style={{ flex: '1.1', textAlign: 'right' }}>{t('inventory.col_ref')}</span>
               </div>
               <div className="mini-table-body">
                 {displayMovements.map((m, idx) => {
@@ -265,7 +268,7 @@ export const InventoryItemDetail: React.FC<InventoryItemDetailProps> = ({
                     : isReceipt
                     ? 'mov-badge-receipt'
                     : 'mov-badge-transfer';
-                  const typeLabel = isIssue ? 'Issue' : isReceipt ? 'Receipt' : 'Transfer';
+                  const typeLabel = isIssue ? (locale === 'ar' ? 'صرف' : 'Issue') : isReceipt ? (locale === 'ar' ? 'استلام' : 'Receipt') : (locale === 'ar' ? 'تحويل' : 'Transfer');
                   const qtySign = m.qty > 0 ? `+${m.qty}` : `${m.qty}`;
 
                   return (
@@ -311,28 +314,28 @@ export const InventoryItemDetail: React.FC<InventoryItemDetailProps> = ({
             <div className="intel-card-header">
               <span className="intel-card-title">
                 <Sparkles style={{ width: 12, height: 12, color: '#38bdf8' }} />
-                <span>Operational Intelligence</span>
+                <span>{t('inventory.intel_title')}</span>
               </span>
               <span className={`intel-status-pill ${onHand <= reorderPoint ? 'pill-alert' : 'pill-healthy'}`}>
-                {onHand <= reorderPoint ? 'Reorder Needed' : 'Healthy Supply'}
+                {onHand <= reorderPoint ? t('inventory.reorder_needed') : t('inventory.healthy_supply')}
               </span>
             </div>
 
             <div className="intel-grid">
               <div className="intel-item">
-                <span className="intel-label">Est. Stock Runway</span>
-                <span className="intel-value">{runwayDays} Days</span>
+                <span className="intel-label">{t('inventory.stock_runway')}</span>
+                <span className="intel-value">{runwayDays} {t('inventory.days')}</span>
               </div>
               <div className="intel-item">
-                <span className="intel-label">Burn Rate</span>
-                <span className="intel-value">~{burnRate}/wk</span>
+                <span className="intel-label">{t('inventory.burn_rate')}</span>
+                <span className="intel-value">~{burnRate}/{locale === 'ar' ? 'أسبوع' : 'wk'}</span>
               </div>
               <div className="intel-item">
-                <span className="intel-label">Bin & Rack</span>
+                <span className="intel-label">{t('inventory.bin_rack')}</span>
                 <span className="intel-value">{binLocation}</span>
               </div>
               <div className="intel-item">
-                <span className="intel-label">Total Value</span>
+                <span className="intel-label">{t('inventory.total_val')}</span>
                 <span className="intel-value">${totalValuation}</span>
               </div>
             </div>
@@ -343,19 +346,19 @@ export const InventoryItemDetail: React.FC<InventoryItemDetailProps> = ({
       {activeTab === 'levels' && (
         <div style={{ padding: '0.75rem 0', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
           <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-            Multi-location distribution breakdown:
+            {locale === 'ar' ? 'تفصيل توزيع المخزون عبر المواقع والمستودعات:' : 'Multi-location distribution breakdown:'}
           </div>
           <div className="detail-meta-row">
-            <span style={{ color: '#94a3b8' }}>Central Warehouse (WH-01):</span>
-            <strong style={{ color: '#f8fafc', fontFamily: 'var(--font-mono)' }}>{onHand} pcs</strong>
+            <span style={{ color: '#94a3b8' }}>{locale === 'ar' ? 'المستودع المركزي (WH-01):' : 'Central Warehouse (WH-01):'}</span>
+            <strong style={{ color: '#f8fafc', fontFamily: 'var(--font-mono)' }}>{onHand} {locale === 'ar' ? 'قطعة' : 'pcs'}</strong>
           </div>
           <div className="detail-meta-row">
-            <span style={{ color: '#94a3b8' }}>Field Yard (YARD-01):</span>
-            <strong style={{ color: '#f8fafc', fontFamily: 'var(--font-mono)' }}>{reserved} pcs</strong>
+            <span style={{ color: '#94a3b8' }}>{locale === 'ar' ? 'ساحة الحقل (YARD-01):' : 'Field Yard (YARD-01):'}</span>
+            <strong style={{ color: '#f8fafc', fontFamily: 'var(--font-mono)' }}>{reserved} {locale === 'ar' ? 'قطعة' : 'pcs'}</strong>
           </div>
           <div className="detail-meta-row">
-            <span style={{ color: '#94a3b8' }}>Rig Site (RIG-01):</span>
-            <strong style={{ color: '#f8fafc', fontFamily: 'var(--font-mono)' }}>0 pcs</strong>
+            <span style={{ color: '#94a3b8' }}>{locale === 'ar' ? 'موقع المنصة (RIG-01):' : 'Rig Site (RIG-01):'}</span>
+            <strong style={{ color: '#f8fafc', fontFamily: 'var(--font-mono)' }}>0 {locale === 'ar' ? 'قطعة' : 'pcs'}</strong>
           </div>
         </div>
       )}
@@ -363,7 +366,7 @@ export const InventoryItemDetail: React.FC<InventoryItemDetailProps> = ({
       {activeTab === 'movements' && (
         <div style={{ padding: '0.75rem 0' }}>
           <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.5rem' }}>
-            Historical movement transactions for {item.sku}:
+            {locale === 'ar' ? `سجل الحركات التاريخية للصنف ${item.sku}:` : `Historical movement transactions for ${item.sku}:`}
           </div>
           <div className="mini-movements-table">
             {displayMovements.map((m, idx) => (
@@ -371,7 +374,7 @@ export const InventoryItemDetail: React.FC<InventoryItemDetailProps> = ({
                 <span style={{ flex: '1.2', color: '#94a3b8', fontSize: '0.72rem' }}>{m.date}</span>
                 <span style={{ flex: '1' }}>
                   <span className={`mov-pill ${m.type === 'ISSUE' ? 'mov-badge-issue' : 'mov-badge-receipt'}`}>
-                    {m.type}
+                    {translateMovementType(m.type, locale)}
                   </span>
                 </span>
                 <span style={{ flex: '0.8', textAlign: 'right', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>
@@ -389,20 +392,20 @@ export const InventoryItemDetail: React.FC<InventoryItemDetailProps> = ({
       {activeTab === 'details' && (
         <div style={{ padding: '0.75rem 0', display: 'flex', flexDirection: 'column', gap: '0.55rem', fontSize: '0.76rem' }}>
           <div className="detail-meta-row">
-            <span style={{ color: '#94a3b8' }}>Unit Cost:</span>
+            <span style={{ color: '#94a3b8' }}>{locale === 'ar' ? 'تكلفة الوحدة:' : 'Unit Cost:'}</span>
             <strong style={{ color: '#f8fafc', fontFamily: 'var(--font-mono)' }}>${(item.unit_cost_minor / 100).toFixed(2)}</strong>
           </div>
           <div className="detail-meta-row">
-            <span style={{ color: '#94a3b8' }}>Unit of Measure (UOM):</span>
+            <span style={{ color: '#94a3b8' }}>{locale === 'ar' ? 'وحدة القياس (UOM):' : 'Unit of Measure (UOM):'}</span>
             <strong style={{ color: '#f8fafc' }}>{item.uom.toUpperCase()}</strong>
           </div>
           <div className="detail-meta-row">
-            <span style={{ color: '#94a3b8' }}>Criticality Rating:</span>
+            <span style={{ color: '#94a3b8' }}>{locale === 'ar' ? 'مستوى الأهمية والخطورة:' : 'Criticality Rating:'}</span>
             <span className={`badge badge-${item.criticality.toLowerCase()}`}>{item.criticality}</span>
           </div>
           <div className="detail-meta-row">
-            <span style={{ color: '#94a3b8' }}>Inventory Ledger Status:</span>
-            <strong style={{ color: '#10b981' }}>Verified Atomic WAL</strong>
+            <span style={{ color: '#94a3b8' }}>{locale === 'ar' ? 'حالة مطابقة السجل:' : 'Inventory Ledger Status:'}</span>
+            <strong style={{ color: '#10b981' }}>{locale === 'ar' ? 'سجل WAL موثق وفوري' : 'Verified Atomic WAL'}</strong>
           </div>
         </div>
       )}
@@ -415,23 +418,23 @@ export const InventoryItemDetail: React.FC<InventoryItemDetailProps> = ({
             className="btn btn-secondary"
             onClick={() => onPrintLabel(item)}
             style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '8px' }}
-            title="Generate thermal shelf/bin barcode label"
+            title={locale === 'ar' ? 'طباعة ملصق الباركود الحراري للرف' : 'Generate thermal shelf/bin barcode label'}
           >
             <Tag style={{ width: 14, height: 14 }} />
-            <span>Print Thermal Shelf Tag</span>
+            <span>{locale === 'ar' ? 'طباعة بطاقة الرف الحرارية' : 'Print Thermal Shelf Tag'}</span>
           </button>
         )}
         <button
           className="create-movement-cta-btn"
           onClick={() => onCreateMovement(item.id)}
-          title={`Create atomic movement for ${item.name}`}
+          title={locale === 'ar' ? `تسجيل حركة مخزون للصنف ${item.name}` : `Create atomic movement for ${item.name}`}
         >
           <Box style={{ width: 16, height: 16 }} />
-          <span>Create Stock Movement</span>
+          <span>{locale === 'ar' ? 'تسجيل حركة مخزون' : 'Create Stock Movement'}</span>
         </button>
         <div className="action-dock-hint">
           <ShieldCheck style={{ width: 12, height: 12, color: '#10b981' }} />
-          <span>Verified Atomic WAL Ledger · Synchronized</span>
+          <span>{locale === 'ar' ? 'سجل محاسبي مدقق · متزامن بالكامل' : 'Verified Atomic WAL Ledger · Synchronized'}</span>
         </div>
       </div>
     </div>

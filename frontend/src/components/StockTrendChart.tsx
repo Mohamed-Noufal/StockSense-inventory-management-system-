@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Calendar, TrendingUp, TrendingDown } from 'lucide-react';
+import { useI18n } from '../i18n/I18nContext';
 
 export interface TrendDataPoint {
   date: string;
@@ -40,6 +41,7 @@ export const StockTrendChart: React.FC<StockTrendChartProps> = ({
   currentStock = 8,
   reorderPoint = 10,
 }) => {
+  const { t, locale } = useI18n();
   const [hoveredPoint, setHoveredPoint] = useState<{
     index: number;
     x: number;
@@ -137,11 +139,11 @@ export const StockTrendChart: React.FC<StockTrendChartProps> = ({
     <div className="stock-trend-card" style={{ marginTop: '0.5rem', marginBottom: '0.75rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
         <h4 style={{ fontSize: '0.8rem', fontWeight: 600, color: '#f8fafc', letterSpacing: '-0.01em' }}>
-          Stock Trend (Last 12 Weeks)
+          {t('inventory.trend_title')}
         </h4>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.68rem', color: '#94a3b8', fontFamily: 'var(--font-mono)' }}>
-          <span>Current: <strong style={{ color: '#ffffff' }}>{currentStock}</strong></span>
-          <span>ROP: <strong style={{ color: '#f59e0b' }}>{reorderPoint}</strong></span>
+          <span>{t('inventory.trend_current')} <strong style={{ color: '#ffffff' }}>{currentStock}</strong></span>
+          <span>{t('inventory.trend_rop')} <strong style={{ color: '#f59e0b' }}>{reorderPoint}</strong></span>
         </div>
       </div>
 
@@ -356,7 +358,7 @@ export const StockTrendChart: React.FC<StockTrendChartProps> = ({
                     borderRadius: '4px',
                   }}
                 >
-                  Week {hoveredPoint.index + 1}
+                  {locale === 'ar' ? `الأسبوع ${hoveredPoint.index + 1}` : `Week ${hoveredPoint.index + 1}`}
                 </span>
               </div>
 
@@ -381,7 +383,7 @@ export const StockTrendChart: React.FC<StockTrendChartProps> = ({
                   {stock}
                 </span>
                 <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 500 }}>
-                  units on-hand
+                  {locale === 'ar' ? 'وحدة متوفرة' : 'units on-hand'}
                 </span>
                 {weekDelta !== null && weekDelta !== 0 && (
                   <span
@@ -442,10 +444,10 @@ export const StockTrendChart: React.FC<StockTrendChartProps> = ({
                 />
                 <span>
                   {isHealthy
-                    ? `+${diff} above safety threshold (${reorderPoint})`
+                    ? (locale === 'ar' ? `+${diff} فوق حد الأمان (${reorderPoint})` : `+${diff} above safety threshold (${reorderPoint})`)
                     : isAtRop
-                    ? `At reorder threshold (${reorderPoint})`
-                    : `${Math.abs(diff)} units below ROP (Reorder)`}
+                    ? (locale === 'ar' ? `عند حد إعادة الطلب (${reorderPoint})` : `At reorder threshold (${reorderPoint})`)
+                    : (locale === 'ar' ? `${Math.abs(diff)} وحدة تحت حد الطلب (إعادة طلب)` : `${Math.abs(diff)} units below ROP (Reorder)`)}
                 </span>
               </div>
 

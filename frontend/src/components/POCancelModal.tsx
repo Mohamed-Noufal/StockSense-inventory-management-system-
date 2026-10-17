@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Ban, X, AlertTriangle } from 'lucide-react';
 import { PurchaseOrder } from '../types';
+import { useI18n } from '../i18n/I18nContext';
+import { translatePOStatus } from '../i18n/translations';
 
 interface POCancelModalProps {
   po: PurchaseOrder;
@@ -9,6 +11,7 @@ interface POCancelModalProps {
 }
 
 export const POCancelModal: React.FC<POCancelModalProps> = ({ po, onClose, onConfirm }) => {
+  const { locale } = useI18n();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -16,7 +19,11 @@ export const POCancelModal: React.FC<POCancelModalProps> = ({ po, onClose, onCon
 
   const handleCancel = async () => {
     if (hasReceivedGoods) {
-      setError('Cannot cancel purchase order: physical items have already been received into inventory.');
+      setError(
+        locale === 'ar'
+          ? 'لا يمكن إلغاء أمر الشراء: تم استلام بضائع فعلية في المخزون بالفعل.'
+          : 'Cannot cancel purchase order: physical items have already been received into inventory.'
+      );
       return;
     }
     setSubmitting(true);
@@ -25,7 +32,7 @@ export const POCancelModal: React.FC<POCancelModalProps> = ({ po, onClose, onCon
       await onConfirm(po.id);
       onClose();
     } catch (err: any) {
-      setError(err?.message || 'Failed to cancel purchase order');
+      setError(err?.message || (locale === 'ar' ? 'فشل إلغاء أمر الشراء' : 'Failed to cancel purchase order'));
     } finally {
       setSubmitting(false);
     }
@@ -37,7 +44,7 @@ export const POCancelModal: React.FC<POCancelModalProps> = ({ po, onClose, onCon
         <div className="modal-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Ban style={{ width: 18, height: 18, color: '#ef4444' }} />
-            <h3>Cancel Purchase Order?</h3>
+            <h3>{locale === 'ar' ? 'إلغاء أمر الشراء؟' : 'Cancel Purchase Order?'}</h3>
           </div>
           <button
             type="button"
@@ -56,35 +63,41 @@ export const POCancelModal: React.FC<POCancelModalProps> = ({ po, onClose, onCon
 
         <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <p style={{ fontSize: '0.82rem', color: 'var(--text-primary)', lineHeight: '1.5' }}>
-            Are you sure you want to cancel purchase order <strong style={{ color: '#ffffff', fontFamily: 'var(--font-mono)' }}>{po.po_number}</strong>?
+            {locale === 'ar' ? (
+              <>هل أنت متأكد من رغبتك في إلغاء أمر الشراء <strong style={{ color: '#ffffff', fontFamily: 'var(--font-mono)' }}>{po.po_number}</strong>؟</>
+            ) : (
+              <>Are you sure you want to cancel purchase order <strong style={{ color: '#ffffff', fontFamily: 'var(--font-mono)' }}>{po.po_number}</strong>?</>
+            )}
           </p>
 
           <div style={{ background: '#121214', border: '1px solid var(--border-default)', borderRadius: '6px', padding: '0.75rem 1rem', fontSize: '0.8rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
-              <span>Vendor:</span>
+              <span>{locale === 'ar' ? 'المورّد:' : 'Vendor:'}</span>
               <span style={{ color: '#ffffff' }}>{po.supplier_name || `Supplier #${po.supplier_id}`}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
-              <span>Current Status:</span>
-              <span style={{ color: '#ffffff', textTransform: 'capitalize' }}>{po.status.toLowerCase().replace('_', ' ')}</span>
+              <span>{locale === 'ar' ? 'الحالة الحالية:' : 'Current Status:'}</span>
+              <span style={{ color: '#ffffff' }}>{translatePOStatus(po.status, locale)}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
-              <span>Total Lines:</span>
-              <span style={{ color: '#ffffff' }}>{po.lines.length} lines</span>
+              <span>{locale === 'ar' ? 'إجمالي البنود:' : 'Total Lines:'}</span>
+              <span style={{ color: '#ffffff' }}>{po.lines.length} {locale === 'ar' ? 'بنود' : 'lines'}</span>
             </div>
           </div>
 
           <div style={{ display: 'flex', gap: '0.6rem', padding: '0.75rem', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.25)', borderRadius: '6px', color: '#f87171', fontSize: '0.78rem', lineHeight: '1.4' }}>
             <AlertTriangle style={{ width: 16, height: 16, flexShrink: 0, marginTop: 2 }} />
             <span>
-              Cancellation is irrevocable. Once cancelled, this order cannot receive goods or be re-opened. Orders with posted receipts cannot be cancelled.
+              {locale === 'ar'
+                ? 'إلغاء أمر الشراء نهائي ولا يمكن التراجع عنه. بمجرد الإلغاء، لا يمكن استلام البضائع أو إعادة فتح هذا الأمر. ولا يمكن إلغاء الأوامر التي تم استلام بضائع منها بالفعل.'
+                : 'Cancellation is irrevocable. Once cancelled, this order cannot receive goods or be re-opened. Orders with posted receipts cannot be cancelled.'}
             </span>
           </div>
         </div>
 
         <div className="modal-footer">
           <button type="button" className="btn btn-secondary" onClick={onClose} disabled={submitting}>
-            Keep Purchase Order
+            {locale === 'ar' ? 'الاحتفاظ بأمر الشراء' : 'Keep Purchase Order'}
           </button>
           <button
             type="button"
@@ -93,7 +106,7 @@ export const POCancelModal: React.FC<POCancelModalProps> = ({ po, onClose, onCon
             disabled={submitting || hasReceivedGoods}
           >
             <Ban style={{ width: 14, height: 14 }} />
-            <span>{submitting ? 'Cancelling...' : 'Confirm Cancellation'}</span>
+            <span>{submitting ? (locale === 'ar' ? 'جارٍ الإلغاء...' : 'Cancelling...') : (locale === 'ar' ? 'تأكيد الإلغاء' : 'Confirm Cancellation')}</span>
           </button>
         </div>
       </div>

@@ -1,6 +1,8 @@
 import React from 'react';
 import { Users, ShieldCheck, UserCheck, Mail, CheckCircle2, ArrowRightLeft } from 'lucide-react';
 import { User, StockMovement } from '../types';
+import { useI18n } from '../i18n/I18nContext';
+import { translateUserRole } from '../i18n/translations';
 
 interface UsersViewProps {
   users: User[];
@@ -17,6 +19,8 @@ export const UsersView: React.FC<UsersViewProps> = ({
   ledger,
   onNavigateTab,
 }) => {
+  const { t, locale } = useI18n();
+
   // Compute role breakdown
   const storekeepers = users.filter((u) => u.role === 'STOREKEEPER').length;
   const procurementOfficers = users.filter((u) => u.role === 'PROCUREMENT_OFFICER').length;
@@ -52,40 +56,40 @@ export const UsersView: React.FC<UsersViewProps> = ({
       <div className="metrics-grid">
         <div className="metric-card">
           <div className="metric-header">
-            <span className="metric-title">Active Personnel</span>
+            <span className="metric-title">{t('users.title')}</span>
             <Users className="metric-icon" style={{ color: '#ffffff' }} />
           </div>
           <div className="metric-value">{users.length}</div>
-          <div className="metric-sub">Authenticated personnel in SQLite database</div>
+          <div className="metric-sub">{t('users.subtitle')}</div>
         </div>
 
         <div className="metric-card">
           <div className="metric-header">
-            <span className="metric-title">Storekeepers (Yard & Base)</span>
+            <span className="metric-title">{t('users.storekeepers')}</span>
             <UserCheck className="metric-icon" style={{ color: '#2dd4bf' }} />
           </div>
           <div className="metric-value">{storekeepers}</div>
-          <div className="metric-sub">Custodians authorized for receipts & issues</div>
+          <div className="metric-sub">{t('users.storekeepers_sub')}</div>
         </div>
 
         <div className="metric-card">
           <div className="metric-header">
-            <span className="metric-title">Procurement Officers</span>
+            <span className="metric-title">{t('users.procurement')}</span>
             <ShieldCheck className="metric-icon" style={{ color: '#a855f7' }} />
           </div>
           <div className="metric-value">{procurementOfficers}</div>
-          <div className="metric-sub">Requisition approvers ({managers} Governance Managers)</div>
+          <div className="metric-sub">{t('users.procurement_sub')} ({managers} {locale === 'ar' ? 'مدراء عمليات' : 'Governance Managers'})</div>
         </div>
 
         <div className="metric-card">
           <div className="metric-header">
-            <span className="metric-title">Active Operating Shift</span>
+            <span className="metric-title">{t('users.active_shift')}</span>
             <CheckCircle2 className="metric-icon" style={{ color: '#10b981' }} />
           </div>
           <div className="metric-value" style={{ fontSize: '1.2rem', color: '#10b981' }}>
-            {currentUser ? currentUser.full_name : 'Default Session'}
+            {currentUser ? currentUser.full_name : (locale === 'ar' ? 'جلسة تجريبية افتراضية' : 'Default Session')}
           </div>
-          <div className="metric-sub">Role: {currentUser?.role || 'STOREKEEPER'}</div>
+          <div className="metric-sub">{t('users.col_role')}: {translateUserRole(currentUser?.role || 'STOREKEEPER', locale)}</div>
         </div>
       </div>
 
@@ -93,14 +97,14 @@ export const UsersView: React.FC<UsersViewProps> = ({
       <div className="card">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
           <div>
-            <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#ffffff' }}>Employee Directory & Operational Roles</h3>
+            <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#ffffff' }}>{t('users.directory_title')}</h3>
             <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-              Real database identities linked to every ledger movement, transfer, and procurement decision.
+              {t('users.directory_desc')}
             </p>
           </div>
           <div className="badge badge-info" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             <ShieldCheck style={{ width: 13, height: 13 }} />
-            <span>Audit Trail Non-Repudiation Active</span>
+            <span>{t('users.audit_active')}</span>
           </div>
         </div>
 
@@ -108,13 +112,13 @@ export const UsersView: React.FC<UsersViewProps> = ({
           <table className="data-table">
             <thead>
               <tr>
-                <th>Employee</th>
-                <th>Assigned Role</th>
-                <th>Work Email</th>
-                <th>Status</th>
-                <th>Audit Movements Logged</th>
-                <th>Account Created</th>
-                <th style={{ textAlign: 'right' }}>Active Session</th>
+                <th>{t('users.col_employee')}</th>
+                <th>{t('users.col_role')}</th>
+                <th>{t('users.col_email')}</th>
+                <th>{t('users.col_status')}</th>
+                <th>{t('users.col_movements')}</th>
+                <th>{t('users.col_created')}</th>
+                <th style={{ textAlign: locale === 'ar' ? 'left' : 'right' }}>{t('users.col_session')}</th>
               </tr>
             </thead>
             <tbody>
@@ -161,7 +165,7 @@ export const UsersView: React.FC<UsersViewProps> = ({
 
                     <td>
                       <span className={`badge ${getRoleBadgeClass(user.role)}`}>
-                        {user.role}
+                        {translateUserRole(user.role, locale)}
                       </span>
                     </td>
 
@@ -176,7 +180,7 @@ export const UsersView: React.FC<UsersViewProps> = ({
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.78rem' }}>
                         <span className="pulse-dot" style={{ backgroundColor: user.is_active ? '#10b981' : '#71717a' }} />
                         <span style={{ color: user.is_active ? '#34d399' : 'var(--text-muted)' }}>
-                          {user.is_active ? 'Active' : 'Inactive'}
+                          {user.is_active ? t('users.active') : t('users.inactive')}
                         </span>
                       </div>
                     </td>
@@ -193,17 +197,21 @@ export const UsersView: React.FC<UsersViewProps> = ({
                             onClick={() => onNavigateTab('ledger')}
                             title="View movements in Movement Ledger"
                           >
-                            <span>Ledger</span>
+                            <span>{t('users.ledger_btn')}</span>
                           </button>
                         )}
                       </div>
                     </td>
 
                     <td style={{ color: 'var(--text-muted)', fontSize: '0.75rem', fontFamily: 'var(--font-mono)' }}>
-                      {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'Initial Setup'}
+                      {user.created_at
+                        ? (locale === 'ar'
+                            ? new Date(user.created_at).toLocaleDateString('ar-EG-u-nu-latn', { year: 'numeric', month: 'short', day: 'numeric' })
+                            : new Date(user.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }))
+                        : (locale === 'ar' ? 'الإعداد المبدئي' : 'Initial Setup')}
                     </td>
 
-                    <td style={{ textAlign: 'right' }}>
+                    <td style={{ textAlign: locale === 'ar' ? 'left' : 'right' }}>
                       {isSelected ? (
                         <span
                           className="badge badge-success"
@@ -211,7 +219,7 @@ export const UsersView: React.FC<UsersViewProps> = ({
                             fontSize: '0.72rem',
                           }}
                         >
-                          ✓ Logged In
+                          {t('users.logged_in')}
                         </span>
                       ) : (
                         <button
@@ -220,7 +228,7 @@ export const UsersView: React.FC<UsersViewProps> = ({
                           onClick={() => onSelectUser(user)}
                         >
                           <ArrowRightLeft style={{ width: 12, height: 12 }} />
-                          <span>Switch to User</span>
+                          <span>{t('users.switch_to_user')}</span>
                         </button>
                       )}
                     </td>

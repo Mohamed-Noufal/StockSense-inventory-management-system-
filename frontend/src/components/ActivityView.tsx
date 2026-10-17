@@ -12,6 +12,8 @@ import { api } from '../api/client';
 import { MovementDetailDrawer } from './MovementDetailDrawer';
 import { AlertsTab } from './AlertsTab';
 import { IntegrityTab } from './IntegrityTab';
+import { useI18n } from '../i18n/I18nContext';
+import { translateMovementType, translateWarehouse, translateUserRole } from '../i18n/translations';
 
 export interface ActivityViewProps {
   ledger: StockMovement[];
@@ -36,6 +38,7 @@ export const ActivityView: React.FC<ActivityViewProps> = ({
   onIntegrityUpdated,
   onPrintWaybill,
 }) => {
+  const { t, locale } = useI18n();
 
   // Tabs
   const [activeTab, setActiveTab] = useState<TabType>('LEDGER');
@@ -192,14 +195,14 @@ export const ActivityView: React.FC<ActivityViewProps> = ({
         return (
           <span className="movement-badge movement-badge-receipt">
             <ArrowDownLeft style={{ width: 11, height: 11 }} />
-            Receipt
+            {translateMovementType('RECEIPT', locale)}
           </span>
         );
       case 'ISSUE':
         return (
           <span className="movement-badge movement-badge-issue">
             <ArrowUpRight style={{ width: 11, height: 11 }} />
-            Issue
+            {translateMovementType('ISSUE', locale)}
           </span>
         );
       case 'TRANSFER_OUT':
@@ -207,7 +210,7 @@ export const ActivityView: React.FC<ActivityViewProps> = ({
         return (
           <span className="movement-badge movement-badge-transfer">
             <ArrowLeftRight style={{ width: 11, height: 11 }} />
-            {type === 'TRANSFER_OUT' ? 'Xfer Out' : 'Xfer In'}
+            {locale === 'ar' ? (type === 'TRANSFER_OUT' ? 'تحويل صادر' : 'تحويل وارد') : (type === 'TRANSFER_OUT' ? 'Xfer Out' : 'Xfer In')}
           </span>
         );
       case 'ADJUSTMENT':
@@ -215,7 +218,7 @@ export const ActivityView: React.FC<ActivityViewProps> = ({
         return (
           <span className="movement-badge movement-badge-adjustment">
             <Sliders style={{ width: 11, height: 11 }} />
-            Adjustment
+            {translateMovementType('ADJUSTMENT', locale)}
           </span>
         );
     }
@@ -228,10 +231,10 @@ export const ActivityView: React.FC<ActivityViewProps> = ({
         <div className="activity-header-title-box">
           <h1>
             <Activity style={{ width: 22, height: 22, color: 'var(--accent-blue)' }} />
-            Activity &amp; Integrity Center
+            {t('activity.title')}
           </h1>
           <p>
-            Immutable append-only audit ledger, operational exception alerts &amp; real-time mathematical balance verification
+            {t('activity.subtitle')}
           </p>
         </div>
 
@@ -240,10 +243,10 @@ export const ActivityView: React.FC<ActivityViewProps> = ({
             className="btn btn-secondary"
             onClick={handleExportCsv}
             style={{ padding: '0.55rem 0.95rem' }}
-            title="Export RFC 4180 CSV audit file"
+            title={locale === 'ar' ? 'تصدير سجل الحركات كملف CSV' : 'Export RFC 4180 CSV audit file'}
           >
             <Download style={{ width: 14, height: 14 }} />
-            <span>Export CSV</span>
+            <span>{t('activity.export_csv')}</span>
           </button>
 
           <button
@@ -253,7 +256,7 @@ export const ActivityView: React.FC<ActivityViewProps> = ({
               fetchAlertsSummary();
             }}
             style={{ padding: '0.55rem 0.75rem' }}
-            title="Refresh ledger events"
+            title={locale === 'ar' ? 'تحديث حركات السجل' : 'Refresh ledger events'}
           >
             <RefreshCw style={{ width: 14, height: 14 }} />
           </button>
@@ -267,12 +270,12 @@ export const ActivityView: React.FC<ActivityViewProps> = ({
           onClick={() => setActiveTab('LEDGER')}
         >
           <div className="activity-summary-card-header">
-            <span className="activity-summary-card-title">Total Ledger Events</span>
+            <span className="activity-summary-card-title">{t('activity.total_events')}</span>
             <Activity style={{ width: 16, height: 16, color: 'var(--accent-blue)' }} />
           </div>
           <div className="activity-summary-card-value">{metrics.totalTransactions}</div>
           <div className="activity-summary-card-sub">
-            Append-only physical transactions
+            {t('activity.total_events_sub')}
           </div>
         </div>
 
@@ -281,14 +284,14 @@ export const ActivityView: React.FC<ActivityViewProps> = ({
           onClick={() => setActiveTab('ALERTS')}
         >
           <div className="activity-summary-card-header">
-            <span className="activity-summary-card-title">Active System Exceptions</span>
+            <span className="activity-summary-card-title">{t('activity.system_exceptions')}</span>
             <AlertTriangle style={{ width: 16, height: 16, color: '#f59e0b' }} />
           </div>
           <div className="activity-summary-card-value" style={{ color: metrics.activeAlertsCount > 0 ? '#f59e0b' : '#ffffff' }}>
             {metrics.activeAlertsCount}
           </div>
           <div className="activity-summary-card-sub">
-            Pending operational review
+            {t('activity.exceptions_sub')}
           </div>
         </div>
 
@@ -297,14 +300,14 @@ export const ActivityView: React.FC<ActivityViewProps> = ({
           onClick={() => setActiveTab('ALERTS')}
         >
           <div className="activity-summary-card-header">
-            <span className="activity-summary-card-title">Critical Risk Alerts</span>
+            <span className="activity-summary-card-title">{t('activity.critical_alerts')}</span>
             <AlertTriangle style={{ width: 16, height: 16, color: '#ef4444' }} />
           </div>
           <div className="activity-summary-card-value" style={{ color: metrics.criticalAlertsCount > 0 ? '#ef4444' : '#ffffff' }}>
             {metrics.criticalAlertsCount}
           </div>
           <div className="activity-summary-card-sub">
-            Stockout hazards &amp; safety breaches
+            {t('activity.critical_alerts_sub')}
           </div>
         </div>
 
@@ -313,14 +316,14 @@ export const ActivityView: React.FC<ActivityViewProps> = ({
           onClick={() => setActiveTab('INTEGRITY')}
         >
           <div className="activity-summary-card-header">
-            <span className="activity-summary-card-title">Ledger Consistency</span>
+            <span className="activity-summary-card-title">{t('activity.ledger_consistency')}</span>
             <ShieldCheck style={{ width: 16, height: 16, color: '#10b981' }} />
           </div>
           <div className="activity-summary-card-value" style={{ color: metrics.mismatches === 0 ? '#10b981' : '#ef4444' }}>
-            {metrics.mismatches === 0 ? '100% PASS' : `${metrics.mismatches} Drift`}
+            {metrics.mismatches === 0 ? (locale === 'ar' ? '100% مطابق' : '100% PASS') : (locale === 'ar' ? `${metrics.mismatches} فروقات` : `${metrics.mismatches} Drift`)}
           </div>
           <div className="activity-summary-card-sub">
-            Zero mathematical balance drift
+            {t('activity.consistency_sub')}
           </div>
         </div>
       </div>
@@ -332,7 +335,7 @@ export const ActivityView: React.FC<ActivityViewProps> = ({
           onClick={() => setActiveTab('LEDGER')}
         >
           <Activity style={{ width: 15, height: 15 }} />
-          <span>Stock Ledger ({ledger.length})</span>
+          <span>{t('activity.tab_ledger')} ({ledger.length})</span>
         </button>
 
         <button
@@ -340,7 +343,7 @@ export const ActivityView: React.FC<ActivityViewProps> = ({
           onClick={() => setActiveTab('ALERTS')}
         >
           <AlertTriangle style={{ width: 15, height: 15 }} />
-          <span>Alerts &amp; Exceptions ({metrics.activeAlertsCount})</span>
+          <span>{t('activity.tab_alerts')} ({metrics.activeAlertsCount})</span>
         </button>
 
         <button
@@ -348,7 +351,7 @@ export const ActivityView: React.FC<ActivityViewProps> = ({
           onClick={() => setActiveTab('INTEGRITY')}
         >
           <ShieldCheck style={{ width: 15, height: 15 }} />
-          <span>Integrity Diagnostic</span>
+          <span>{t('activity.tab_integrity')}</span>
         </button>
       </div>
 
@@ -359,10 +362,10 @@ export const ActivityView: React.FC<ActivityViewProps> = ({
           <div className="card" style={{ padding: '0.85rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1, minWidth: 260 }}>
               <div style={{ position: 'relative', width: '100%', maxWidth: 360 }}>
-                <Search style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', width: 14, height: 14, color: 'var(--text-muted)' }} />
+                <Search style={{ position: 'absolute', left: locale === 'ar' ? undefined : 10, right: locale === 'ar' ? 10 : undefined, top: '50%', transform: 'translateY(-50%)', width: 14, height: 14, color: 'var(--text-muted)' }} />
                 <input
                   type="text"
-                  placeholder="Filter by SKU, name, reference, actor, or ID..."
+                  placeholder={t('activity.search_placeholder')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   style={{
@@ -370,7 +373,7 @@ export const ActivityView: React.FC<ActivityViewProps> = ({
                     background: '#09090b',
                     border: '1px solid var(--border-default)',
                     borderRadius: 'var(--radius-sm)',
-                    padding: '0.45rem 2rem 0.45rem 2rem',
+                    padding: locale === 'ar' ? '0.45rem 2rem 0.45rem 0.75rem' : '0.45rem 0.75rem 0.45rem 2rem',
                     fontSize: '0.8rem',
                     color: '#ffffff',
                     outline: 'none',
@@ -379,7 +382,7 @@ export const ActivityView: React.FC<ActivityViewProps> = ({
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery('')}
-                    style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+                    style={{ position: 'absolute', right: locale === 'ar' ? undefined : 8, left: locale === 'ar' ? 8 : undefined, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
                   >
                     <X style={{ width: 14, height: 14 }} />
                   </button>
@@ -390,7 +393,7 @@ export const ActivityView: React.FC<ActivityViewProps> = ({
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
               {/* Signed Delta Toggle */}
               <div style={{ display: 'flex', gap: '0.2rem', alignItems: 'center', background: '#09090b', padding: '0.2rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-default)' }}>
-                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', paddingLeft: '0.4rem', paddingRight: '0.2rem' }}>Delta:</span>
+                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', paddingLeft: '0.4rem', paddingRight: '0.2rem' }}>{t('activity.delta_label')}</span>
                 {(['ALL', 'POSITIVE', 'NEGATIVE'] as DeltaFilterType[]).map((d) => (
                   <button
                     key={d}
@@ -406,7 +409,7 @@ export const ActivityView: React.FC<ActivityViewProps> = ({
                       fontWeight: deltaFilter === d ? 700 : 400,
                     }}
                   >
-                    {d === 'POSITIVE' ? '+ In' : d === 'NEGATIVE' ? '- Out' : 'All'}
+                    {d === 'POSITIVE' ? t('activity.delta_in') : d === 'NEGATIVE' ? t('activity.delta_out') : t('activity.delta_all')}
                   </button>
                 ))}
               </div>
@@ -418,11 +421,11 @@ export const ActivityView: React.FC<ActivityViewProps> = ({
                 onChange={(e) => setMovementTypeFilter(e.target.value)}
                 style={{ padding: '0.35rem 0.65rem', fontSize: '0.76rem', background: '#09090b', color: '#ffffff', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-sm)' }}
               >
-                <option value="ALL">All Movement Types</option>
-                <option value="RECEIPT">Receipts</option>
-                <option value="ISSUE">Issues</option>
-                <option value="TRANSFERS">Transfers (In/Out)</option>
-                <option value="ADJUSTMENT">Adjustments</option>
+                <option value="ALL">{t('activity.all_types')}</option>
+                <option value="RECEIPT">{t('activity.type_receipts')}</option>
+                <option value="ISSUE">{t('activity.type_issues')}</option>
+                <option value="TRANSFERS">{t('activity.type_transfers')}</option>
+                <option value="ADJUSTMENT">{t('activity.type_adjustments')}</option>
               </select>
 
               {/* Location Filter */}
@@ -432,10 +435,10 @@ export const ActivityView: React.FC<ActivityViewProps> = ({
                 onChange={(e) => setLocationFilter(e.target.value)}
                 style={{ padding: '0.35rem 0.65rem', fontSize: '0.76rem', background: '#09090b', color: '#ffffff', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-sm)' }}
               >
-                <option value="ALL">All Facility Locations</option>
+                <option value="ALL">{t('activity.all_locations')}</option>
                 {locations.map((loc) => (
                   <option key={loc.id} value={loc.code}>
-                    {loc.code} — {loc.name}
+                    {loc.code} — {translateWarehouse(loc.name, locale)}
                   </option>
                 ))}
               </select>
@@ -447,11 +450,11 @@ export const ActivityView: React.FC<ActivityViewProps> = ({
                 onChange={(e) => setTimeWindowDays(Number(e.target.value))}
                 style={{ padding: '0.35rem 0.65rem', fontSize: '0.76rem', background: '#09090b', color: '#ffffff', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-sm)' }}
               >
-                <option value={1}>Last 24 Hours</option>
-                <option value={7}>Last 7 Days</option>
-                <option value={30}>Last 30 Days</option>
-                <option value={90}>Last 90 Days</option>
-                <option value={0}>All Time History</option>
+                <option value={1}>{t('activity.time_24h')}</option>
+                <option value={7}>{t('activity.time_7d')}</option>
+                <option value={30}>{t('activity.time_30d')}</option>
+                <option value={90}>{t('activity.time_90d')}</option>
+                <option value={0}>{t('activity.time_all')}</option>
               </select>
             </div>
           </div>
@@ -461,22 +464,22 @@ export const ActivityView: React.FC<ActivityViewProps> = ({
             <table className="data-table">
               <thead>
                 <tr>
-                  <th style={{ width: '85px' }}>Event ID</th>
-                  <th style={{ width: '130px' }}>Type</th>
-                  <th style={{ width: '110px' }}>Signed Delta</th>
-                  <th>Spare Item &amp; SKU</th>
-                  <th>Location Route</th>
-                  <th>Reference / Doc</th>
-                  <th>Actor Attribution</th>
-                  <th>Occurred At</th>
-                  <th style={{ textAlign: 'right', width: '80px' }}>Details</th>
+                  <th style={{ width: '85px' }}>{t('activity.col_event_id')}</th>
+                  <th style={{ width: '130px' }}>{t('activity.col_type')}</th>
+                  <th style={{ width: '110px' }}>{t('activity.col_delta')}</th>
+                  <th>{t('activity.col_item')}</th>
+                  <th>{t('activity.col_route')}</th>
+                  <th>{t('activity.col_ref')}</th>
+                  <th>{t('activity.col_actor')}</th>
+                  <th>{t('activity.col_time')}</th>
+                  <th style={{ textAlign: 'right', width: '80px' }}>{t('activity.col_details')}</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredLedger.length === 0 ? (
                   <tr>
                     <td colSpan={9} style={{ textAlign: 'center', padding: '3.5rem', color: 'var(--text-muted)' }}>
-                      No ledger transactions match the active filter criteria.
+                      {t('activity.empty_filter')}
                     </td>
                   </tr>
                 ) : (
@@ -518,7 +521,7 @@ export const ActivityView: React.FC<ActivityViewProps> = ({
                           </div>
                           {mov.transfer_group_id && (
                             <span style={{ fontSize: '0.68rem', color: '#c084fc', fontFamily: 'var(--font-mono)' }}>
-                              Transfer Group
+                              {locale === 'ar' ? 'مجموعة تحويل' : 'Transfer Group'}
                             </span>
                           )}
                         </td>
@@ -530,7 +533,7 @@ export const ActivityView: React.FC<ActivityViewProps> = ({
                         <td>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.76rem', color: '#ffffff' }}>
                             <User style={{ width: 12, height: 12, color: 'var(--accent-blue)' }} />
-                            <span>{mov.actor_label || 'Storekeeper'}</span>
+                            <span>{translateUserRole(mov.actor_label || 'STOREKEEPER', locale)}</span>
                           </div>
                         </td>
 
@@ -539,7 +542,7 @@ export const ActivityView: React.FC<ActivityViewProps> = ({
                         </td>
 
                         <td style={{ textAlign: 'right' }}>
-                          <ChevronRight style={{ width: 15, height: 15, color: 'var(--text-muted)', marginLeft: 'auto' }} />
+                          <ChevronRight style={{ width: 15, height: 15, color: 'var(--text-muted)', marginLeft: 'auto', transform: locale === 'ar' ? 'rotate(180deg)' : 'none' }} />
                         </td>
                       </tr>
                     );

@@ -4,6 +4,8 @@ import {
   ArrowRight, Check, Copy, Printer, FileText
 } from 'lucide-react';
 import { StockMovement } from '../types';
+import { useI18n } from '../i18n/I18nContext';
+import { translateMovementType, translateWarehouse } from '../i18n/translations';
 
 interface OperationsTableProps {
   ledger: StockMovement[];
@@ -16,7 +18,7 @@ export const OperationsTable: React.FC<OperationsTableProps> = ({
   onSelectMovement,
   onPrintWaybill,
 }) => {
-
+  const { t, locale } = useI18n();
   const [activeTab, setActiveTab] = useState<'ALL' | 'ISSUE' | 'TRANSFER' | 'RECEIPT' | 'ADJUSTMENT'>('ALL');
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [sortAsc, setSortAsc] = useState<boolean>(false);
@@ -55,17 +57,19 @@ export const OperationsTable: React.FC<OperationsTableProps> = ({
   const formatDateTime = (isoStr: string) => {
     try {
       const d = new Date(isoStr);
-      // Format as: "Oct 15, 2026 09:42 AM"
-      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      const month = months[d.getUTCMonth()];
+      const enMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const arMonths = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+      const month = locale === 'ar' ? arMonths[d.getUTCMonth()] : enMonths[d.getUTCMonth()];
       const day = d.getUTCDate();
       const year = d.getUTCFullYear();
       let hours = d.getUTCHours();
       const mins = d.getUTCMinutes().toString().padStart(2, '0');
-      const ampm = hours >= 12 ? 'PM' : 'AM';
+      const ampm = hours >= 12 ? (locale === 'ar' ? 'م' : 'PM') : (locale === 'ar' ? 'ص' : 'AM');
       hours = hours % 12 || 12;
       const hoursStr = hours.toString().padStart(2, '0');
-      return `${month} ${day}, ${year} ${hoursStr}:${mins} ${ampm}`;
+      return locale === 'ar'
+        ? `${day} ${month} ${year} ${hoursStr}:${mins} ${ampm}`
+        : `${month} ${day}, ${year} ${hoursStr}:${mins} ${ampm}`;
     } catch {
       return isoStr;
     }
@@ -81,16 +85,16 @@ export const OperationsTable: React.FC<OperationsTableProps> = ({
   const getTypeBadge = (type: string) => {
     switch (type) {
       case 'RECEIPT':
-        return <span className="ops-pill ops-pill-receipt">Receipt</span>;
+        return <span className="ops-pill ops-pill-receipt">{translateMovementType('RECEIPT', locale)}</span>;
       case 'ISSUE':
-        return <span className="ops-pill ops-pill-issue">Issue</span>;
+        return <span className="ops-pill ops-pill-issue">{translateMovementType('ISSUE', locale)}</span>;
       case 'TRANSFER_OUT':
       case 'TRANSFER_IN':
-        return <span className="ops-pill ops-pill-transfer">Transfer</span>;
+        return <span className="ops-pill ops-pill-transfer">{translateMovementType('TRANSFER', locale)}</span>;
       case 'ADJUSTMENT':
-        return <span className="ops-pill ops-pill-adjust">Adjustment</span>;
+        return <span className="ops-pill ops-pill-adjust">{translateMovementType('ADJUSTMENT', locale)}</span>;
       default:
-        return <span className="ops-pill ops-pill-neutral">{type}</span>;
+        return <span className="ops-pill ops-pill-neutral">{translateMovementType(type, locale)}</span>;
     }
   };
 
@@ -119,7 +123,7 @@ export const OperationsTable: React.FC<OperationsTableProps> = ({
       <div className="ops-table-header-row">
         <div className="ops-table-title-area">
           <Activity style={{ width: 17, height: 17, color: '#ffffff' }} />
-          <h2 className="ops-table-title">Recent Operations</h2>
+          <h2 className="ops-table-title">{t('operations.recent_ops_title')}</h2>
         </div>
 
         <button
@@ -128,7 +132,7 @@ export const OperationsTable: React.FC<OperationsTableProps> = ({
           onClick={() => setActiveTab('ALL')}
           title="View all recorded operations"
         >
-          <span>View all</span>
+          <span>{t('operations.view_all')}</span>
           <ArrowRight style={{ width: 13, height: 13 }} />
         </button>
       </div>
@@ -139,31 +143,31 @@ export const OperationsTable: React.FC<OperationsTableProps> = ({
           className={`ops-filter-tab ${activeTab === 'ALL' ? 'active' : ''}`}
           onClick={() => { setActiveTab('ALL'); setCurrentPage(1); }}
         >
-          All
+          {t('operations.tab_all')}
         </button>
         <button
           className={`ops-filter-tab ${activeTab === 'ISSUE' ? 'active' : ''}`}
           onClick={() => { setActiveTab('ISSUE'); setCurrentPage(1); }}
         >
-          Issues
+          {t('operations.tab_issues')}
         </button>
         <button
           className={`ops-filter-tab ${activeTab === 'TRANSFER' ? 'active' : ''}`}
           onClick={() => { setActiveTab('TRANSFER'); setCurrentPage(1); }}
         >
-          Transfers
+          {t('operations.tab_transfers')}
         </button>
         <button
           className={`ops-filter-tab ${activeTab === 'RECEIPT' ? 'active' : ''}`}
           onClick={() => { setActiveTab('RECEIPT'); setCurrentPage(1); }}
         >
-          Receipts
+          {t('operations.tab_receipts')}
         </button>
         <button
           className={`ops-filter-tab ${activeTab === 'ADJUSTMENT' ? 'active' : ''}`}
           onClick={() => { setActiveTab('ADJUSTMENT'); setCurrentPage(1); }}
         >
-          Adjustments
+          {t('operations.tab_adjustments')}
         </button>
       </div>
 
@@ -178,25 +182,25 @@ export const OperationsTable: React.FC<OperationsTableProps> = ({
                 title="Sort by date"
               >
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                  <span>Date & Time</span>
+                  <span>{t('operations.col_date_time')}</span>
                   <ArrowUpDown style={{ width: 12, height: 12, opacity: 0.7 }} />
                 </div>
               </th>
-              <th>Type</th>
-              <th>Item</th>
-              <th>SKU</th>
-              <th style={{ textAlign: 'right' }}>Quantity</th>
-              <th>From → To</th>
-              <th>Reference</th>
-              <th>Status</th>
-              <th style={{ textAlign: 'center', width: 44 }}>Actions</th>
+              <th>{t('operations.col_type')}</th>
+              <th>{t('operations.col_item')}</th>
+              <th>{t('operations.col_sku')}</th>
+              <th style={{ textAlign: 'right' }}>{t('operations.col_quantity')}</th>
+              <th>{t('operations.col_from_to')}</th>
+              <th>{t('operations.col_reference')}</th>
+              <th>{t('operations.col_status')}</th>
+              <th style={{ textAlign: 'center', width: 44 }}>{t('operations.col_actions')}</th>
             </tr>
           </thead>
           <tbody>
             {paginatedRows.length === 0 ? (
               <tr>
                 <td colSpan={9} style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
-                  No operations match the selected filter.
+                  {t('operations.empty_filter')}
                 </td>
               </tr>
             ) : (
@@ -229,7 +233,7 @@ export const OperationsTable: React.FC<OperationsTableProps> = ({
 
                     {/* From -> To Route */}
                     <td style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
-                      {mov.route_display || mov.location_code || 'WH-01'}
+                      {translateWarehouse(mov.route_display || mov.location_code || 'Central Warehouse (Cairo Base)', locale)}
                     </td>
 
                     {/* Reference */}
@@ -241,7 +245,7 @@ export const OperationsTable: React.FC<OperationsTableProps> = ({
                     <td>
                       <div className="ops-status-indicator">
                         <span className="ops-status-dot" />
-                        <span>Completed</span>
+                        <span>{t('operations.status_completed')}</span>
                       </div>
                     </td>
 
@@ -254,7 +258,7 @@ export const OperationsTable: React.FC<OperationsTableProps> = ({
                           e.stopPropagation();
                           setOpenActionMenuId(isOpenMenu ? null : mov.id);
                         }}
-                        title="Operation options"
+                        title={locale === 'ar' ? 'خيارات العملية' : 'Operation options'}
                       >
                         <MoreHorizontal style={{ width: 14, height: 14 }} />
                       </button>
@@ -273,7 +277,7 @@ export const OperationsTable: React.FC<OperationsTableProps> = ({
                             }}
                           >
                             <FileText style={{ width: 13, height: 13 }} />
-                            <span>Audit Details</span>
+                            <span>{t('operations.audit_details')}</span>
                           </button>
 
                           <button
@@ -286,7 +290,7 @@ export const OperationsTable: React.FC<OperationsTableProps> = ({
                             ) : (
                               <Copy style={{ width: 13, height: 13 }} />
                             )}
-                            <span>Copy Reference</span>
+                            <span>{t('operations.copy_ref')}</span>
                           </button>
 
                           <button
@@ -302,7 +306,7 @@ export const OperationsTable: React.FC<OperationsTableProps> = ({
                             }}
                           >
                             <Printer style={{ width: 13, height: 13 }} />
-                            <span>Print Waybill</span>
+                            <span>{t('operations.print_waybill')}</span>
                           </button>
                         </div>
                       )}
@@ -319,7 +323,7 @@ export const OperationsTable: React.FC<OperationsTableProps> = ({
       {/* Pagination Footer */}
       <div className="ops-pagination-bar">
         <div className="ops-pagination-info">
-          Showing {filteredList.length === 0 ? 0 : pageStart + 1}–{Math.min(filteredList.length, pageStart + pageSize)} of {filteredList.length} operations
+          {t('operations.showing')} {filteredList.length === 0 ? 0 : pageStart + 1}–{Math.min(filteredList.length, pageStart + pageSize)} {t('operations.of')} {filteredList.length} {t('operations.operations_count')}
         </div>
 
         <div className="ops-pagination-controls">
@@ -328,7 +332,7 @@ export const OperationsTable: React.FC<OperationsTableProps> = ({
             className="ops-page-btn"
             disabled={currentPage <= 1}
             onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-            title="Previous page"
+            title={locale === 'ar' ? 'الصفحة السابقة' : 'Previous page'}
           >
             <ChevronLeft style={{ width: 14, height: 14 }} />
           </button>
@@ -349,7 +353,7 @@ export const OperationsTable: React.FC<OperationsTableProps> = ({
             className="ops-page-btn"
             disabled={currentPage >= totalPages}
             onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-            title="Next page"
+            title={locale === 'ar' ? 'الصفحة التالية' : 'Next page'}
           >
             <ChevronRight style={{ width: 14, height: 14 }} />
           </button>

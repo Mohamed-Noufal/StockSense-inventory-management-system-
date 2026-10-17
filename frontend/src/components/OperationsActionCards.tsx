@@ -1,11 +1,14 @@
 import React from 'react';
 import { ArrowDownLeft, ArrowLeftRight, Package, ShieldCheck, ChevronRight } from 'lucide-react';
+import { useI18n } from '../i18n/I18nContext';
 
 interface OperationsActionCardsProps {
   onOpenAction: (type: 'ISSUE' | 'TRANSFER' | 'RECEIPT' | 'ADJUSTMENT') => void;
 }
 
 export const OperationsActionCards: React.FC<OperationsActionCardsProps> = ({ onOpenAction }) => {
+  const { t } = useI18n();
+
   return (
     <div className="ops-action-grid">
       {/* 1. Issue Stock */}
@@ -17,8 +20,8 @@ export const OperationsActionCards: React.FC<OperationsActionCardsProps> = ({ on
           <ChevronRight className="ops-card-chevron" style={{ width: 16, height: 16 }} />
         </div>
         <div className="ops-action-content">
-          <h3 className="ops-action-title">Issue Stock</h3>
-          <p className="ops-action-desc">Remove items from inventory for projects or internal use.</p>
+          <h3 className="ops-action-title">{t('operations.card_issue_title')}</h3>
+          <p className="ops-action-desc">{t('operations.card_issue_desc')}</p>
         </div>
         <button
           type="button"
@@ -28,7 +31,7 @@ export const OperationsActionCards: React.FC<OperationsActionCardsProps> = ({ on
             onOpenAction('ISSUE');
           }}
         >
-          New Issue
+          {t('operations.card_issue_btn')}
         </button>
       </div>
 
@@ -41,8 +44,8 @@ export const OperationsActionCards: React.FC<OperationsActionCardsProps> = ({ on
           <ChevronRight className="ops-card-chevron" style={{ width: 16, height: 16 }} />
         </div>
         <div className="ops-action-content">
-          <h3 className="ops-action-title">Transfer Stock</h3>
-          <p className="ops-action-desc">Move items between warehouses or locations.</p>
+          <h3 className="ops-action-title">{t('operations.card_transfer_title')}</h3>
+          <p className="ops-action-desc">{t('operations.card_transfer_desc')}</p>
         </div>
         <button
           type="button"
@@ -52,7 +55,7 @@ export const OperationsActionCards: React.FC<OperationsActionCardsProps> = ({ on
             onOpenAction('TRANSFER');
           }}
         >
-          New Transfer
+          {t('operations.card_transfer_btn')}
         </button>
       </div>
 
@@ -65,8 +68,8 @@ export const OperationsActionCards: React.FC<OperationsActionCardsProps> = ({ on
           <ChevronRight className="ops-card-chevron" style={{ width: 16, height: 16 }} />
         </div>
         <div className="ops-action-content">
-          <h3 className="ops-action-title">Receive Stock</h3>
-          <p className="ops-action-desc">Record incoming deliveries from suppliers.</p>
+          <h3 className="ops-action-title">{t('operations.card_receive_title')}</h3>
+          <p className="ops-action-desc">{t('operations.card_receive_desc')}</p>
         </div>
         <button
           type="button"
@@ -76,7 +79,7 @@ export const OperationsActionCards: React.FC<OperationsActionCardsProps> = ({ on
             onOpenAction('RECEIPT');
           }}
         >
-          New Receipt
+          {t('operations.card_receive_btn')}
         </button>
       </div>
 
@@ -89,8 +92,8 @@ export const OperationsActionCards: React.FC<OperationsActionCardsProps> = ({ on
           <ChevronRight className="ops-card-chevron" style={{ width: 16, height: 16 }} />
         </div>
         <div className="ops-action-content">
-          <h3 className="ops-action-title">Adjust Stock Count</h3>
-          <p className="ops-action-desc">Fix discrepancies from cycle counts or physical checks.</p>
+          <h3 className="ops-action-title">{t('operations.card_adjust_title')}</h3>
+          <p className="ops-action-desc">{t('operations.card_adjust_desc')}</p>
         </div>
         <button
           type="button"
@@ -100,7 +103,7 @@ export const OperationsActionCards: React.FC<OperationsActionCardsProps> = ({ on
             onOpenAction('ADJUSTMENT');
           }}
         >
-          New Adjustment
+          {t('operations.card_adjust_btn')}
         </button>
       </div>
     </div>

@@ -2,6 +2,8 @@ import React, { useMemo } from 'react';
 import { X, Printer, FileText } from 'lucide-react';
 import { PurchaseOrder, Supplier, InventoryItem, InventoryLocation } from '../types';
 import { generateCode128Svg, generateQrCodeSvg } from '../utils/barcode';
+import { useI18n } from '../i18n/I18nContext';
+import { translatePOStatus } from '../i18n/translations';
 
 interface POPrintModalProps {
   po: PurchaseOrder;
@@ -18,6 +20,7 @@ export const POPrintModal: React.FC<POPrintModalProps> = ({
   locations = [],
   onClose,
 }) => {
+  const { locale } = useI18n();
   const itemMap = useMemo(() => new Map(items.map((i) => [i.id, i])), [items]);
   const poNumber = po.po_number || `PO-${po.id.toString().padStart(6, '0')}`;
   const totalAmountFormatted = (po.total_amount_minor / 100).toLocaleString('en-US', {
@@ -587,7 +590,7 @@ export const POPrintModal: React.FC<POPrintModalProps> = ({
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <h3 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 700, color: '#ffffff' }}>
-                  Official Purchase Order Document
+                  {locale === 'ar' ? 'وثيقة أمر الشراء الرسمية' : 'Official Purchase Order Document'}
                 </h3>
                 <span
                   style={{
@@ -614,11 +617,13 @@ export const POPrintModal: React.FC<POPrintModalProps> = ({
                     border: po.status === 'DRAFT' ? '1px solid rgba(234, 179, 8, 0.3)' : '1px solid rgba(16, 185, 129, 0.3)',
                   }}
                 >
-                  {po.status}
+                  {translatePOStatus(po.status, locale)}
                 </span>
               </div>
               <p style={{ margin: 0, fontSize: '0.74rem', color: 'var(--text-muted)' }}>
-                Legal Commercial Procurement Docket • A4 Print & PDF Export Ready
+                {locale === 'ar'
+                  ? 'سند شراء تجاري رسمي • جاهز للطباعة وتصدير PDF (A4)'
+                  : 'Legal Commercial Procurement Docket • A4 Print & PDF Export Ready'}
               </p>
             </div>
           </div>
@@ -639,11 +644,12 @@ export const POPrintModal: React.FC<POPrintModalProps> = ({
               }}
             >
               <Printer style={{ width: 15, height: 15 }} />
-              <span>Print Official PO (PDF)</span>
+              <span>{locale === 'ar' ? 'طباعة أمر الشراء الرسمي (PDF)' : 'Print Official PO (PDF)'}</span>
             </button>
             <button
               type="button"
               onClick={onClose}
+              title={locale === 'ar' ? 'إغلاق' : 'Close'}
               style={{
                 background: 'none',
                 border: 'none',

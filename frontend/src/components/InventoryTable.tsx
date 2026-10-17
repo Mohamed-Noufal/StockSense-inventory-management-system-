@@ -5,6 +5,8 @@ import {
 } from 'lucide-react';
 import { InventoryItem } from '../types';
 import { ItemPartThumbnail } from './ItemPartThumbnail';
+import { useI18n } from '../i18n/I18nContext';
+import { translateCategory, translateWarehouse } from '../i18n/translations';
 
 interface InventoryTableProps {
   items: InventoryItem[];
@@ -29,6 +31,7 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
   onPageSizeChange,
   totalItemsCount,
 }) => {
+  const { t, locale } = useI18n();
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [actionMenuOpenId, setActionMenuOpenId] = useState<number | null>(null);
   const [sortField, setSortField] = useState<string>('name');
@@ -84,12 +87,12 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
     const onHand = item.total_on_hand ?? 0;
     const rop = item.reorder_point ?? 10;
     if (onHand <= 0) {
-      return <span className="status-pill status-out">Out of Stock</span>;
+      return <span className="status-pill status-out">{t('inventory.out_of_stock')}</span>;
     }
     if (onHand <= rop) {
-      return <span className="status-pill status-low">Low Stock</span>;
+      return <span className="status-pill status-low">{t('inventory.low_stock_pill')}</span>;
     }
-    return <span className="status-pill status-in">In Stock</span>;
+    return <span className="status-pill status-in">{t('inventory.in_stock')}</span>;
   };
 
   return (
@@ -112,7 +115,7 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
               {/* Item */}
               <th onClick={() => handleSort('name')} className="sortable-th" style={{ minWidth: '180px' }}>
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                  <span>Item</span>
+                  <span>{t('inventory.col_item')}</span>
                   <ArrowUpDown style={{ width: 12, height: 12, opacity: sortField === 'name' ? 1 : 0.4 }} />
                 </div>
               </th>
@@ -120,18 +123,18 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
               {/* Category */}
               <th onClick={() => handleSort('category_name')} className="sortable-th" style={{ minWidth: '130px' }}>
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                  <span>Category</span>
+                  <span>{t('inventory.col_category')}</span>
                   <ArrowUpDown style={{ width: 12, height: 12, opacity: sortField === 'category_name' ? 1 : 0.4 }} />
                 </div>
               </th>
 
               {/* Warehouse */}
-              <th style={{ minWidth: '120px' }}>Warehouse</th>
+              <th style={{ minWidth: '120px' }}>{t('inventory.col_warehouse')}</th>
 
               {/* On Hand */}
               <th onClick={() => handleSort('total_on_hand')} className="sortable-th" style={{ textAlign: 'right', minWidth: '85px' }}>
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', justifyContent: 'flex-end', width: '100%' }}>
-                  <span>On Hand</span>
+                  <span>{t('inventory.col_on_hand')}</span>
                   <ArrowUpDown style={{ width: 12, height: 12, opacity: sortField === 'total_on_hand' ? 1 : 0.4 }} />
                 </div>
               </th>
@@ -139,7 +142,7 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
               {/* Reserved */}
               <th onClick={() => handleSort('reserved_qty')} className="sortable-th" style={{ textAlign: 'right', minWidth: '85px' }}>
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', justifyContent: 'flex-end', width: '100%' }}>
-                  <span>Reserved</span>
+                  <span>{t('inventory.col_reserved')}</span>
                   <ArrowUpDown style={{ width: 12, height: 12, opacity: sortField === 'reserved_qty' ? 1 : 0.4 }} />
                 </div>
               </th>
@@ -147,16 +150,16 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
               {/* Available */}
               <th onClick={() => handleSort('available_qty')} className="sortable-th" style={{ textAlign: 'right', minWidth: '85px' }}>
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', justifyContent: 'flex-end', width: '100%' }}>
-                  <span>Available</span>
+                  <span>{t('inventory.col_available')}</span>
                   <ArrowUpDown style={{ width: 12, height: 12, opacity: sortField === 'available_qty' ? 1 : 0.4 }} />
                 </div>
               </th>
 
               {/* Status */}
-              <th style={{ minWidth: '100px', textAlign: 'center' }}>Status</th>
+              <th style={{ minWidth: '100px', textAlign: 'center' }}>{t('inventory.col_status')}</th>
 
               {/* Actions */}
-              <th style={{ width: '50px', textAlign: 'center' }}>Actions</th>
+              <th style={{ width: '50px', textAlign: 'center' }}>{t('inventory.col_actions')}</th>
             </tr>
           </thead>
 
@@ -211,12 +214,16 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
 
                     {/* Category */}
                     <td>
-                      <span className="table-category-label">{item.category_name || 'Mechanical Parts'}</span>
+                      <span className="table-category-label">
+                        {translateCategory(item.category_name || 'Mechanical Parts', locale)}
+                      </span>
                     </td>
 
                     {/* Warehouse */}
                     <td>
-                      <span className="table-warehouse-label">{item.warehouse_name || 'Main Warehouse'}</span>
+                      <span className="table-warehouse-label">
+                        {translateWarehouse(item.warehouse_name || 'Central Warehouse (Cairo Base)', locale)}
+                      </span>
                     </td>
 
                     {/* On Hand */}
@@ -247,7 +254,7 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
                           e.stopPropagation();
                           setActionMenuOpenId(actionMenuOpenId === item.id ? null : item.id);
                         }}
-                        title="Actions"
+                        title={t('inventory.col_actions')}
                       >
                         <MoreHorizontal style={{ width: 14, height: 14 }} />
                       </button>
@@ -266,7 +273,7 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
                             }}
                           >
                             <ArrowUpRight style={{ width: 12, height: 12, color: '#ef4444' }} />
-                            <span>Quick Issue</span>
+                            <span>{t('inventory.quick_issue')}</span>
                           </button>
                           <button
                             className="actions-menu-item"
@@ -276,7 +283,7 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
                             }}
                           >
                             <ArrowLeftRight style={{ width: 12, height: 12, color: 'var(--text-secondary)' }} />
-                            <span>Transfer Stock</span>
+                            <span>{t('inventory.transfer_stock')}</span>
                           </button>
                           <button
                             className="actions-menu-item"
@@ -286,7 +293,7 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
                             }}
                           >
                             <Check style={{ width: 12, height: 12, color: '#10b981' }} />
-                            <span>Receive Stock</span>
+                            <span>{t('inventory.receive_stock')}</span>
                           </button>
                         </div>
                       )}
@@ -302,7 +309,9 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
       {/* Pagination Footer */}
       <div className="table-pagination-footer">
         <div className="pagination-info">
-          Showing {items.length > 0 ? startItemIndex : 0} - {endItemIndex} of {totalItemsCount} items
+          {locale === 'ar'
+            ? `عرض ${items.length > 0 ? startItemIndex : 0} - ${endItemIndex} من إجمالي ${totalItemsCount} صنفاً`
+            : `Showing ${items.length > 0 ? startItemIndex : 0} - ${endItemIndex} of ${totalItemsCount} items`}
         </div>
 
         <div className="pagination-controls">
@@ -344,9 +353,9 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
             onChange={(e) => onPageSizeChange(Number(e.target.value))}
             aria-label="Items per page"
           >
-            <option value={10}>10 / page</option>
-            <option value={20}>20 / page</option>
-            <option value={50}>50 / page</option>
+            <option value={10}>10 {t('inventory.per_page')}</option>
+            <option value={20}>20 {t('inventory.per_page')}</option>
+            <option value={50}>50 {t('inventory.per_page')}</option>
           </select>
         </div>
       </div>

@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Printer, X, Tag, Download, Check, Sparkles } from 'lucide-react';
 import { InventoryItem, InventoryLocation } from '../types';
 import { generateCode128Svg, generateQrCodeSvg } from '../utils/barcode';
+import { useI18n } from '../i18n/I18nContext';
 
 interface BinLabelModalProps {
   item: InventoryItem;
@@ -14,6 +15,7 @@ export const BinLabelModal: React.FC<BinLabelModalProps> = ({
   location,
   onClose,
 }) => {
+  const { locale } = useI18n();
   const [labelSize, setLabelSize] = useState<'4x2' | '2x1'>('4x2');
   const [downloaded, setDownloaded] = useState<boolean>(false);
 
@@ -289,9 +291,9 @@ export const BinLabelModal: React.FC<BinLabelModalProps> = ({
         <div className="label-modal-header">
           <div className="label-modal-title">
             <Tag size={16} />
-            <span>Thermal Shelf & Bin Label Generator</span>
+            <span>{locale === 'ar' ? 'مُولّد ملصقات الأرفف والصناديق الحرارية' : 'Thermal Shelf & Bin Label Generator'}</span>
           </div>
-          <button className="btn-icon" onClick={onClose} title="Close (Esc)">
+          <button className="btn-icon" onClick={onClose} title={locale === 'ar' ? 'إغلاق (Esc)' : 'Close (Esc)'}>
             <X size={16} />
           </button>
         </div>
@@ -304,13 +306,13 @@ export const BinLabelModal: React.FC<BinLabelModalProps> = ({
               className={`label-size-btn ${labelSize === '4x2' ? 'active' : ''}`}
               onClick={() => setLabelSize('4x2')}
             >
-              <span>4" × 2" Rack / Bin Tag (Zebra Standard)</span>
+              <span>{locale === 'ar' ? 'ملصق رفوف / صناديق 4" × 2" (معيار زيبرا)' : '4" × 2" Rack / Bin Tag (Zebra Standard)'}</span>
             </button>
             <button
               className={`label-size-btn ${labelSize === '2x1' ? 'active' : ''}`}
               onClick={() => setLabelSize('2x1')}
             >
-              <span>2" × 1" Compact Part Sticker</span>
+              <span>{locale === 'ar' ? 'ملصق أجزاء مدمج 2" × 1"' : '2" × 1" Compact Part Sticker'}</span>
             </button>
           </div>
 
@@ -383,7 +385,7 @@ export const BinLabelModal: React.FC<BinLabelModalProps> = ({
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.75rem', color: '#888888' }}>
             <Sparkles size={14} color="#10b981" />
-            <span>Pure vector SVG — 100% crisp printing with zero anti-aliasing blur on thermal heads.</span>
+            <span>{locale === 'ar' ? 'رسومات شعاعية SVG نقية — طباعة عالية الوضوح بنسبة 100% بدون تشويش على الرؤوس الحرارية.' : 'Pure vector SVG — 100% crisp printing with zero anti-aliasing blur on thermal heads.'}</span>
           </div>
         </div>
 
@@ -395,11 +397,15 @@ export const BinLabelModal: React.FC<BinLabelModalProps> = ({
             style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
           >
             {downloaded ? <Check size={14} color="#10b981" /> : <Download size={14} />}
-            <span>{downloaded ? 'Downloaded SVG' : 'Download SVG'}</span>
+            <span>
+              {locale === 'ar'
+                ? (downloaded ? 'تم تنزيل SVG' : 'تنزيل كـ SVG')
+                : (downloaded ? 'Downloaded SVG' : 'Download SVG')}
+            </span>
           </button>
           <div style={{ display: 'flex', gap: '8px' }}>
             <button className="btn btn-secondary" onClick={onClose}>
-              Cancel
+              {locale === 'ar' ? 'إلغاء' : 'Cancel'}
             </button>
             <button
               className="btn btn-primary"
@@ -407,7 +413,7 @@ export const BinLabelModal: React.FC<BinLabelModalProps> = ({
               style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
             >
               <Printer size={15} />
-              <span>Print Thermal Tag</span>
+              <span>{locale === 'ar' ? 'طباعة الملصق الحراري' : 'Print Thermal Tag'}</span>
             </button>
           </div>
         </div>

@@ -10,6 +10,8 @@ import { POApprovalModal } from './POApprovalModal';
 import { POReceiveModal } from './POReceiveModal';
 import { POCancelModal } from './POCancelModal';
 import { POPrintModal } from './POPrintModal';
+import { useI18n } from '../i18n/I18nContext';
+import { translatePOStatus } from '../i18n/translations';
 
 interface ProcurementViewProps {
   orders: PurchaseOrder[];
@@ -40,6 +42,7 @@ export const ProcurementView: React.FC<ProcurementViewProps> = ({
   initialPoId,
   onClearInitialPoId,
 }) => {
+  const { t, locale } = useI18n();
   // Navigation Workstation Mode
   const [viewMode, setViewMode] = useState<'LIST' | 'CREATE' | 'DETAIL'>('LIST');
   const [selectedPoId, setSelectedPoId] = useState<number | null>(null);
@@ -170,19 +173,20 @@ export const ProcurementView: React.FC<ProcurementViewProps> = ({
   };
 
   const getStatusBadge = (status: string) => {
+    const label = translatePOStatus(status, locale);
     switch (status) {
       case 'DRAFT':
-        return <span className="po-badge po-badge-draft">Draft</span>;
+        return <span className="po-badge po-badge-draft">{label}</span>;
       case 'APPROVED':
-        return <span className="po-badge po-badge-approved">Approved</span>;
+        return <span className="po-badge po-badge-approved">{label}</span>;
       case 'PARTIALLY_RECEIVED':
-        return <span className="po-badge po-badge-partial">Partially Received</span>;
+        return <span className="po-badge po-badge-partial">{label}</span>;
       case 'RECEIVED':
-        return <span className="po-badge po-badge-received">Received</span>;
+        return <span className="po-badge po-badge-received">{label}</span>;
       case 'CANCELLED':
-        return <span className="po-badge po-badge-cancelled">Cancelled</span>;
+        return <span className="po-badge po-badge-cancelled">{label}</span>;
       default:
-        return <span className="po-badge">{status}</span>;
+        return <span className="po-badge">{label}</span>;
     }
   };
 
@@ -268,8 +272,8 @@ export const ProcurementView: React.FC<ProcurementViewProps> = ({
       {/* Page Heading */}
       <div className="procurement-header">
         <div className="procurement-header-title-box">
-          <h1>Purchase Orders</h1>
-          <p>Track supplier orders, manage approvals, and record incoming deliveries.</p>
+          <h1>{t('procurement.title')}</h1>
+          <p>{t('procurement.subtitle')}</p>
         </div>
 
         <div className="procurement-header-actions">
@@ -277,10 +281,10 @@ export const ProcurementView: React.FC<ProcurementViewProps> = ({
             type="button"
             className="btn btn-secondary"
             onClick={handleExportCSV}
-            title="Export filtered purchase orders as CSV"
+            title={locale === 'ar' ? 'تصدير أوامر الشراء كملف CSV' : 'Export filtered purchase orders as CSV'}
           >
             <Download style={{ width: 14, height: 14 }} />
-            <span>Export CSV</span>
+            <span>{t('procurement.export_csv')}</span>
           </button>
 
           <button
@@ -289,7 +293,7 @@ export const ProcurementView: React.FC<ProcurementViewProps> = ({
             onClick={() => setViewMode('CREATE')}
           >
             <Plus style={{ width: 14, height: 14 }} />
-            <span>+ Create Purchase Order</span>
+            <span>{t('procurement.create_po')}</span>
           </button>
         </div>
       </div>
@@ -299,66 +303,66 @@ export const ProcurementView: React.FC<ProcurementViewProps> = ({
         <div
           className={`po-summary-card ${activeCardFilter === 'OPEN' ? 'active' : ''}`}
           onClick={() => handleCardClick('OPEN')}
-          title="Click to filter by open purchase orders"
+          title={locale === 'ar' ? 'تصفية أوامر الشراء المفتوحة' : 'Click to filter by open purchase orders'}
         >
           <div className="po-summary-card-header">
-            <span className="po-summary-card-title">Open Purchase Orders</span>
+            <span className="po-summary-card-title">{t('procurement.open_orders')}</span>
             <ShoppingBag className="po-summary-card-icon" />
           </div>
           <div className="po-summary-card-value">{openOrdersCount}</div>
-          <div className="po-summary-card-sub">Draft, Approved & Partially Received</div>
+          <div className="po-summary-card-sub">{t('procurement.open_orders_sub')}</div>
         </div>
 
         <div
           className={`po-summary-card card-amber ${activeCardFilter === 'AWAITING' ? 'active' : ''}`}
           onClick={() => handleCardClick('AWAITING')}
-          title="Click to filter by draft orders awaiting approval"
+          title={locale === 'ar' ? 'تصفية الأوامر بانتظار الاعتماد' : 'Click to filter by draft orders awaiting approval'}
         >
           <div className="po-summary-card-header">
-            <span className="po-summary-card-title">Awaiting Approval</span>
+            <span className="po-summary-card-title">{t('procurement.awaiting_approval')}</span>
             <Clock className="po-summary-card-icon" style={{ color: '#fbbf24' }} />
           </div>
           <div className="po-summary-card-value" style={{ color: '#fbbf24' }}>{awaitingApprovalCount}</div>
-          <div className="po-summary-card-sub">Draft orders pending authorization</div>
+          <div className="po-summary-card-sub">{t('procurement.awaiting_approval_sub')}</div>
         </div>
 
         <div
           className={`po-summary-card ${activeCardFilter === 'PARTIAL' ? 'active' : ''}`}
           onClick={() => handleCardClick('PARTIAL')}
-          title="Click to filter by partially delivered purchase orders"
+          title={locale === 'ar' ? 'تصفية الأوامر المستلمة جزئياً' : 'Click to filter by partially delivered purchase orders'}
         >
           <div className="po-summary-card-header">
-            <span className="po-summary-card-title">Partially Received</span>
+            <span className="po-summary-card-title">{t('procurement.partially_received')}</span>
             <Truck className="po-summary-card-icon" style={{ color: '#60a5fa' }} />
           </div>
           <div className="po-summary-card-value">{partiallyReceivedCount}</div>
-          <div className="po-summary-card-sub">Deliveries in progress on dock</div>
+          <div className="po-summary-card-sub">{t('procurement.partially_received_sub')}</div>
         </div>
 
         <div
           className={`po-summary-card card-red ${activeCardFilter === 'OVERDUE' ? 'active' : ''}`}
           onClick={() => handleCardClick('OVERDUE')}
-          title="Click to filter by overdue open orders"
+          title={locale === 'ar' ? 'تصفية الأوامر المتأخرة عن موعدها' : 'Click to filter by overdue open orders'}
         >
           <div className="po-summary-card-header">
-            <span className="po-summary-card-title">Overdue Deliveries</span>
+            <span className="po-summary-card-title">{t('procurement.overdue_deliveries')}</span>
             <AlertTriangle className="po-summary-card-icon" style={{ color: '#f87171' }} />
           </div>
           <div className="po-summary-card-value" style={{ color: overdueDeliveriesCount > 0 ? '#f87171' : '#ffffff' }}>
             {overdueDeliveriesCount}
           </div>
-          <div className="po-summary-card-sub">Arrival date passed & order open</div>
+          <div className="po-summary-card-sub">{t('procurement.overdue_sub')}</div>
         </div>
       </div>
 
       {/* Filter Toolbar */}
       <div className="po-filter-bar">
         <div className="po-search-box">
-          <Search style={{ width: 14, height: 14, position: 'absolute', left: '0.65rem', color: 'var(--text-muted)' }} />
+          <Search style={{ width: 14, height: 14, position: 'absolute', left: locale === 'ar' ? undefined : '0.65rem', right: locale === 'ar' ? '0.65rem' : undefined, color: 'var(--text-muted)' }} />
           <input
             type="text"
             className="po-search-input"
-            placeholder="Search by PO number or supplier..."
+            placeholder={t('procurement.search_placeholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -366,7 +370,7 @@ export const ProcurementView: React.FC<ProcurementViewProps> = ({
             <button
               type="button"
               onClick={() => setSearchQuery('')}
-              style={{ position: 'absolute', right: '0.5rem', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+              style={{ position: 'absolute', right: locale === 'ar' ? undefined : '0.5rem', left: locale === 'ar' ? '0.5rem' : undefined, background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
             >
               <X style={{ width: 13, height: 13 }} />
             </button>
@@ -376,19 +380,24 @@ export const ProcurementView: React.FC<ProcurementViewProps> = ({
         <div className="po-filter-group">
           {/* Status Pills */}
           <div className="po-status-pills">
-            {['ALL', 'DRAFT', 'APPROVED', 'PARTIALLY_RECEIVED', 'RECEIVED', 'CANCELLED'].map((st) => (
-              <button
-                key={st}
-                type="button"
-                className={`po-status-pill-btn ${statusFilter === st ? 'active' : ''}`}
-                onClick={() => {
-                  setStatusFilter(st);
-                  setActiveCardFilter('ALL');
-                }}
-              >
-                {st === 'PARTIALLY_RECEIVED' ? 'Partial' : st.replace('_', ' ')}
-              </button>
-            ))}
+            {['ALL', 'DRAFT', 'APPROVED', 'PARTIALLY_RECEIVED', 'RECEIVED', 'CANCELLED'].map((st) => {
+              const label = st === 'ALL'
+                ? (locale === 'ar' ? 'الكل' : 'All')
+                : translatePOStatus(st, locale);
+              return (
+                <button
+                  key={st}
+                  type="button"
+                  className={`po-status-pill-btn ${statusFilter === st ? 'active' : ''}`}
+                  onClick={() => {
+                    setStatusFilter(st);
+                    setActiveCardFilter('ALL');
+                  }}
+                >
+                  {label}
+                </button>
+              );
+            })}
           </div>
 
           {/* Supplier Dropdown */}
@@ -398,7 +407,9 @@ export const ProcurementView: React.FC<ProcurementViewProps> = ({
             value={supplierFilter}
             onChange={(e) => setSupplierFilter(e.target.value)}
           >
-            <option value="ALL">All Suppliers ({suppliers.length})</option>
+            <option value="ALL">
+              {locale === 'ar' ? `جميع الموردين (${suppliers.length})` : `All Suppliers (${suppliers.length})`}
+            </option>
             {suppliers.map((s) => (
               <option key={s.id} value={String(s.id)}>
                 {s.name}
@@ -412,10 +423,10 @@ export const ProcurementView: React.FC<ProcurementViewProps> = ({
               className="btn btn-secondary"
               onClick={clearFilters}
               style={{ fontSize: '0.74rem', padding: '0.3rem 0.6rem' }}
-              title="Reset all active filters"
+              title={locale === 'ar' ? 'إعادة ضبط عوامل التصفية' : 'Reset all active filters'}
             >
               <X style={{ width: 12, height: 12 }} />
-              <span>Clear</span>
+              <span>{t('procurement.btn_clear')}</span>
             </button>
           )}
         </div>
@@ -426,29 +437,29 @@ export const ProcurementView: React.FC<ProcurementViewProps> = ({
         <table className="data-table">
           <thead>
             <tr>
-              <th>PO Number</th>
-              <th>Supplier Partner</th>
-              <th>Order Date</th>
-              <th>Expected Delivery</th>
-              <th style={{ textAlign: 'right' }}>Items</th>
-              <th style={{ textAlign: 'right' }}>Total Value</th>
-              <th>Destination</th>
-              <th>Source</th>
-              <th>Status</th>
-              <th style={{ textAlign: 'right' }}>Actions</th>
+              <th>{t('procurement.col_po_number')}</th>
+              <th>{t('procurement.col_supplier')}</th>
+              <th>{t('procurement.col_created')}</th>
+              <th>{t('procurement.col_expected')}</th>
+              <th style={{ textAlign: 'right' }}>{t('procurement.col_items')}</th>
+              <th style={{ textAlign: 'right' }}>{t('procurement.col_total')}</th>
+              <th>{t('procurement.col_destination')}</th>
+              <th>{t('procurement.col_source')}</th>
+              <th>{t('procurement.col_status')}</th>
+              <th style={{ textAlign: 'right' }}>{t('procurement.col_actions')}</th>
             </tr>
           </thead>
           <tbody>
             {loading && orders.length === 0 ? (
               <tr>
                 <td colSpan={10} style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
-                  Loading purchase orders from inventory ledger...
+                  {t('procurement.loading_msg')}
                 </td>
               </tr>
             ) : filteredOrders.length === 0 ? (
               <tr>
                 <td colSpan={10} style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
-                  No purchase orders found matching this filter criteria.
+                  {t('procurement.empty_msg')}
                 </td>
               </tr>
             ) : (
@@ -493,7 +504,7 @@ export const ProcurementView: React.FC<ProcurementViewProps> = ({
                       )}
                     </td>
                     <td style={{ textAlign: 'right', fontWeight: 500 }}>
-                      {po.lines.length} {po.lines.length === 1 ? 'line' : 'lines'}
+                      {po.lines.length} {locale === 'ar' ? 'بنود' : (po.lines.length === 1 ? 'line' : 'lines')}
                     </td>
                     <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono)', fontWeight: 600, color: '#ffffff' }}>
                       {totalValue}
@@ -506,10 +517,10 @@ export const ProcurementView: React.FC<ProcurementViewProps> = ({
                     <td>
                       {po.source_recommendation_id ? (
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem', fontSize: '0.7rem', color: '#38bdf8' }}>
-                          <Sparkles style={{ width: 11, height: 11 }} /> AI Rec
+                          <Sparkles style={{ width: 11, height: 11 }} /> {locale === 'ar' ? 'توصية ذكية' : 'AI Rec'}
                         </span>
                       ) : (
-                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Manual</span>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{locale === 'ar' ? 'يدوي' : 'Manual'}</span>
                       )}
                     </td>
                     <td>{getStatusBadge(po.status)}</td>
@@ -522,7 +533,7 @@ export const ProcurementView: React.FC<ProcurementViewProps> = ({
                             style={{ padding: '0.25rem 0.55rem', fontSize: '0.72rem' }}
                             onClick={() => setApprovingPO(po)}
                           >
-                            <CheckCircle style={{ width: 12, height: 12 }} /> Approve
+                            <CheckCircle style={{ width: 12, height: 12 }} /> {t('procurement.btn_approve')}
                           </button>
                         )}
                         {(po.status === 'APPROVED' || po.status === 'PARTIALLY_RECEIVED') && (
@@ -532,14 +543,14 @@ export const ProcurementView: React.FC<ProcurementViewProps> = ({
                             style={{ padding: '0.25rem 0.55rem', fontSize: '0.72rem', background: '#10b981', borderColor: '#10b981' }}
                             onClick={() => setReceivingPO(po)}
                           >
-                            <PackageCheck style={{ width: 12, height: 12 }} /> Receive
+                            <PackageCheck style={{ width: 12, height: 12 }} /> {t('procurement.btn_receive')}
                           </button>
                         )}
                         <button
                           type="button"
                           className="btn btn-secondary"
                           style={{ padding: '0.25rem 0.55rem', fontSize: '0.72rem' }}
-                          title="Print Official PO Docket"
+                          title={locale === 'ar' ? 'طباعة مستند أمر الشراء الرسمي' : 'Print Official PO Docket'}
                           onClick={() => setPrintingPO(po)}
                         >
                           <Printer style={{ width: 12, height: 12, color: '#38bdf8' }} />
@@ -553,7 +564,7 @@ export const ProcurementView: React.FC<ProcurementViewProps> = ({
                             setViewMode('DETAIL');
                           }}
                         >
-                          View Details
+                          {t('procurement.btn_view')}
                         </button>
                       </div>
                     </td>

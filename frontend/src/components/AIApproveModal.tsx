@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Sparkles, CheckCircle, X, AlertCircle, ShoppingBag } from 'lucide-react';
 import { AIRecommendation, Supplier, InventoryLocation, PurchaseOrder } from '../types';
+import { useI18n } from '../i18n/I18nContext';
+import { translateWarehouse } from '../i18n/translations';
 
 interface AIApproveModalProps {
   rec: AIRecommendation;
@@ -19,6 +21,7 @@ export const AIApproveModal: React.FC<AIApproveModalProps> = ({
   onApproveSuccess,
   onApprove,
 }) => {
+  const { locale } = useI18n();
   let explanation: any = {};
   try {
     explanation = JSON.parse(rec.explanation_json);
@@ -32,7 +35,11 @@ export const AIApproveModal: React.FC<AIApproveModalProps> = ({
   const [orderQty, setOrderQty] = useState<number>(rec.suggested_qty);
   const supplierId = rec.supplier_id || suppliers[0]?.id || 1;
   const [expectedDate, setExpectedDate] = useState<string>('');
-  const [notes, setNotes] = useState<string>(`Generated from AI Replenishment Recommendation #${rec.id}`);
+  const [notes, setNotes] = useState<string>(
+    locale === 'ar'
+      ? `تم التوليد آلياً من مقترح إعادة التوريد #${rec.id}`
+      : `Generated from AI Replenishment Recommendation #${rec.id}`
+  );
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -74,9 +81,11 @@ export const AIApproveModal: React.FC<AIApproveModalProps> = ({
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Sparkles style={{ width: 18, height: 18, color: '#38bdf8' }} />
             <div>
-              <h3>Review Replenishment Order</h3>
+              <h3>{locale === 'ar' ? 'مراجعة أمر إعادة التوريد' : 'Review Replenishment Order'}</h3>
               <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', margin: 0 }}>
-                Review proposed purchase parameters before creating draft purchase order
+                {locale === 'ar'
+                  ? 'مراجعة محددات الشراء قبل إنشاء مسودة أمر الشراء واعتمادها'
+                  : 'Review proposed purchase parameters before creating draft purchase order'}
               </p>
             </div>
           </div>
@@ -102,17 +111,19 @@ export const AIApproveModal: React.FC<AIApproveModalProps> = ({
             <div style={{ padding: '0.65rem 0.85rem', background: '#121214', border: '1px solid var(--border-default)', borderRadius: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <span className="sku-cell" style={{ fontWeight: 600 }}>{rec.item_sku}</span>
-                <span style={{ fontSize: '0.8rem', color: '#ffffff', marginLeft: '0.5rem' }}>{rec.item_name}</span>
+                <span style={{ fontSize: '0.8rem', color: '#ffffff', marginInlineStart: '0.5rem' }}>{rec.item_name}</span>
               </div>
               <span className="badge badge-info" style={{ fontSize: '0.68rem' }}>
-                Position: {rec.inventory_position} / ROP: {rec.reorder_point}
+                {locale === 'ar' ? 'الموقف:' : 'Position:'} {rec.inventory_position} / {locale === 'ar' ? 'نقطة الطلب:' : 'ROP:'} {rec.reorder_point}
               </span>
             </div>
 
             <div className="form-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
               <div className="form-group">
                 <label className="form-label">
-                  Proposed Order Quantity * (MOQ: {moq})
+                  {locale === 'ar'
+                    ? `الكمية المقترحة للطلب * (الحد الأدنى: ${moq} وحدة)`
+                    : `Proposed Order Quantity * (MOQ: ${moq})`}
                 </label>
                 <input
                   type="number"
@@ -127,7 +138,9 @@ export const AIApproveModal: React.FC<AIApproveModalProps> = ({
               </div>
 
               <div className="form-group">
-                <label className="form-label">Expected Delivery Date</label>
+                <label className="form-label">
+                  {locale === 'ar' ? 'تاريخ التوريد المتوقع' : 'Expected Delivery Date'}
+                </label>
                 <input
                   type="date"
                   className="form-input"
@@ -139,7 +152,9 @@ export const AIApproveModal: React.FC<AIApproveModalProps> = ({
 
             <div className="form-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
               <div className="form-group">
-                <label className="form-label">Assigned Vendor</label>
+                <label className="form-label">
+                  {locale === 'ar' ? 'المورّد المعتمد' : 'Assigned Vendor'}
+                </label>
                 <input
                   type="text"
                   className="form-input"
@@ -150,11 +165,13 @@ export const AIApproveModal: React.FC<AIApproveModalProps> = ({
               </div>
 
               <div className="form-group">
-                <label className="form-label">Destination Warehouse</label>
+                <label className="form-label">
+                  {locale === 'ar' ? 'مستودع الوجهة' : 'Destination Warehouse'}
+                </label>
                 <input
                   type="text"
                   className="form-input"
-                  value={matchedLocation.name}
+                  value={translateWarehouse(matchedLocation.name, locale)}
                   readOnly
                   style={{ background: '#09090b', color: 'var(--text-secondary)' }}
                 />
@@ -162,7 +179,9 @@ export const AIApproveModal: React.FC<AIApproveModalProps> = ({
             </div>
 
             <div className="form-group">
-              <label className="form-label">Requisition Reference & Audit Notes</label>
+              <label className="form-label">
+                {locale === 'ar' ? 'مرجع الطلب وملاحظات التدقيق' : 'Requisition Reference & Audit Notes'}
+              </label>
               <input
                 type="text"
                 className="form-input"
@@ -175,30 +194,38 @@ export const AIApproveModal: React.FC<AIApproveModalProps> = ({
             <div className="po-modal-review-summary">
               <div style={{ fontWeight: 600, color: '#ffffff', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                 <ShoppingBag style={{ width: 14, height: 14, color: '#3b82f6' }} />
-                <span>Replenishment Order Review</span>
+                <span>{locale === 'ar' ? 'مراجعة أمر إعادة التوريد' : 'Replenishment Order Review'}</span>
               </div>
               <div className="po-modal-review-row">
-                <span>Model Suggested Quantity:</span>
-                <span>+{rec.suggested_qty} units</span>
+                <span>{locale === 'ar' ? 'الكمية المقترحة من النموذج:' : 'Model Suggested Quantity:'}</span>
+                <span>+{rec.suggested_qty} {locale === 'ar' ? 'وحدة' : 'units'}</span>
               </div>
               <div className="po-modal-review-row">
-                <span>Final Requisition Quantity:</span>
-                <span style={{ color: '#34d399', fontWeight: 700 }}>+{orderQty} units</span>
+                <span>{locale === 'ar' ? 'الكمية النهائية لأمر الشراء:' : 'Final Requisition Quantity:'}</span>
+                <span style={{ color: '#34d399', fontWeight: 700 }}>+{orderQty} {locale === 'ar' ? 'وحدة' : 'units'}</span>
               </div>
               <div className="po-modal-review-row">
-                <span>Constraints Check:</span>
-                <span style={{ color: '#34d399' }}>✓ MOQ ({moq}) & Multiple ({orderMultiple}) Satisfied</span>
+                <span>{locale === 'ar' ? 'فحص القيود:' : 'Constraints Check:'}</span>
+                <span style={{ color: '#34d399' }}>
+                  {locale === 'ar'
+                    ? `✓ تم استيفاء الحد الأدنى (${moq}) ومضاعف الحزمة (${orderMultiple})`
+                    : `✓ MOQ (${moq}) & Multiple (${orderMultiple}) Satisfied`}
+                </span>
               </div>
             </div>
           </div>
 
           <div className="modal-footer">
             <button type="button" className="btn btn-secondary" onClick={onClose} disabled={submitting}>
-              Cancel
+              {locale === 'ar' ? 'إلغاء' : 'Cancel'}
             </button>
             <button type="submit" className="btn btn-primary" disabled={submitting || orderQty <= 0}>
               <CheckCircle style={{ width: 14, height: 14 }} />
-              <span>{submitting ? 'Generating PO & Updating Ledger...' : 'Confirm & Create Purchase Order'}</span>
+              <span>
+                {submitting
+                  ? (locale === 'ar' ? 'جارٍ إنشاء أمر الشراء وتحديث السجل...' : 'Generating PO & Updating Ledger...')
+                  : (locale === 'ar' ? 'تأكيد وإنشاء أمر الشراء' : 'Confirm & Create Purchase Order')}
+              </span>
             </button>
           </div>
         </form>

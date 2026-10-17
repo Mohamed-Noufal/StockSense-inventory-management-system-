@@ -7,6 +7,8 @@ import {
 import { InventoryItem, PurchaseOrder, Supplier } from '../types';
 import { useBarcodeScanner } from '../hooks/useBarcodeScanner';
 import { soundEffects } from '../utils/audio';
+import { useI18n } from '../i18n/I18nContext';
+import { translateCategory, translateWarehouse } from '../i18n/translations';
 
 interface BarcodeScannerModalProps {
   items: InventoryItem[];
@@ -31,6 +33,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
   onOnboardNewItem,
   onReceivePOLine,
 }) => {
+  const { t, locale } = useI18n();
   const [query, setQuery] = useState<string>('');
   const [scannedItem, setScannedItem] = useState<InventoryItem | null>(null);
   const [matchedVendorSku, setMatchedVendorSku] = useState<string | null>(null);
@@ -256,7 +259,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <Scan size={18} color="#ededed" />
             <span style={{ fontSize: '0.95rem', fontWeight: 600, color: '#ededed' }}>
-              Universal Optical Barcode & Delivery Docket Scanner
+              {locale === 'ar' ? 'ماسح الباركود الضوئي وإشعارات الشحن الواردة' : 'Universal Optical Barcode & Delivery Docket Scanner'}
             </span>
           </div>
 
@@ -279,12 +282,12 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
               title="Toggle mobile device camera scanner"
             >
               <Camera size={13} />
-              <span>{scannerMode === 'camera' ? 'Camera Active' : 'Camera Scan'}</span>
+              <span>{scannerMode === 'camera' ? (locale === 'ar' ? 'الكاميرا نشطة' : 'Camera Active') : (locale === 'ar' ? 'مسح بالكاميرا' : 'Camera Scan')}</span>
             </button>
 
             <div className="scanner-status-pulse">
               <span className="pulse-dot" />
-              <span>USB Wedge Active</span>
+              <span>{locale === 'ar' ? 'القارئ الليزري جاهز' : 'USB Wedge Active'}</span>
             </div>
             <button className="btn-icon" onClick={onClose} title="Close (Esc)">
               <X size={16} />
@@ -300,7 +303,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
               {cameraError ? (
                 <div style={{ padding: '1rem', textAlign: 'center', color: '#ef4444' }}>
                   <AlertCircle size={28} style={{ margin: '0 auto 8px' }} />
-                  <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>Camera Unavailable</div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>{locale === 'ar' ? 'الكاميرا غير متاحة' : 'Camera Unavailable'}</div>
                   <div style={{ fontSize: '0.75rem', color: '#888888', marginTop: '4px' }}>
                     {cameraError}
                   </div>
@@ -309,7 +312,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                     onClick={() => setScannerMode('gun')}
                     style={{ marginTop: '10px', fontSize: '0.75rem' }}
                   >
-                    Return to USB Gun Wedge
+                    {locale === 'ar' ? 'العودة للقارئ اليدوي' : 'Return to USB Gun Wedge'}
                   </button>
                 </div>
               ) : (
@@ -339,7 +342,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                       gap: '6px',
                     }}
                   >
-                    <span>Point camera at printed SKU tag, vendor barcode, or PO waybill</span>
+                    <span>{locale === 'ar' ? 'وجّه الكاميرا نحو ملصق الباركود للصنف أو بوليصة أمر الشراء' : 'Point camera at printed SKU tag, vendor barcode, or PO waybill'}</span>
                   </div>
                 </>
               )}
@@ -352,7 +355,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
             <input
               ref={inputRef}
               type="text"
-              placeholder="Scan barcode with USB gun, enter SKU, Vendor Part #, or PO #..."
+              placeholder={t('scanner.search_placeholder')}
               value={query}
               onChange={(e) => {
                 setQuery(e.target.value);
@@ -384,7 +387,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
           {/* Quick Test Presets (Interview Demo Facilitator) */}
           <div className="scanner-presets-section">
             <div className="scanner-presets-label">
-              Interview Demonstration Presets (Click to Simulate Hardware Scan):
+              {t('scanner.presets_title')}
             </div>
             <div className="scanner-chips-row">
               {samplePresets.map((preset) => (
@@ -419,14 +422,14 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                         border: '1px solid rgba(56, 189, 248, 0.3)',
                       }}
                     >
-                      Inbound Delivery Docket
+                      {t('scanner.inbound_docket')}
                     </span>
                   </div>
                   <div className="scanned-item-title">
-                    Supplier: {scannedPO.supplier_name || 'Apex Seals & Hydraulics Ltd'}
+                    {t('scanner.supplier')} {scannedPO.supplier_name || 'Apex Seals & Hydraulics Ltd'}
                   </div>
                   <div style={{ fontSize: '0.75rem', color: '#888888', marginTop: '2px' }}>
-                    Expected: {scannedPO.expected_date ? scannedPO.expected_date.split('T')[0] : 'Today'} • Destination: Central Warehouse (Cairo Base)
+                    {t('scanner.expected')} {scannedPO.expected_date ? scannedPO.expected_date.split('T')[0] : (locale === 'ar' ? 'اليوم' : 'Today')} • {t('scanner.destination')} {translateWarehouse('Central Warehouse (Cairo Base)', locale)}
                   </div>
                 </div>
                 <div
@@ -444,7 +447,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
               {/* PO Line Items Breakdown */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '0.75rem 0', borderTop: '1px solid #1f1f23', borderBottom: '1px solid #1f1f23' }}>
                 <div style={{ fontSize: '0.7rem', fontWeight: 600, color: '#71717a', textTransform: 'uppercase' }}>
-                  Delivery Lines & Ordered Quantities:
+                  {t('scanner.delivery_lines')}
                 </div>
                 {scannedPO.lines && scannedPO.lines.map((line) => {
                   const remaining = line.qty_ordered - line.qty_received;
@@ -482,7 +485,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                           {line.qty_received} / {line.qty_ordered} EA
                         </div>
                         <div style={{ fontSize: '0.65rem', color: '#71717a' }}>
-                          {isDone ? 'Completed' : `${remaining} remaining`}
+                          {isDone ? (locale === 'ar' ? 'مكتمل' : 'Completed') : (locale === 'ar' ? `متبقي ${remaining}` : `${remaining} remaining`)}
                         </div>
                       </div>
                     </div>
@@ -509,7 +512,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                         }
                       }}
                     >
-                      Print 4"x2" Shelf Tag
+                      {locale === 'ar' ? 'طباعة ملصق الرف 4"x2"' : 'Print 4"x2" Shelf Tag'}
                     </button>
                   )}
                 </div>
@@ -517,7 +520,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                 scannedPO.status !== 'RECEIVED' && (
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontSize: '0.75rem', color: '#a1a1aa' }}>Receive Qty:</span>
+                      <span style={{ fontSize: '0.75rem', color: '#a1a1aa' }}>{locale === 'ar' ? 'الكمية المستلمة:' : 'Receive Qty:'}</span>
                       <input
                         type="number"
                         min="1"
@@ -543,7 +546,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                         style={{ padding: '0.5rem 1rem' }}
                       >
                         <Check size={14} color="#000000" />
-                        <span>{poReceiving ? 'Receiving...' : 'Post Goods Receipt'}</span>
+                        <span>{poReceiving ? t('scanner.receiving_btn') : t('scanner.receive_btn')}</span>
                       </button>
                     </div>
                   </div>
@@ -570,13 +573,13 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                           border: '1px solid rgba(56, 189, 248, 0.3)',
                         }}
                       >
-                        Vendor Part Alias: {matchedVendorSku}
+                        {locale === 'ar' ? `كود القطعة لدى المورد: ${matchedVendorSku}` : `Vendor Part Alias: ${matchedVendorSku}`}
                       </span>
                     )}
                   </div>
                   <div className="scanned-item-title">{scannedItem.name}</div>
                   <div style={{ fontSize: '0.75rem', color: '#888888', marginTop: '2px' }}>
-                    {scannedItem.category_name} • Warehouse: {scannedItem.warehouse_name || 'Central Warehouse (Cairo Base)'}
+                    {translateCategory(scannedItem.category_name || 'General', locale)} • {locale === 'ar' ? 'المستودع:' : 'Warehouse:'} {translateWarehouse(scannedItem.warehouse_name || 'Central Warehouse (Cairo Base)', locale)}
                   </div>
                 </div>
                 <div
@@ -587,28 +590,28 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                     border: '1px solid currentColor',
                   }}
                 >
-                  {scannedItem.criticality}
+                  {scannedItem.criticality === 'CRITICAL' ? (locale === 'ar' ? 'خطر حرج' : 'CRITICAL') : (locale === 'ar' ? 'قياسي' : 'STANDARD')}
                 </div>
               </div>
 
               {/* 4-Stat HUD Grid */}
               <div className="scanned-item-stats">
                 <div className="scanned-stat-box">
-                  <span className="scanned-stat-label">Stock On Hand</span>
+                  <span className="scanned-stat-label">{locale === 'ar' ? 'الرصيد الفعلي' : 'Stock On Hand'}</span>
                   <span className="scanned-stat-value" style={{ color: scannedItem.total_on_hand <= (scannedItem.reorder_point ?? 10) ? '#f59e0b' : '#10b981' }}>
-                    {scannedItem.total_on_hand} EA
+                    {scannedItem.total_on_hand} {locale === 'ar' ? 'وحدة' : 'EA'}
                   </span>
                 </div>
                 <div className="scanned-stat-box">
-                  <span className="scanned-stat-label">Reorder Point</span>
-                  <span className="scanned-stat-value">{scannedItem.reorder_point ?? 10} EA</span>
+                  <span className="scanned-stat-label">{locale === 'ar' ? 'حد الطلب' : 'Reorder Point'}</span>
+                  <span className="scanned-stat-value">{scannedItem.reorder_point ?? 10} {locale === 'ar' ? 'وحدة' : 'EA'}</span>
                 </div>
                 <div className="scanned-stat-box">
-                  <span className="scanned-stat-label">Unit Cost</span>
+                  <span className="scanned-stat-label">{locale === 'ar' ? 'سعر الوحدة' : 'Unit Cost'}</span>
                   <span className="scanned-stat-value">${(scannedItem.unit_cost_minor / 100).toFixed(2)}</span>
                 </div>
                 <div className="scanned-stat-box">
-                  <span className="scanned-stat-label">Storage Bin</span>
+                  <span className="scanned-stat-label">{locale === 'ar' ? 'موقع الرف' : 'Storage Bin'}</span>
                   <span className="scanned-stat-value" style={{ fontSize: '0.85rem', color: '#38bdf8' }}>
                     {storageBinDisplay}
                   </span>
@@ -626,7 +629,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                   title="Issue part to drilling rig or maintenance work order"
                 >
                   <ArrowUpRight size={14} />
-                  <span>Record Issue</span>
+                  <span>{t('scanner.btn_issue')}</span>
                 </button>
                 <button
                   className="scanned-action-btn receipt"
@@ -637,7 +640,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                   title="Receive inbound shipment into warehouse stock"
                 >
                   <ArrowDownLeft size={14} color="#10b981" />
-                  <span>Record Receipt</span>
+                  <span>{t('scanner.btn_receive')}</span>
                 </button>
                 <button
                   className="scanned-action-btn label"
@@ -653,7 +656,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                   title="Verify physical rack count matches system stock"
                 >
                   {auditVerified ? <Check size={14} color="#10b981" /> : <ShieldCheck size={14} color="#38bdf8" />}
-                  <span>{auditVerified ? 'Count Verified' : 'Audit Count'}</span>
+                  <span>{auditVerified ? (locale === 'ar' ? 'تم التحقق' : 'Count Verified') : (locale === 'ar' ? 'جرد فعلي' : 'Audit Count')}</span>
                 </button>
                 <button
                   className="scanned-action-btn label"
@@ -664,7 +667,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                   title="Print single-sheet 4x2 thermal shelf tag"
                 >
                   <Tag size={14} color="#a1a1aa" />
-                  <span>Print Tag</span>
+                  <span>{t('scanner.btn_print_tag')}</span>
                 </button>
                 <button
                   className="scanned-action-btn label"
@@ -675,7 +678,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                   title="Inspect 360-degree ledger history and safety stock"
                 >
                   <Layers size={14} color="#a1a1aa" />
-                  <span>Inspect</span>
+                  <span>{t('scanner.btn_inspect')}</span>
                 </button>
               </div>
             </div>
@@ -687,7 +690,9 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                   <AlertCircle size={32} color="#ef4444" />
                   <div style={{ color: '#ef4444', fontWeight: 600 }}>{scanStatus}</div>
                   <div style={{ fontSize: '0.75rem', color: '#888888', maxWidth: '420px' }}>
-                    No catalog item, vendor part alias, or open Purchase Order matches code "{query}".
+                    {locale === 'ar'
+                      ? `لا يوجد صنف في الدليل أو أمر شراء مفتوح يطابق الكود "${query}".`
+                      : `No catalog item, vendor part alias, or open Purchase Order matches code "${query}".`}
                   </div>
                   {onOnboardNewItem && (
                     <button
@@ -696,7 +701,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                       style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}
                     >
                       <PackagePlus size={15} />
-                      <span>+ Onboard "{query}" as New Catalog Item</span>
+                      <span>{locale === 'ar' ? `+ تسجيل "${query}" كصنف جديد في الدليل` : `+ Onboard "${query}" as New Catalog Item`}</span>
                     </button>
                   )}
                 </>
@@ -704,10 +709,12 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                 <>
                   <Layers size={32} />
                   <div style={{ fontWeight: 600, color: '#ededed' }}>
-                    Pull scanner gun trigger, scan camera, or select a preset
+                    {locale === 'ar' ? 'اضغط زناد قارئ الباركود، أو وجّه الكاميرا، أو اختر نموذجاً تجريبياً' : 'Pull scanner gun trigger, scan camera, or select a preset'}
                   </div>
                   <div style={{ fontSize: '0.75rem', color: '#888888', maxWidth: '420px' }}>
-                    Universal scanner accepts Internal SKUs, Supplier Part Numbers, or Inbound Purchase Order waybills with automatic cross-referencing.
+                    {locale === 'ar'
+                      ? 'يدعم القارئ الذكي رموز الأصناف الداخلية، أكواد الموردين، وبوالص أوامر الشراء تلقائياً.'
+                      : 'Universal scanner accepts Internal SKUs, Supplier Part Numbers, or Inbound Purchase Order waybills with automatic cross-referencing.'}
                   </div>
                 </>
               )}
@@ -718,10 +725,14 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
         {/* Footer */}
         <div className="label-modal-footer">
           <span style={{ fontSize: '0.75rem', color: '#71717a' }}>
-            Shortcut: Press <kbd style={{ background: '#1c1c20', padding: '2px 5px', borderRadius: '4px', border: '1px solid #333' }}>F2</kbd> anywhere to open scanner
+            {locale === 'ar' ? (
+              <>اختصار: اضغط <kbd style={{ background: '#1c1c20', padding: '2px 5px', borderRadius: '4px', border: '1px solid #333' }}>F2</kbd> في أي شاشة لفتح القارئ</>
+            ) : (
+              <>Shortcut: Press <kbd style={{ background: '#1c1c20', padding: '2px 5px', borderRadius: '4px', border: '1px solid #333' }}>F2</kbd> anywhere to open scanner</>
+            )}
           </span>
           <button className="btn btn-secondary" onClick={onClose}>
-            Close Scanner
+            {locale === 'ar' ? 'إغلاق القارئ' : 'Close Scanner'}
           </button>
         </div>
       </div>

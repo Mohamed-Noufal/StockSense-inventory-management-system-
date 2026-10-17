@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Play, X, RefreshCw, Sparkles } from 'lucide-react';
 import { AIRunTriggerPayload } from '../types';
+import { useI18n } from '../i18n/I18nContext';
 
 interface AIRunModalProps {
   onClose: () => void;
@@ -9,6 +10,7 @@ interface AIRunModalProps {
 }
 
 export const AIRunModal: React.FC<AIRunModalProps> = ({ onClose, onExecute, running }) => {
+  const { locale } = useI18n();
   const [serviceLevel, setServiceLevel] = useState<number>(0.95);
   const [method, setMethod] = useState<string>('tsb');
   const [seed, setSeed] = useState<number>(42);
@@ -25,7 +27,7 @@ export const AIRunModal: React.FC<AIRunModalProps> = ({ onClose, onExecute, runn
       });
       onClose();
     } catch (err: any) {
-      setError(err?.message || 'Failed to trigger AI forecasting run');
+      setError(err?.message || (locale === 'ar' ? 'فشل تشغيل خوارزميات التنبؤ' : 'Failed to trigger AI forecasting run'));
     }
   };
 
@@ -36,9 +38,11 @@ export const AIRunModal: React.FC<AIRunModalProps> = ({ onClose, onExecute, runn
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Sparkles style={{ width: 18, height: 18, color: '#38bdf8' }} />
             <div>
-              <h3>Run Forecast & Analysis</h3>
+              <h3>{locale === 'ar' ? 'تشغيل التحليل وخوارزميات التنبؤ' : 'Run Forecast & Analysis'}</h3>
               <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', margin: 0 }}>
-                Execute intermittent demand algorithms and compute replenishment policies
+                {locale === 'ar'
+                  ? 'تنفيذ خوارزميات الطلب المتقطع وحساب سياسات ومستويات إعادة الطلب'
+                  : 'Execute intermittent demand algorithms and compute replenishment policies'}
               </p>
             </div>
           </div>
@@ -62,13 +66,19 @@ export const AIRunModal: React.FC<AIRunModalProps> = ({ onClose, onExecute, runn
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
           <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div style={{ padding: '0.75rem 0.85rem', background: '#121214', border: '1px solid var(--border-default)', borderRadius: '6px', fontSize: '0.8rem', lineHeight: '1.45', color: 'var(--text-secondary)' }}>
-              This pipeline snapshots the active stock movements ledger up to the temporal cutoff, executes intermittent statistical models (TSB, SBA, Croston), and evaluates safety stock levels for slow-moving parts.
+              {locale === 'ar'
+                ? 'يقوم هذا المسار بأخذ لقطة فورية من سجل حركات المخزون حتى الحد الزمني المحدد، وينفذ النماذج الإحصائية للطلب المتقطع (TSB, SBA, Croston)، ويقيم مستويات مخزون الأمان لقطع الغيار بطيئة الحركة.'
+                : 'This pipeline snapshots the active stock movements ledger up to the temporal cutoff, executes intermittent statistical models (TSB, SBA, Croston), and evaluates safety stock levels for slow-moving parts.'}
             </div>
 
             <div className="form-group">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
-                <label className="form-label" style={{ margin: 0 }}>Target Cycle Service Level: {(serviceLevel * 100).toFixed(1)}%</label>
-                <span style={{ fontSize: '0.75rem', color: '#34d399', fontWeight: 600 }}>Normal: 95.0%</span>
+                <label className="form-label" style={{ margin: 0 }}>
+                  {locale === 'ar' ? `مستوى الخدمة المستهدف: ${(serviceLevel * 100).toFixed(1)}%` : `Target Cycle Service Level: ${(serviceLevel * 100).toFixed(1)}%`}
+                </label>
+                <span style={{ fontSize: '0.75rem', color: '#34d399', fontWeight: 600 }}>
+                  {locale === 'ar' ? 'الافتراضي: 95.0%' : 'Normal: 95.0%'}
+                </span>
               </div>
               <input
                 type="range"
@@ -84,7 +94,7 @@ export const AIRunModal: React.FC<AIRunModalProps> = ({ onClose, onExecute, runn
 
             <div className="form-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
               <div className="form-group">
-                <label className="form-label">Intermittent Method</label>
+                <label className="form-label">{locale === 'ar' ? 'خوارزمية الطلب المتقطع' : 'Intermittent Method'}</label>
                 <select
                   className="form-select"
                   value={method}
@@ -94,12 +104,12 @@ export const AIRunModal: React.FC<AIRunModalProps> = ({ onClose, onExecute, runn
                   <option value="tsb">TSB (Teunter-Syntetos-Babai)</option>
                   <option value="sba">SBA (Syntetos-Boylan Approx)</option>
                   <option value="croston">Croston's Method</option>
-                  <option value="ma8">Moving Average (MA8)</option>
+                  <option value="ma8">{locale === 'ar' ? 'المتوسط المتحرك (MA8)' : 'Moving Average (MA8)'}</option>
                 </select>
               </div>
 
               <div className="form-group">
-                <label className="form-label">Simulation Seed</label>
+                <label className="form-label">{locale === 'ar' ? 'بذرة المحاكاة (Seed)' : 'Simulation Seed'}</label>
                 <input
                   type="number"
                   className="form-input"
@@ -111,24 +121,28 @@ export const AIRunModal: React.FC<AIRunModalProps> = ({ onClose, onExecute, runn
             </div>
 
             <div style={{ padding: '0.65rem 0.85rem', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--border-subtle)', borderRadius: '6px', fontSize: '0.74rem', color: 'var(--text-muted)' }}>
-              Dataset Scope: <strong>Synthetic Demo Data (Oilfield Spares)</strong> • Invariant: Zero Future Leakage
+              {locale === 'ar' ? (
+                <>نطاق البيانات: <strong>بيانات افتراضية تجريبية (قطع غيار نفطية)</strong> • الثابت: عزل تام لمنع تسرب البيانات المستقبلية</>
+              ) : (
+                <>Dataset Scope: <strong>Synthetic Demo Data (Oilfield Spares)</strong> • Invariant: Zero Future Leakage</>
+              )}
             </div>
           </div>
 
           <div className="modal-footer">
             <button type="button" className="btn btn-secondary" onClick={onClose} disabled={running}>
-              Cancel
+              {locale === 'ar' ? 'إلغاء' : 'Cancel'}
             </button>
             <button type="submit" className="btn btn-primary" disabled={running}>
               {running ? (
                 <>
                   <RefreshCw className="animate-spin" style={{ width: 14, height: 14 }} />
-                  <span>Computing Models & Policies...</span>
+                  <span>{locale === 'ar' ? 'جارٍ حساب النماذج والسياسات...' : 'Computing Models & Policies...'}</span>
                 </>
               ) : (
                 <>
                   <Play style={{ width: 14, height: 14, fill: '#000000' }} />
-                  <span>Start AI Run</span>
+                  <span>{locale === 'ar' ? 'بدء تشغيل الذكاء الاصطناعي' : 'Start AI Run'}</span>
                 </>
               )}
             </button>

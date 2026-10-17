@@ -26,6 +26,8 @@ import { BarcodeScannerModal } from './components/BarcodeScannerModal';
 import { NewItemModal } from './components/NewItemModal';
 import { LoginView } from './components/LoginView';
 import { useBarcodeScanner } from './hooks/useBarcodeScanner';
+import { useI18n } from './i18n/I18nContext';
+import { translateUserRole, translateMovementType, translatePOStatus } from './i18n/translations';
 
 const VALID_TABS = ['overview', 'inventory', 'ledger', 'procurement', 'ai', 'activity', 'users'] as const;
 type TabType = typeof VALID_TABS[number];
@@ -45,6 +47,7 @@ const getInitialTab = (): TabType => {
 };
 
 const App: React.FC = () => {
+  const { locale } = useI18n();
   const [activeTab, setActiveTab] = useState<TabType>(getInitialTab);
 
   const handleTabChange = (tab: TabType) => {
@@ -91,7 +94,7 @@ const App: React.FC = () => {
     localStorage.removeItem('stocksense_current_user_id');
     setIsAuthenticated(false);
     setCurrentUser(null);
-    setSuccessMsg('You have signed out successfully.');
+    setSuccessMsg(locale === 'ar' ? 'تم تسجيل الخروج بنجاح.' : 'You have signed out successfully.');
   };
   const [integrity, setIntegrity] = useState<IntegrityCheckResponse | null>(null);
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
@@ -128,11 +131,19 @@ const App: React.FC = () => {
       localStorage.setItem('stocksense_current_user_id', String(user.id));
       setCurrentUser(res.user);
       setIsAuthenticated(true);
-      setSuccessMsg(`Authenticated as ${res.user.full_name} (${res.user.role}) — JWT Issued`);
+      setSuccessMsg(
+        locale === 'ar'
+          ? `تم توثيق الدخول كـ ${res.user.full_name} (${translateUserRole(res.user.role, locale)}) — تم إصدار رمز JWT`
+          : `Authenticated as ${res.user.full_name} (${res.user.role}) — JWT Issued`
+      );
     } catch {
       setCurrentUser(user);
       localStorage.setItem('stocksense_current_user_id', String(user.id));
-      setSuccessMsg(`Active identity switched to ${user.full_name} (${user.role})`);
+      setSuccessMsg(
+        locale === 'ar'
+          ? `تم تبديل الهوية النشطة إلى ${user.full_name} (${translateUserRole(user.role, locale)})`
+          : `Active identity switched to ${user.full_name} (${user.role})`
+      );
     }
   };
 
@@ -300,7 +311,11 @@ const App: React.FC = () => {
           reason: txReason || 'Field site transfer',
           actor_label: actorLabel,
         });
-        setSuccessMsg(`Transfer of ${res.quantity} units executed! Group: ${res.transfer_group_id.slice(0, 8)}`);
+        setSuccessMsg(
+          locale === 'ar'
+            ? `تم تنفيذ تحويل ${res.quantity} وحدة! مجموعة التحويل: ${res.transfer_group_id.slice(0, 8)}`
+            : `Transfer of ${res.quantity} units executed! Group: ${res.transfer_group_id.slice(0, 8)}`
+        );
       } else {
         const res = await api.postMovement({
           item_id: selectedItemId, location_id: selectedLocId,
@@ -310,7 +325,11 @@ const App: React.FC = () => {
           reason: txReason || `Manual ${modalType.toLowerCase()}`,
           actor_label: actorLabel,
         });
-        setSuccessMsg(`Movement #${res.id} (${res.movement_type} ${res.quantity} units) recorded by ${currentUser?.full_name || 'Storekeeper'}!`);
+        setSuccessMsg(
+          locale === 'ar'
+            ? `تم تسجيل الحركة #${res.id} (${translateMovementType(res.movement_type, locale)} ${res.quantity} وحدة) بواسطة ${currentUser?.full_name || 'أمين المستودع'}!`
+            : `Movement #${res.id} (${res.movement_type} ${res.quantity} units) recorded by ${currentUser?.full_name || 'Storekeeper'}!`
+        );
         if (attachedFile && res?.id) {
           try {
             await api.uploadAttachment(attachedFile, 'MOVEMENT', res.id, txReason || 'Physical Delivery Slip / Waybill', actorLabel);
@@ -326,7 +345,7 @@ const App: React.FC = () => {
       setAttachedFile(null);
       await fetchData();
     } catch (err: any) {
-      const msg = err.message || 'Transaction failed';
+      const msg = err.message || (locale === 'ar' ? 'فشلت المعاملة' : 'Transaction failed');
       setModalError(msg);
       setError(msg);
     } finally {
@@ -338,7 +357,11 @@ const App: React.FC = () => {
   const handleCreatePO = async (payload: POCreatePayload): Promise<PurchaseOrder> => {
     setError(null);
     const po = await api.createPurchaseOrder(payload);
-    setSuccessMsg(`Purchase Order ${po.po_number} created successfully.`);
+    setSuccessMsg(
+      locale === 'ar'
+        ? `تم إنشاء أمر الشراء ${po.po_number} بنجاح.`
+        : `Purchase Order ${po.po_number} created successfully.`
+    );
     await fetchData();
     return po;
   };
@@ -347,10 +370,14 @@ const App: React.FC = () => {
     setError(null);
     try {
       const po = await api.approvePurchaseOrder(poId);
-      setSuccessMsg(`Purchase Order ${po.po_number} APPROVED for procurement!`);
+      setSuccessMsg(
+        locale === 'ar'
+          ? `تم اعتماد أمر الشراء ${po.po_number} للتوريد!`
+          : `Purchase Order ${po.po_number} APPROVED for procurement!`
+      );
       fetchData();
     } catch (err: any) {
-      setError(err.message || 'Failed to approve purchase order');
+      setError(err.message || (locale === 'ar' ? 'فشل اعتماد أمر الشراء' : 'Failed to approve purchase order'));
     }
   };
 
@@ -362,10 +389,14 @@ const App: React.FC = () => {
         ...payload,
         actor_label: payload.actor_label || actorLabel,
       });
-      setSuccessMsg(`Received ${payload.quantity_received} units on ${po.po_number} by ${currentUser?.full_name || 'Storekeeper'}! Status: ${po.status}`);
+      setSuccessMsg(
+        locale === 'ar'
+          ? `تم استلام ${payload.quantity_received} وحدة في ${po.po_number} بواسطة ${currentUser?.full_name || 'أمين المستودع'}! الحالة: ${translatePOStatus(po.status, locale)}`
+          : `Received ${payload.quantity_received} units on ${po.po_number} by ${currentUser?.full_name || 'Storekeeper'}! Status: ${po.status}`
+      );
       fetchData();
     } catch (err: any) {
-      setError(err.message || 'Receipt rejected');
+      setError(err.message || (locale === 'ar' ? 'تم رفض الاستلام' : 'Receipt rejected'));
       throw err;
     }
   };
@@ -374,10 +405,14 @@ const App: React.FC = () => {
     setError(null);
     try {
       const po = await api.cancelPurchaseOrder(poId);
-      setSuccessMsg(`Purchase Order ${po.po_number} CANCELLED.`);
+      setSuccessMsg(
+        locale === 'ar'
+          ? `تم إلغاء أمر الشراء ${po.po_number}.`
+          : `Purchase Order ${po.po_number} CANCELLED.`
+      );
       fetchData();
     } catch (err: any) {
-      setError(err.message || 'Failed to cancel purchase order');
+      setError(err.message || (locale === 'ar' ? 'فشل إلغاء أمر الشراء' : 'Failed to cancel purchase order'));
     }
   };
 
@@ -386,10 +421,14 @@ const App: React.FC = () => {
     setError(null);
     try {
       const run = await api.triggerAIRun(payload);
-      setSuccessMsg(`AI Run #${run.id} completed! Identified ${run.recommendations_count} replenishment proposals.`);
+      setSuccessMsg(
+        locale === 'ar'
+          ? `اكتمل تشغيل الذكاء الاصطناعي #${run.id}! تم تحديد ${run.recommendations_count} مقترح إعادة طلب.`
+          : `AI Run #${run.id} completed! Identified ${run.recommendations_count} replenishment proposals.`
+      );
       await fetchData();
     } catch (err: any) {
-      setError(err.message || 'AI run failed');
+      setError(err.message || (locale === 'ar' ? 'فشل تشغيل الذكاء الاصطناعي' : 'AI run failed'));
     } finally {
       setRunningAi(false);
     }
@@ -399,11 +438,15 @@ const App: React.FC = () => {
     setError(null);
     try {
       const po = await api.approveRecommendation(recId);
-      setSuccessMsg(`Recommendation #${recId} APPROVED! Draft Purchase Order ${po.po_number} created.`);
+      setSuccessMsg(
+        locale === 'ar'
+          ? `تمت الموافقة على التوصية #${recId}! تم إنشاء مسودة أمر الشراء ${po.po_number}.`
+          : `Recommendation #${recId} APPROVED! Draft Purchase Order ${po.po_number} created.`
+      );
       await fetchData();
       return po;
     } catch (err: any) {
-      setError(err.message || 'Failed to approve recommendation');
+      setError(err.message || (locale === 'ar' ? 'فشل اعتماد التوصية' : 'Failed to approve recommendation'));
       throw err;
     }
   };
@@ -412,10 +455,14 @@ const App: React.FC = () => {
     setError(null);
     try {
       await api.dismissRecommendation(recId, reason);
-      setSuccessMsg(`Recommendation #${recId} dismissed.`);
+      setSuccessMsg(
+        locale === 'ar'
+          ? `تم استبعاد التوصية #${recId}.`
+          : `Recommendation #${recId} dismissed.`
+      );
       await fetchData();
     } catch (err: any) {
-      setError(err.message || 'Failed to dismiss recommendation');
+      setError(err.message || (locale === 'ar' ? 'فشل استبعاد التوصية' : 'Failed to dismiss recommendation'));
     }
   };
 
@@ -423,9 +470,13 @@ const App: React.FC = () => {
     try {
       const res = await api.getIntegrityCheck();
       setIntegrity(res);
-      setSuccessMsg(`Audit verified! Status: ${res.status}. Mismatches: ${res.mismatches_count}.`);
+      setSuccessMsg(
+        locale === 'ar'
+          ? `تم التحقق من التدقيق! الحالة: ${res.status}. عدم التطابق: ${res.mismatches_count}.`
+          : `Audit verified! Status: ${res.status}. Mismatches: ${res.mismatches_count}.`
+      );
     } catch (err: any) {
-      setError(err.message || 'Integrity check failed');
+      setError(err.message || (locale === 'ar' ? 'فشل فحص سلامة وتكامل البيانات' : 'Integrity check failed'));
     }
   };
 
@@ -434,7 +485,7 @@ const App: React.FC = () => {
       <div className="login-viewport">
         <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
           <div style={{ width: 18, height: 18, border: '2px solid rgba(255,255,255,0.2)', borderTopColor: '#10b981', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-          <span>Verifying StockSense secure session...</span>
+          <span>{locale === 'ar' ? 'جاري التحقق من جلسة StockSense الآمنة...' : 'Verifying StockSense secure session...'}</span>
         </div>
       </div>
     );
@@ -448,7 +499,11 @@ const App: React.FC = () => {
           localStorage.setItem('stocksense_current_user_id', String(user.id));
           setCurrentUser(user);
           setIsAuthenticated(true);
-          setSuccessMsg(`Welcome, ${user.full_name} (${user.role.replace('_', ' ')})!`);
+          setSuccessMsg(
+            locale === 'ar'
+              ? `مرحباً، ${user.full_name} (${translateUserRole(user.role, locale)})!`
+              : `Welcome, ${user.full_name} (${user.role.replace('_', ' ')})!`
+          );
           fetchData();
         }}
       />
@@ -499,7 +554,7 @@ const App: React.FC = () => {
               type="button"
               onClick={() => setError(null)}
               style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', padding: '0.2rem', display: 'flex', alignItems: 'center', opacity: 0.8 }}
-              title="Dismiss notification"
+              title={locale === 'ar' ? 'إغلاق الإشعار' : 'Dismiss notification'}
             >
               <X style={{ width: 15, height: 15 }} />
             </button>
@@ -516,7 +571,7 @@ const App: React.FC = () => {
               type="button"
               onClick={() => setSuccessMsg(null)}
               style={{ background: 'none', border: 'none', color: '#34d399', cursor: 'pointer', padding: '0.2rem', display: 'flex', alignItems: 'center', opacity: 0.8 }}
-              title="Dismiss notification"
+              title={locale === 'ar' ? 'إغلاق الإشعار' : 'Dismiss notification'}
             >
               <X style={{ width: 15, height: 15 }} />
             </button>

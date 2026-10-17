@@ -1,5 +1,7 @@
 import React from 'react';
 import { Search, ChevronDown, Download, PackagePlus } from 'lucide-react';
+import { useI18n } from '../i18n/I18nContext';
+import { translateCategory, translateWarehouse } from '../i18n/translations';
 
 interface InventoryToolbarProps {
   searchQuery: string;
@@ -30,6 +32,8 @@ export const InventoryToolbar: React.FC<InventoryToolbarProps> = ({
   onExport,
   onAddNewItem,
 }) => {
+  const { t, locale } = useI18n();
+
   return (
     <div className="inventory-toolbar-card">
       {/* 1. Search Bar */}
@@ -38,7 +42,7 @@ export const InventoryToolbar: React.FC<InventoryToolbarProps> = ({
         <input
           type="text"
           className="toolbar-search-input"
-          placeholder="Search items by name or SKU..."
+          placeholder={t('inventory.search_placeholder')}
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
         />
@@ -53,10 +57,10 @@ export const InventoryToolbar: React.FC<InventoryToolbarProps> = ({
             value={categoryFilter}
             onChange={(e) => onCategoryChange(e.target.value)}
           >
-            <option value="ALL">All Categories</option>
+            <option value="ALL">{t('inventory.all_categories')}</option>
             {categories.map((c) => (
               <option key={c} value={c}>
-                {c}
+                {translateCategory(c, locale)}
               </option>
             ))}
           </select>
@@ -70,10 +74,10 @@ export const InventoryToolbar: React.FC<InventoryToolbarProps> = ({
             value={locationFilter}
             onChange={(e) => onLocationChange(e.target.value)}
           >
-            <option value="ALL">All Locations</option>
+            <option value="ALL">{t('inventory.all_locations')}</option>
             {locations.map((l) => (
               <option key={l} value={l}>
-                {l}
+                {translateWarehouse(l, locale)}
               </option>
             ))}
           </select>
@@ -87,10 +91,10 @@ export const InventoryToolbar: React.FC<InventoryToolbarProps> = ({
             value={statusFilter}
             onChange={(e) => onStatusChange(e.target.value)}
           >
-            <option value="ALL">All Stock Status</option>
-            <option value="IN_STOCK">In Stock</option>
-            <option value="LOW_STOCK">Low Stock</option>
-            <option value="OUT_OF_STOCK">Out of Stock</option>
+            <option value="ALL">{t('inventory.all_status')}</option>
+            <option value="IN_STOCK">{t('inventory.in_stock')}</option>
+            <option value="LOW_STOCK">{t('inventory.low_stock_pill')}</option>
+            <option value="OUT_OF_STOCK">{t('inventory.out_of_stock')}</option>
           </select>
           <ChevronDown className="select-chevron" />
         </div>
@@ -102,7 +106,7 @@ export const InventoryToolbar: React.FC<InventoryToolbarProps> = ({
           title="Export filtered items to CSV"
         >
           <Download style={{ width: 14, height: 14 }} />
-          <span>Export</span>
+          <span>{t('inventory.export')}</span>
         </button>
 
         {/* 4. Register New Item Button */}
@@ -123,7 +127,7 @@ export const InventoryToolbar: React.FC<InventoryToolbarProps> = ({
             title="Register new catalog SKU into master inventory"
           >
             <PackagePlus style={{ width: 14, height: 14 }} />
-            <span>+ Register Item</span>
+            <span>{t('inventory.register_item')}</span>
           </button>
         )}
       </div>

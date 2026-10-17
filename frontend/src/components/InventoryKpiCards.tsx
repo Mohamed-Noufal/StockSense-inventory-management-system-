@@ -1,5 +1,6 @@
 import React from 'react';
 import { Package, Layers, AlertTriangle, ClipboardList, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { useI18n } from '../i18n/I18nContext';
 
 interface InventoryKpiCardsProps {
   totalItems?: number;
@@ -16,7 +17,9 @@ export const InventoryKpiCards: React.FC<InventoryKpiCardsProps> = ({
   openPOCount = 0,
   loading = false,
 }) => {
-  // Format monetary value cleanly
+  const { t } = useI18n();
+
+  // Format monetary value cleanly (Standard Western digits: $1,111,184)
   const formattedValue = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
@@ -32,14 +35,14 @@ export const InventoryKpiCards: React.FC<InventoryKpiCardsProps> = ({
             <Package style={{ width: 18, height: 18, color: '#ededed' }} />
           </div>
           <div>
-            <div className="kpi-label">Total Items</div>
+            <div className="kpi-label">{t('inventory.total_items')}</div>
             <div className="kpi-value">{loading && totalItems === 0 ? '—' : totalItems}</div>
           </div>
         </div>
         <div className="kpi-trend-pill trend-positive">
           <ArrowUpRight style={{ width: 13, height: 13 }} />
           <span>12%</span>
-          <span className="trend-context">vs. last month</span>
+          <span className="trend-context">{t('inventory.vs_last_month')}</span>
         </div>
       </div>
 
@@ -50,14 +53,14 @@ export const InventoryKpiCards: React.FC<InventoryKpiCardsProps> = ({
             <Layers style={{ width: 18, height: 18, color: '#ededed' }} />
           </div>
           <div>
-            <div className="kpi-label">Total Stock Value</div>
+            <div className="kpi-label">{t('inventory.total_value')}</div>
             <div className="kpi-value">{loading && totalItems === 0 ? '—' : formattedValue}</div>
           </div>
         </div>
         <div className="kpi-trend-pill trend-positive">
           <ArrowUpRight style={{ width: 13, height: 13 }} />
           <span>8%</span>
-          <span className="trend-context">vs. last month</span>
+          <span className="trend-context">{t('inventory.vs_last_month')}</span>
         </div>
       </div>
 
@@ -68,14 +71,14 @@ export const InventoryKpiCards: React.FC<InventoryKpiCardsProps> = ({
             <AlertTriangle style={{ width: 18, height: 18, color: '#ededed' }} />
           </div>
           <div>
-            <div className="kpi-label">Low Stock Items</div>
+            <div className="kpi-label">{t('inventory.low_stock')}</div>
             <div className="kpi-value">{loading && totalItems === 0 ? '—' : lowStockCount}</div>
           </div>
         </div>
         <div className="kpi-trend-pill trend-positive">
           <ArrowDownRight style={{ width: 13, height: 13 }} />
           <span>32%</span>
-          <span className="trend-context">vs. last month</span>
+          <span className="trend-context">{t('inventory.vs_last_month')}</span>
         </div>
       </div>
 
@@ -86,14 +89,14 @@ export const InventoryKpiCards: React.FC<InventoryKpiCardsProps> = ({
             <ClipboardList style={{ width: 18, height: 18, color: '#ededed' }} />
           </div>
           <div>
-            <div className="kpi-label">Open POs</div>
+            <div className="kpi-label">{t('inventory.open_pos')}</div>
             <div className="kpi-value">{loading && totalItems === 0 ? '—' : openPOCount}</div>
           </div>
         </div>
         <div className="kpi-trend-pill trend-positive">
           <ArrowUpRight style={{ width: 13, height: 13 }} />
           <span>2%</span>
-          <span className="trend-context">vs. last week</span>
+          <span className="trend-context">{t('inventory.vs_last_week')}</span>
         </div>
       </div>
     </div>

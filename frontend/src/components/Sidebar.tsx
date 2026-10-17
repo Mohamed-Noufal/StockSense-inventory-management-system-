@@ -140,7 +140,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </button>
 
         {/* Secondary Admin/Audit items */}
-        {!isCollapsed && <div className="nav-section-label" style={{ marginTop: '0.85rem' }}>Management & Health</div>}
+        {!isCollapsed && <div className="nav-section-label" style={{ marginTop: '0.85rem' }}>{t('sidebar.mgmt_health')}</div>}
 
         <button
           className={`nav-item ${activeTab === 'users' ? 'active' : ''}`}
@@ -161,8 +161,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div className="sidebar-promo-icon">
             <ShieldCheck style={{ width: 18, height: 18, color: '#10b981' }} />
           </div>
-          <div className="sidebar-promo-title">Keep your stock running smoothly</div>
-          <div className="sidebar-promo-desc">AI-powered insights for better decisions.</div>
+          <div className="sidebar-promo-title">{t('sidebar.promo_title')}</div>
+          <div className="sidebar-promo-desc">{t('sidebar.promo_desc')}</div>
         </div>
       )}
 
@@ -173,11 +173,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             style={{ backgroundColor: health?.status === 'healthy' ? '#10b981' : '#f59e0b' }}
             title={health?.status === 'healthy' ? 'Engine: SQLite WAL (Online)' : 'Connecting to database...'}
           />
-          {!isCollapsed && <span style={{ fontWeight: 500 }}>Engine: SQLite WAL</span>}
+          {!isCollapsed && <span style={{ fontWeight: 500 }}>{t('sidebar.engine_db')}</span>}
         </div>
         {!isCollapsed && (
           <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
-            API: {health?.status === 'healthy' ? 'Online (Port 8000)' : 'Connecting...'}
+            {health?.status === 'healthy' ? t('sidebar.api_online') : t('sidebar.api_connecting')}
           </div>
         )}
       </div>

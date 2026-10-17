@@ -5,6 +5,8 @@ import {
   AlertCircle, AlertTriangle, CheckCircle2, ArrowUpRight
 } from 'lucide-react';
 import { InventoryItem, InventoryLocation, StockBalance } from '../types';
+import { useI18n } from '../i18n/I18nContext';
+import { translateWarehouse } from '../i18n/translations';
 
 interface MovementModalProps {
   modalType: 'RECEIPT' | 'ISSUE' | 'TRANSFER' | 'ADJUSTMENT';
@@ -64,6 +66,7 @@ export const MovementModal: React.FC<MovementModalProps> = ({
   onClose,
   onSubmit,
 }) => {
+  const { t, locale } = useI18n();
   const selectedItem = items.find((i) => i.id === selectedItemId);
   const selectedLoc = locations.find((l) => l.id === selectedLocId);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -138,6 +141,15 @@ export const MovementModal: React.FC<MovementModalProps> = ({
     setSelectedLocId(locId);
   };
 
+  const getModalTitle = () => {
+    switch (modalType) {
+      case 'RECEIPT': return t('movement_modal.title_receipt');
+      case 'ISSUE': return t('movement_modal.title_issue');
+      case 'TRANSFER': return t('movement_modal.title_transfer');
+      case 'ADJUSTMENT': return t('movement_modal.title_adjust');
+    }
+  };
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 540 }}>
@@ -147,7 +159,7 @@ export const MovementModal: React.FC<MovementModalProps> = ({
             {modalType === 'ISSUE' && <MinusCircle style={{ width: 18, height: 18, color: '#f87171' }} />}
             {modalType === 'TRANSFER' && <ArrowRightLeft style={{ width: 18, height: 18, color: '#ffffff' }} />}
             {modalType === 'ADJUSTMENT' && <ShieldCheck style={{ width: 18, height: 18, color: '#fbbf24' }} />}
-            <h3>Record {modalType.charAt(0) + modalType.slice(1).toLowerCase()} Transaction</h3>
+            <h3>{getModalTitle()}</h3>
           </div>
           <button
             type="button"
@@ -178,7 +190,7 @@ export const MovementModal: React.FC<MovementModalProps> = ({
             <AlertCircle style={{ width: 17, height: 17, flexShrink: 0, marginTop: 2, color: '#ef4444' }} />
             <div style={{ flex: 1 }}>
               <strong style={{ display: 'block', color: '#fca5a5', marginBottom: '0.2rem' }}>
-                Transaction Rejected by Server
+                {t('movement_modal.server_rejected')}
               </strong>
               <span>{modalError}</span>
             </div>
@@ -189,25 +201,25 @@ export const MovementModal: React.FC<MovementModalProps> = ({
           <div className="modal-body">
             {/* Movement Type Selector */}
             <div className="form-group">
-              <label className="form-label">Transaction Mode</label>
+              <label className="form-label">{t('movement_modal.tx_mode')}</label>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.4rem' }}>
-                {(['RECEIPT', 'ISSUE', 'TRANSFER', 'ADJUSTMENT'] as const).map((t) => (
+                {(['RECEIPT', 'ISSUE', 'TRANSFER', 'ADJUSTMENT'] as const).map((tType) => (
                   <button
                     type="button"
-                    key={t}
-                    className={`btn ${modalType === t ? 'btn-primary' : 'btn-secondary'}`}
+                    key={tType}
+                    className={`btn ${modalType === tType ? 'btn-primary' : 'btn-secondary'}`}
                     style={{
                       padding: '0.45rem 0.2rem',
                       fontSize: '0.72rem',
                       fontWeight: 600,
                       justifyContent: 'center',
                     }}
-                    onClick={() => handleModeChange(t)}
+                    onClick={() => handleModeChange(tType)}
                   >
-                    {t === 'RECEIPT' && 'Receive'}
-                    {t === 'ISSUE' && 'Issue'}
-                    {t === 'TRANSFER' && 'Transfer'}
-                    {t === 'ADJUSTMENT' && 'Adjust'}
+                    {tType === 'RECEIPT' && t('movement_modal.mode_receipt')}
+                    {tType === 'ISSUE' && t('movement_modal.mode_issue')}
+                    {tType === 'TRANSFER' && t('movement_modal.mode_transfer')}
+                    {tType === 'ADJUSTMENT' && t('movement_modal.mode_adjust')}
                   </button>
                 ))}
               </div>
@@ -215,7 +227,7 @@ export const MovementModal: React.FC<MovementModalProps> = ({
 
             {/* Item Selection */}
             <div className="form-group">
-              <label className="form-label">Item / Spare Part SKU</label>
+              <label className="form-label">{t('movement_modal.item_label')}</label>
               <select
                 className="form-select"
                 value={selectedItemId}
@@ -223,7 +235,7 @@ export const MovementModal: React.FC<MovementModalProps> = ({
               >
                 {items.map((itm) => (
                   <option key={itm.id} value={itm.id}>
-                    {itm.sku} — {itm.name} (Total On-Hand: {itm.total_on_hand} {itm.uom || 'EA'})
+                    {itm.sku} — {itm.name} ({locale === 'ar' ? `الرصيد: ${itm.total_on_hand} ${itm.uom || 'وحدة'}` : `Total On-Hand: ${itm.total_on_hand} ${itm.uom || 'EA'}`})
                   </option>
                 ))}
               </select>
@@ -233,10 +245,10 @@ export const MovementModal: React.FC<MovementModalProps> = ({
             <div className="form-group">
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
                 <label className="form-label" style={{ margin: 0 }}>
-                  {modalType === 'TRANSFER' ? 'Source Warehouse (From)' : 'Warehouse Location'}
+                  {modalType === 'TRANSFER' ? t('movement_modal.source_wh') : t('movement_modal.wh_loc')}
                 </label>
                 <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                  Per-location inventory
+                  {locale === 'ar' ? 'رصيد الموقع' : 'Per-location inventory'}
                 </span>
               </div>
               <select
@@ -248,7 +260,7 @@ export const MovementModal: React.FC<MovementModalProps> = ({
                   const bal = getLocBalance(loc.id);
                   return (
                     <option key={loc.id} value={loc.id}>
-                      {loc.code} — {loc.name} {modalType !== 'RECEIPT' ? `(${bal} ${selectedItem?.uom || 'EA'} available)` : ''}
+                      {loc.code} — {translateWarehouse(loc.name, locale)} {modalType !== 'RECEIPT' ? (locale === 'ar' ? `(${bal} ${selectedItem?.uom || 'وحدة'} متوفر)` : `(${bal} ${selectedItem?.uom || 'EA'} available)`) : ''}
                     </option>
                   );
                 })}
@@ -270,7 +282,7 @@ export const MovementModal: React.FC<MovementModalProps> = ({
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <span style={{ color: 'var(--text-muted)' }}>
-                    Available Stock at {selectedLoc?.code || 'Selected Location'}:
+                    {locale === 'ar' ? `الرصيد المتاح في ${selectedLoc?.code || 'الموقع'}:` : `Available Stock at ${selectedLoc?.code || 'Selected Location'}:`}
                   </span>
                   <span
                     style={{
@@ -284,12 +296,12 @@ export const MovementModal: React.FC<MovementModalProps> = ({
                     {currentLocBalance > 0 ? (
                       <>
                         <CheckCircle2 style={{ width: 13, height: 13 }} />
-                        {currentLocBalance} {selectedItem?.uom || 'EA'} on-hand
+                        {currentLocBalance} {selectedItem?.uom || (locale === 'ar' ? 'وحدة' : 'EA')} {locale === 'ar' ? 'متوفر' : 'on-hand'}
                       </>
                     ) : (
                       <>
                         <AlertCircle style={{ width: 13, height: 13 }} />
-                        0 {selectedItem?.uom || 'EA'} (Out of Stock here)
+                        0 {selectedItem?.uom || (locale === 'ar' ? 'وحدة' : 'EA')} ({locale === 'ar' ? 'نفد الرصيد هنا' : 'Out of Stock here'})
                       </>
                     )}
                   </span>
@@ -309,7 +321,7 @@ export const MovementModal: React.FC<MovementModalProps> = ({
                       flexWrap: 'wrap',
                     }}
                   >
-                    <span>Also stocked in:</span>
+                    <span>{locale === 'ar' ? 'متوفر أيضاً في:' : 'Also stocked in:'}</span>
                     {otherStockLocations.map((other) => (
                       <button
                         key={other.locationId}
@@ -342,7 +354,7 @@ export const MovementModal: React.FC<MovementModalProps> = ({
             {/* Destination for Transfers */}
             {modalType === 'TRANSFER' && (
               <div className="form-group">
-                <label className="form-label">Destination Warehouse (To)</label>
+                <label className="form-label">{t('movement_modal.dest_wh')}</label>
                 <select
                   className="form-select"
                   value={targetLocId}
@@ -357,7 +369,7 @@ export const MovementModal: React.FC<MovementModalProps> = ({
                       const destBal = getLocBalance(loc.id);
                       return (
                         <option key={loc.id} value={loc.id}>
-                          {loc.code} — {loc.name} ({destBal} {selectedItem?.uom || 'EA'} currently on-hand)
+                          {loc.code} — {translateWarehouse(loc.name, locale)} ({destBal} {selectedItem?.uom || (locale === 'ar' ? 'وحدة' : 'EA')} {locale === 'ar' ? 'متوفر حالياً' : 'currently on-hand'})
                         </option>
                       );
                     })}
@@ -368,17 +380,17 @@ export const MovementModal: React.FC<MovementModalProps> = ({
             {/* Destination for Issues */}
             {modalType === 'ISSUE' && (
               <div className="form-group">
-                <label className="form-label">Issue Destination (Project / Rig / Workshop)</label>
+                <label className="form-label">{t('movement_modal.issue_dest')}</label>
                 <select
                   className="form-select"
                   value={destinationLabel}
                   onChange={(e) => setDestinationLabel && setDestinationLabel(e.target.value)}
                 >
-                  <option value="Rig-12">Rig-12 (Drilling Operation)</option>
-                  <option value="Rig-07">Rig-07 (Workover Unit)</option>
-                  <option value="Workshop">Central Maintenance Workshop</option>
-                  <option value="Rig-01">Rig-01 (Offshore Platform)</option>
-                  <option value="Field Support">Field Support Vehicle</option>
+                  <option value="Rig-12">{locale === 'ar' ? 'منصة 12 (عمليات الحفر)' : 'Rig-12 (Drilling Operation)'}</option>
+                  <option value="Rig-07">{locale === 'ar' ? 'منصة 07 (وحدة الصيانة والتأهيل)' : 'Rig-07 (Workover Unit)'}</option>
+                  <option value="Workshop">{locale === 'ar' ? 'ورشة الصيانة المركزية' : 'Central Maintenance Workshop'}</option>
+                  <option value="Rig-01">{locale === 'ar' ? 'منصة 01 (منصة بحرية)' : 'Rig-01 (Offshore Platform)'}</option>
+                  <option value="Field Support">{locale === 'ar' ? 'مركبة دعم العمليات الميدانية' : 'Field Support Vehicle'}</option>
                 </select>
               </div>
             )}
@@ -386,7 +398,7 @@ export const MovementModal: React.FC<MovementModalProps> = ({
             {/* Adjustment Direction Toggle */}
             {modalType === 'ADJUSTMENT' && (
               <div className="form-group">
-                <label className="form-label">Adjustment Type</label>
+                <label className="form-label">{t('movement_modal.adj_type')}</label>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
                   <button
                     type="button"
@@ -398,7 +410,7 @@ export const MovementModal: React.FC<MovementModalProps> = ({
                     }}
                   >
                     <TrendingUp style={{ width: 14, height: 14, color: '#34d399' }} />
-                    <span>Surplus (+) [Found Stock]</span>
+                    <span>{t('movement_modal.surplus')}</span>
                   </button>
 
                   <button
@@ -411,7 +423,7 @@ export const MovementModal: React.FC<MovementModalProps> = ({
                     }}
                   >
                     <TrendingDown style={{ width: 14, height: 14, color: '#f87171' }} />
-                    <span>Shrinkage (-) [Damaged / Missing]</span>
+                    <span>{t('movement_modal.shrinkage')}</span>
                   </button>
                 </div>
               </div>
@@ -421,13 +433,13 @@ export const MovementModal: React.FC<MovementModalProps> = ({
             <div className="form-group">
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
                 <label className="form-label" style={{ margin: 0 }}>
-                  Quantity Units {selectedItem?.uom ? `(${selectedItem.uom})` : ''}
+                  {t('movement_modal.qty_units')} {selectedItem?.uom ? `(${selectedItem.uom})` : ''}
                 </label>
 
                 {isDepletingMode && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.72rem' }}>
                     <span style={{ color: 'var(--text-muted)' }}>
-                      Available at {selectedLoc?.code}:{' '}
+                      {t('movement_modal.avail_at')} {selectedLoc?.code}:{' '}
                       <strong style={{ color: currentLocBalance > 0 ? '#34d399' : '#f87171' }}>
                         {currentLocBalance}
                       </strong>
@@ -451,7 +463,7 @@ export const MovementModal: React.FC<MovementModalProps> = ({
                         }}
                         title={`Auto-fill maximum available quantity (${currentLocBalance})`}
                       >
-                        Set Max ({currentLocBalance})
+                        {t('movement_modal.set_max')} ({currentLocBalance})
                       </button>
                     )}
                   </div>
@@ -495,7 +507,9 @@ export const MovementModal: React.FC<MovementModalProps> = ({
                 >
                   <AlertTriangle style={{ width: 14, height: 14, flexShrink: 0 }} />
                   <span>
-                    Cannot {modalType.toLowerCase()} {txQty} {selectedItem?.uom || 'EA'}. Requested quantity exceeds available stock at {selectedLoc?.code || 'this location'} (Max: {currentLocBalance} {selectedItem?.uom || 'EA'}).
+                    {locale === 'ar'
+                      ? `لا يمكن ${modalType === 'ISSUE' ? 'صرف' : 'تحويل'} ${txQty} ${selectedItem?.uom || 'وحدة'}. الكمية المطلوبة تتجاوز الرصيد المتاح في ${selectedLoc?.code} (الحد الأقصى: ${currentLocBalance} ${selectedItem?.uom || 'وحدة'}).`
+                      : `Cannot ${modalType.toLowerCase()} ${txQty} ${selectedItem?.uom || 'EA'}. Requested quantity exceeds available stock at ${selectedLoc?.code || 'this location'} (Max: ${currentLocBalance} ${selectedItem?.uom || 'EA'}).`}
                   </span>
                 </div>
               )}
@@ -518,7 +532,9 @@ export const MovementModal: React.FC<MovementModalProps> = ({
                 >
                   <AlertCircle style={{ width: 14, height: 14, flexShrink: 0 }} />
                   <span>
-                    Warehouse {selectedLoc?.code} has 0 stock of this item. Select another warehouse location with stock or receive new inventory first.
+                    {locale === 'ar'
+                      ? `رصيد المستودع ${selectedLoc?.code} هو 0 لهذا الصنف. اختر موقعاً آخر يتوفر به رصيد أو قم بتسجيل استلام شحنة جديدة أولاً.`
+                      : `Warehouse ${selectedLoc?.code} has 0 stock of this item. Select another warehouse location with stock or receive new inventory first.`}
                   </span>
                 </div>
               )}
@@ -527,18 +543,18 @@ export const MovementModal: React.FC<MovementModalProps> = ({
             {/* Reference & Reason */}
             <div className="form-group">
               <label className="form-label">
-                {modalType === 'RECEIPT' && 'Purchase Order or Delivery Reference'}
-                {modalType === 'ISSUE' && 'Requisition Reference / Work Order'}
-                {modalType === 'TRANSFER' && 'Transfer Waybill Reference'}
-                {modalType === 'ADJUSTMENT' && 'Cycle Count Sheet / Audit Reference'}
+                {modalType === 'RECEIPT' && t('movement_modal.ref_receipt')}
+                {modalType === 'ISSUE' && t('movement_modal.ref_issue')}
+                {modalType === 'TRANSFER' && t('movement_modal.ref_transfer')}
+                {modalType === 'ADJUSTMENT' && t('movement_modal.ref_adjust')}
               </label>
               <input
                 type="text"
                 placeholder={
-                  modalType === 'RECEIPT' ? 'e.g. PO-1042 - Initial shipment' :
-                  modalType === 'ISSUE' ? 'e.g. REQ-0034 - Scheduled overhaul' :
-                  modalType === 'TRANSFER' ? 'e.g. TR-0078 - Inter-warehouse transfer' :
-                  'e.g. CT-0012 - Physical cycle count reconciliation'
+                  modalType === 'RECEIPT' ? (locale === 'ar' ? 'مثال: PO-1042 - شحنة توريد ابتدائية' : 'e.g. PO-1042 - Initial shipment') :
+                  modalType === 'ISSUE' ? (locale === 'ar' ? 'مثال: REQ-0034 - صيانة دورية مجدولة' : 'e.g. REQ-0034 - Scheduled overhaul') :
+                  modalType === 'TRANSFER' ? (locale === 'ar' ? 'مثال: TR-0078 - نقل بين المستودعات' : 'e.g. TR-0078 - Inter-warehouse transfer') :
+                  (locale === 'ar' ? 'مثال: CT-0012 - مطابقة الجرد الفعلي الدوري' : 'e.g. CT-0012 - Physical cycle count reconciliation')
                 }
                 className="form-input"
                 value={txReason}
@@ -554,9 +570,9 @@ export const MovementModal: React.FC<MovementModalProps> = ({
               <label className="form-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                   <Paperclip style={{ width: 13, height: 13, color: 'var(--text-muted)' }} />
-                  Physical Document Proof (PDF / Images)
+                  {t('movement_modal.doc_proof')}
                 </span>
-                <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Optional • Audit Verification</span>
+                <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>{t('movement_modal.optional_audit')}</span>
               </label>
 
               <input
@@ -605,10 +621,10 @@ export const MovementModal: React.FC<MovementModalProps> = ({
                 >
                   <UploadCloud className="attachment-dropzone-icon" />
                   <div className="attachment-dropzone-text">
-                    Click or drop physical delivery docket, bill of lading, or inspection photo
+                    {t('movement_modal.dropzone_text')}
                   </div>
                   <div className="attachment-dropzone-hint">
-                    Supports PDF, PNG, JPG up to 15MB
+                    {t('movement_modal.dropzone_hint')}
                   </div>
                 </div>
               )}
@@ -617,7 +633,7 @@ export const MovementModal: React.FC<MovementModalProps> = ({
 
           <div className="modal-footer">
             <button type="button" className="btn btn-secondary" onClick={onClose} disabled={isSubmitting}>
-              Cancel
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
@@ -636,14 +652,14 @@ export const MovementModal: React.FC<MovementModalProps> = ({
               {isSubmitting ? (
                 <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'center' }}>
                   <span className="spinner" style={{ width: 13, height: 13, borderWidth: 2 }} />
-                  Recording Movement...
+                  {t('movement_modal.recording_btn')}
                 </span>
               ) : isZeroStock ? (
-                'Zero Stock at Location'
+                t('movement_modal.zero_stock')
               ) : isOverStock ? (
-                `Exceeds Available (${currentLocBalance})`
+                `${t('movement_modal.exceeds_avail')} (${currentLocBalance})`
               ) : (
-                'Commit to Ledger'
+                t('movement_modal.commit_btn')
               )}
             </button>
           </div>

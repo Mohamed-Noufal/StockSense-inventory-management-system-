@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { AlertItem, User as UserModel } from '../types';
 import { api } from '../api/client';
+import { useI18n } from '../i18n/I18nContext';
 
 interface AlertsTabProps {
   currentUser?: UserModel | null;
@@ -12,6 +13,7 @@ interface AlertsTabProps {
 }
 
 export const AlertsTab: React.FC<AlertsTabProps> = ({ currentUser, onAlertUpdated }) => {
+  const { locale } = useI18n();
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +35,7 @@ export const AlertsTab: React.FC<AlertsTabProps> = ({ currentUser, onAlertUpdate
       const data = await api.getAlerts(severityFilter, statusFilter);
       setAlerts(data);
     } catch (err: any) {
-      setError(err?.message || 'Failed to fetch system alerts');
+      setError(err?.message || (locale === 'ar' ? 'فشل جلب تنبيهات المنظومة' : 'Failed to fetch system alerts'));
     } finally {
       setLoading(false);
     }
@@ -53,7 +55,7 @@ export const AlertsTab: React.FC<AlertsTabProps> = ({ currentUser, onAlertUpdate
       await fetchAlerts();
       onAlertUpdated?.();
     } catch (err: any) {
-      setError(err?.message || 'Failed to acknowledge alert');
+      setError(err?.message || (locale === 'ar' ? 'فشل تأكيد استلام التنبيه' : 'Failed to acknowledge alert'));
     } finally {
       setSubmittingAction(false);
     }
@@ -71,7 +73,7 @@ export const AlertsTab: React.FC<AlertsTabProps> = ({ currentUser, onAlertUpdate
       await fetchAlerts();
       onAlertUpdated?.();
     } catch (err: any) {
-      setError(err?.message || 'Failed to resolve alert');
+      setError(err?.message || (locale === 'ar' ? 'فشل معالجة التنبيه' : 'Failed to resolve alert'));
     } finally {
       setSubmittingAction(false);
     }
@@ -94,14 +96,14 @@ export const AlertsTab: React.FC<AlertsTabProps> = ({ currentUser, onAlertUpdate
         return (
           <span className="severity-badge severity-badge-critical">
             <AlertOctagon style={{ width: 12, height: 12 }} />
-            Critical
+            {locale === 'ar' ? 'حرج' : 'Critical'}
           </span>
         );
       case 'WARNING':
         return (
           <span className="severity-badge severity-badge-warning">
             <AlertTriangle style={{ width: 12, height: 12 }} />
-            Warning
+            {locale === 'ar' ? 'تحذير' : 'Warning'}
           </span>
         );
       case 'INFO':
@@ -109,11 +111,25 @@ export const AlertsTab: React.FC<AlertsTabProps> = ({ currentUser, onAlertUpdate
         return (
           <span className="severity-badge severity-badge-info">
             <Info style={{ width: 12, height: 12 }} />
-            Info
+            {locale === 'ar' ? 'معلومات' : 'Info'}
           </span>
         );
     }
   };
+
+  const severityOptions = [
+    { key: 'ALL', label: locale === 'ar' ? 'الكل' : 'ALL' },
+    { key: 'CRITICAL', label: locale === 'ar' ? 'حرج' : 'CRITICAL' },
+    { key: 'WARNING', label: locale === 'ar' ? 'تحذير' : 'WARNING' },
+    { key: 'INFO', label: locale === 'ar' ? 'معلومات' : 'INFO' },
+  ];
+
+  const statusOptions = [
+    { key: 'ALL', label: locale === 'ar' ? 'الكل' : 'ALL' },
+    { key: 'OPEN', label: locale === 'ar' ? 'مفتوح' : 'OPEN' },
+    { key: 'ACKNOWLEDGED', label: locale === 'ar' ? 'مستلم' : 'ACKNOWLEDGED' },
+    { key: 'RESOLVED', label: locale === 'ar' ? 'معالج' : 'RESOLVED' },
+  ];
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -124,7 +140,7 @@ export const AlertsTab: React.FC<AlertsTabProps> = ({ currentUser, onAlertUpdate
             <Search style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', width: 14, height: 14, color: 'var(--text-muted)' }} />
             <input
               type="text"
-              placeholder="Filter alerts by text, SKU, or location..."
+              placeholder={locale === 'ar' ? 'بحث بالتنبيهات أو الرمز أو الموقع...' : 'Filter alerts by text, SKU, or location...'}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{
@@ -152,46 +168,50 @@ export const AlertsTab: React.FC<AlertsTabProps> = ({ currentUser, onAlertUpdate
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
           {/* Severity filter */}
           <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center', background: '#09090b', padding: '0.2rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-default)' }}>
-            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', paddingLeft: '0.5rem', paddingRight: '0.25rem' }}>Severity:</span>
-            {['ALL', 'CRITICAL', 'WARNING', 'INFO'].map((sev) => (
+            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', paddingLeft: '0.5rem', paddingRight: '0.25rem' }}>
+              {locale === 'ar' ? 'الخطورة:' : 'Severity:'}
+            </span>
+            {severityOptions.map((opt) => (
               <button
-                key={sev}
-                onClick={() => setSeverityFilter(sev)}
+                key={opt.key}
+                onClick={() => setSeverityFilter(opt.key)}
                 style={{
-                  background: severityFilter === sev ? '#27272a' : 'transparent',
+                  background: severityFilter === opt.key ? '#27272a' : 'transparent',
                   border: 'none',
-                  color: severityFilter === sev ? '#ffffff' : 'var(--text-secondary)',
+                  color: severityFilter === opt.key ? '#ffffff' : 'var(--text-secondary)',
                   fontSize: '0.72rem',
                   padding: '0.25rem 0.55rem',
                   borderRadius: 'var(--radius-sm)',
                   cursor: 'pointer',
-                  fontWeight: severityFilter === sev ? 600 : 400,
+                  fontWeight: severityFilter === opt.key ? 600 : 400,
                 }}
               >
-                {sev}
+                {opt.label}
               </button>
             ))}
           </div>
 
           {/* Status filter */}
           <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center', background: '#09090b', padding: '0.2rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-default)' }}>
-            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', paddingLeft: '0.5rem', paddingRight: '0.25rem' }}>Status:</span>
-            {['ALL', 'OPEN', 'ACKNOWLEDGED', 'RESOLVED'].map((st) => (
+            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', paddingLeft: '0.5rem', paddingRight: '0.25rem' }}>
+              {locale === 'ar' ? 'الحالة:' : 'Status:'}
+            </span>
+            {statusOptions.map((opt) => (
               <button
-                key={st}
-                onClick={() => setStatusFilter(st)}
+                key={opt.key}
+                onClick={() => setStatusFilter(opt.key)}
                 style={{
-                  background: statusFilter === st ? '#27272a' : 'transparent',
+                  background: statusFilter === opt.key ? '#27272a' : 'transparent',
                   border: 'none',
-                  color: statusFilter === st ? '#ffffff' : 'var(--text-secondary)',
+                  color: statusFilter === opt.key ? '#ffffff' : 'var(--text-secondary)',
                   fontSize: '0.72rem',
                   padding: '0.25rem 0.55rem',
                   borderRadius: 'var(--radius-sm)',
                   cursor: 'pointer',
-                  fontWeight: statusFilter === st ? 600 : 400,
+                  fontWeight: statusFilter === opt.key ? 600 : 400,
                 }}
               >
-                {st}
+                {opt.label}
               </button>
             ))}
           </div>
@@ -201,7 +221,7 @@ export const AlertsTab: React.FC<AlertsTabProps> = ({ currentUser, onAlertUpdate
             onClick={fetchAlerts}
             disabled={loading}
             style={{ padding: '0.45rem 0.65rem' }}
-            title="Refresh alerts"
+            title={locale === 'ar' ? 'تحديث التنبيهات' : 'Refresh alerts'}
           >
             <RefreshCw className={loading ? 'animate-spin' : ''} style={{ width: 14, height: 14 }} />
           </button>
@@ -219,16 +239,18 @@ export const AlertsTab: React.FC<AlertsTabProps> = ({ currentUser, onAlertUpdate
         {loading && alerts.length === 0 ? (
           <div className="card" style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
             <RefreshCw className="animate-spin" style={{ width: 20, height: 20, margin: '0 auto 0.5rem' }} />
-            <div>Loading system alerts and exceptions...</div>
+            <div>{locale === 'ar' ? 'جاري تحميل تنبيهات واستثناءات المنظومة...' : 'Loading system alerts and exceptions...'}</div>
           </div>
         ) : filteredAlerts.length === 0 ? (
           <div className="card" style={{ padding: '3.5rem', textAlign: 'center', color: 'var(--text-muted)' }}>
             <ShieldCheck style={{ width: 28, height: 28, color: '#10b981', margin: '0 auto 0.5rem' }} />
             <div style={{ color: '#ffffff', fontWeight: 600, fontSize: '0.9rem' }}>
-              Zero exceptions found matching current filter
+              {locale === 'ar' ? 'لا توجد تنبيهات أو استثناءات مطابقة للتصفية الحالية' : 'Zero exceptions found matching current filter'}
             </div>
             <div style={{ fontSize: '0.76rem', marginTop: '0.25rem' }}>
-              All inventory safety buffers and ledger checkpoints are operating within nominal limits.
+              {locale === 'ar'
+                ? 'جميع حواجز الأمان المخزنية ونقاط التحقق المحاسبية تعمل ضمن النطاق الطبيعي المعتمد.'
+                : 'All inventory safety buffers and ledger checkpoints are operating within nominal limits.'}
             </div>
           </div>
         ) : (
@@ -273,7 +295,7 @@ export const AlertsTab: React.FC<AlertsTabProps> = ({ currentUser, onAlertUpdate
                       <>
                         <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>•</span>
                         <span style={{ fontSize: '0.76rem', color: '#60a5fa' }}>
-                          Location: {alert.location_code}
+                          {locale === 'ar' ? 'الموقع:' : 'Location:'} {alert.location_code}
                         </span>
                       </>
                     )}
@@ -282,17 +304,17 @@ export const AlertsTab: React.FC<AlertsTabProps> = ({ currentUser, onAlertUpdate
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     {alert.status === 'OPEN' && (
                       <span style={{ fontSize: '0.72rem', padding: '0.15rem 0.5rem', borderRadius: 4, background: 'rgba(239, 68, 68, 0.1)', color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
-                        OPEN
+                        {locale === 'ar' ? 'مفتوح' : 'OPEN'}
                       </span>
                     )}
                     {alert.status === 'ACKNOWLEDGED' && (
                       <span style={{ fontSize: '0.72rem', padding: '0.15rem 0.5rem', borderRadius: 4, background: 'rgba(245, 158, 11, 0.1)', color: '#fbbf24', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
-                        ACKNOWLEDGED
+                        {locale === 'ar' ? 'مستلم' : 'ACKNOWLEDGED'}
                       </span>
                     )}
                     {alert.status === 'RESOLVED' && (
                       <span style={{ fontSize: '0.72rem', padding: '0.15rem 0.5rem', borderRadius: 4, background: 'rgba(16, 185, 129, 0.1)', color: '#34d399', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
-                        RESOLVED
+                        {locale === 'ar' ? 'معالج' : 'RESOLVED'}
                       </span>
                     )}
                   </div>
@@ -332,20 +354,20 @@ export const AlertsTab: React.FC<AlertsTabProps> = ({ currentUser, onAlertUpdate
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.72rem', color: 'var(--text-muted)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                       <Clock style={{ width: 12, height: 12 }} />
-                      <span>{new Date(alert.created_at).toLocaleString()}</span>
+                      <span>{new Date(alert.created_at).toISOString().slice(0, 16).replace('T', ' ')}</span>
                     </div>
 
                     {alert.acknowledged_by_name && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: '#fbbf24' }}>
                         <Check style={{ width: 12, height: 12 }} />
-                        <span>Ack: {alert.acknowledged_by_name}</span>
+                        <span>{locale === 'ar' ? 'استلم:' : 'Ack:'} {alert.acknowledged_by_name}</span>
                       </div>
                     )}
 
                     {alert.resolved_by_name && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: '#34d399' }}>
                         <CheckCheck style={{ width: 12, height: 12 }} />
-                        <span>Resolved: {alert.resolved_by_name}</span>
+                        <span>{locale === 'ar' ? 'عالج:' : 'Resolved:'} {alert.resolved_by_name}</span>
                       </div>
                     )}
                   </div>
@@ -361,7 +383,7 @@ export const AlertsTab: React.FC<AlertsTabProps> = ({ currentUser, onAlertUpdate
                           style={{ padding: '0.3rem 0.65rem', fontSize: '0.74rem' }}
                         >
                           <Check style={{ width: 13, height: 13 }} />
-                          <span>Acknowledge</span>
+                          <span>{locale === 'ar' ? 'استلام' : 'Acknowledge'}</span>
                         </button>
                       )}
 
@@ -369,7 +391,7 @@ export const AlertsTab: React.FC<AlertsTabProps> = ({ currentUser, onAlertUpdate
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                           <input
                             type="text"
-                            placeholder="Resolution note..."
+                            placeholder={locale === 'ar' ? 'ملاحظة المعالجة...' : 'Resolution note...'}
                             value={resolveNotes}
                             onChange={(e) => setResolveNotes(e.target.value)}
                             style={{
@@ -387,14 +409,14 @@ export const AlertsTab: React.FC<AlertsTabProps> = ({ currentUser, onAlertUpdate
                             disabled={submittingAction}
                             style={{ padding: '0.3rem 0.65rem', fontSize: '0.74rem' }}
                           >
-                            Confirm
+                            {locale === 'ar' ? 'تأكيد' : 'Confirm'}
                           </button>
                           <button
                             className="btn btn-secondary"
                             onClick={() => setActionAlertId(null)}
                             style={{ padding: '0.3rem 0.5rem', fontSize: '0.74rem' }}
                           >
-                            Cancel
+                            {locale === 'ar' ? 'إلغاء' : 'Cancel'}
                           </button>
                         </div>
                       ) : (
@@ -405,7 +427,7 @@ export const AlertsTab: React.FC<AlertsTabProps> = ({ currentUser, onAlertUpdate
                           style={{ padding: '0.3rem 0.65rem', fontSize: '0.74rem' }}
                         >
                           <CheckCircle2 style={{ width: 13, height: 13 }} />
-                          <span>Resolve</span>
+                          <span>{locale === 'ar' ? 'معالجة' : 'Resolve'}</span>
                         </button>
                       )}
                     </div>

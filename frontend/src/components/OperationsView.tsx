@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Box, Calendar, ChevronDown, X, Scan } from 'lucide-react';
 import { StockMovement, OperationsStats, InventoryItem, InventoryLocation } from '../types';
 import { api } from '../api/client';
+import { useI18n } from '../i18n/I18nContext';
 import { OperationsActionCards } from './OperationsActionCards';
 import { OperationsTable } from './OperationsTable';
 import { OperationsStatsCard } from './OperationsStatsCard';
@@ -23,11 +24,17 @@ export const OperationsView: React.FC<OperationsViewProps> = ({
   onPrintWaybill,
   onOpenScanner,
 }) => {
-
+  const { t, locale } = useI18n();
   const [stats, setStats] = useState<OperationsStats | null>(null);
   const [selectedMovement, setSelectedMovement] = useState<StockMovement | null>(null);
-  const [dateRangeText, setDateRangeText] = useState<string>('Oct 1, 2026 – Oct 15, 2026');
+  const [dateRangeText, setDateRangeText] = useState<string>(
+    locale === 'ar' ? '1 أكتوبر 2026 – 15 أكتوبر 2026' : 'Oct 1, 2026 – Oct 15, 2026'
+  );
   const [isDatePickerOpen, setIsDatePickerOpen] = useState<boolean>(false);
+
+  useEffect(() => {
+    setDateRangeText(locale === 'ar' ? '1 أكتوبر 2026 – 15 أكتوبر 2026' : 'Oct 1, 2026 – Oct 15, 2026');
+  }, [locale]);
 
   const fetchStats = async (days = 7) => {
     try {
@@ -55,7 +62,7 @@ export const OperationsView: React.FC<OperationsViewProps> = ({
           <div className="ops-header-icon-square">
             <Box style={{ width: 20, height: 20, color: '#ffffff' }} />
           </div>
-          <h1 className="ops-title">Operations</h1>
+          <h1 className="ops-title">{t('operations.title')}</h1>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -68,7 +75,7 @@ export const OperationsView: React.FC<OperationsViewProps> = ({
               title="Open Barcode Scanner (F2)"
             >
               <Scan style={{ width: 14, height: 14 }} />
-              <span>Scan Barcode</span>
+              <span>{t('operations.scan_barcode')}</span>
             </button>
           )}
 
@@ -89,30 +96,30 @@ export const OperationsView: React.FC<OperationsViewProps> = ({
               <button
                 type="button"
                 className="ops-date-opt"
-                onClick={() => handleSelectDateRange('Oct 1, 2026 – Oct 15, 2026')}
+                onClick={() => handleSelectDateRange(t('operations.current_sprint'))}
               >
-                Current Sprint (Oct 1 – Oct 15, 2026)
+                {t('operations.current_sprint')}
               </button>
               <button
                 type="button"
                 className="ops-date-opt"
-                onClick={() => handleSelectDateRange('Last 7 Days (Oct 8 – Oct 15, 2026)')}
+                onClick={() => handleSelectDateRange(t('operations.last_7_days'))}
               >
-                Last 7 Days
+                {t('operations.last_7_days')}
               </button>
               <button
                 type="button"
                 className="ops-date-opt"
-                onClick={() => handleSelectDateRange('Last 30 Days (Sep 15 – Oct 15, 2026)')}
+                onClick={() => handleSelectDateRange(t('operations.last_30_days'))}
               >
-                Last 30 Days
+                {t('operations.last_30_days')}
               </button>
               <button
                 type="button"
                 className="ops-date-opt"
-                onClick={() => handleSelectDateRange('All Operations (Full Ledger)')}
+                onClick={() => handleSelectDateRange(t('operations.all_operations'))}
               >
-                All Operations (Full Ledger)
+                {t('operations.all_operations')}
               </button>
             </div>
           )}

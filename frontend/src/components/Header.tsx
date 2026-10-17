@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { IntegrityCheckResponse, User } from '../types';
 import { useI18n } from '../i18n/I18nContext';
+import { translateUserRole } from '../i18n/translations';
 
 interface HeaderProps {
   activeTab: string;
@@ -78,7 +79,32 @@ export const Header: React.FC<HeaderProps> = ({
     return name.slice(0, 2).toUpperCase();
   };
 
-  const notifications = [
+  const notifications = locale === 'ar' ? [
+    {
+      id: 1,
+      title: 'تم استلام أمر الشراء #PO-1042',
+      desc: 'تم استلام وفحص 10 وحدات من مضخة هيدروليكية بالمستودع المركزي',
+      time: 'منذ ساعتين',
+      icon: CheckCircle2,
+      color: '#10b981',
+    },
+    {
+      id: 2,
+      title: 'تنبيه انخفاض رصيد المخزون',
+      desc: 'انخفض رصيد صمام ضغط (PV-042) إلى 5 وحدات (حد الطلب: 15)',
+      time: 'منذ 3 ساعات',
+      icon: AlertTriangle,
+      color: '#f59e0b',
+    },
+    {
+      id: 3,
+      title: 'اجتياز تدقيق ومطابقة السجل',
+      desc: 'تم التحقق من تطابق حركات المخزون مع الأرصدة الحالية بنسبة 100%',
+      time: 'منذ 5 ساعات',
+      icon: ShieldCheck,
+      color: '#10b981',
+    },
+  ] : [
     {
       id: 1,
       title: 'PO #PO-1042 Received',
@@ -169,8 +195,8 @@ export const Header: React.FC<HeaderProps> = ({
           {showNotifications && (
             <div className="header-popover-menu notif-popover">
               <div className="popover-header">
-                <span>Operational Alerts</span>
-                <span className="popover-badge">3 New</span>
+                <span>{locale === 'ar' ? 'تنبيهات العمليات' : 'Operational Alerts'}</span>
+                <span className="popover-badge">{locale === 'ar' ? '3 جديدة' : '3 New'}</span>
               </div>
               <div className="notif-list">
                 {notifications.map((n) => {
@@ -206,7 +232,7 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="user-pill-text">
               <span className="user-pill-name">{currentUser ? currentUser.full_name : 'Ahmed Fawzy'}</span>
               <span className="user-pill-role">
-                {currentUser ? currentUser.role.replace('_', ' ').toLowerCase() : 'storekeeper'}
+                {translateUserRole(currentUser ? currentUser.role : 'STOREKEEPER', locale)}
               </span>
             </div>
             <ChevronDown style={{ width: 13, height: 13, color: 'var(--text-muted)' }} />
@@ -222,7 +248,7 @@ export const Header: React.FC<HeaderProps> = ({
                   <div className="user-card-name">{currentUser?.full_name || 'Ahmed Fawzy'}</div>
                   <div className="user-card-email">{currentUser?.email || 'ahmed.fawzy@stocksense.oilfield'}</div>
                   <span className="badge badge-info" style={{ marginTop: '0.35rem', display: 'inline-block', fontSize: '0.68rem' }}>
-                    {currentUser?.role || 'STOREKEEPER'}
+                    {translateUserRole(currentUser?.role || 'STOREKEEPER', locale)}
                   </span>
                 </div>
               </div>
@@ -246,9 +272,9 @@ export const Header: React.FC<HeaderProps> = ({
                         <div className="user-avatar-circle small">
                           {getInitials(u.full_name)}
                         </div>
-                        <div style={{ textAlign: 'left', flex: 1, minWidth: 0 }}>
+                        <div style={{ textAlign: locale === 'ar' ? 'right' : 'left', flex: 1, minWidth: 0 }}>
                           <div className="user-switch-name">{u.full_name}</div>
-                          <div className="user-switch-role">{u.role}</div>
+                          <div className="user-switch-role">{translateUserRole(u.role, locale)}</div>
                         </div>
                         {isSelected && <span style={{ color: '#10b981', fontSize: '0.75rem', fontWeight: 500 }}>✓ {t('header.active')}</span>}
                       </button>

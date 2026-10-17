@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Plus, Trash2, AlertCircle, Save } from 'lucide-react';
 import { Supplier, InventoryItem, InventoryLocation, POCreatePayload, POLineCreatePayload } from '../types';
+import { useI18n } from '../i18n/I18nContext';
+import { translateWarehouse, translateCategory } from '../i18n/translations';
 
 interface POCreateViewProps {
   suppliers: Supplier[];
@@ -17,6 +19,7 @@ export const POCreateView: React.FC<POCreateViewProps> = ({
   onBack,
   onSubmit,
 }) => {
+  const { locale } = useI18n();
   const [supplierId, setSupplierId] = useState<number>(suppliers[0]?.id || 1);
   const [defaultLocId, setDefaultLocId] = useState<number>(
     locations.find((l) => l.is_default_replenishment === 1)?.id || locations[0]?.id || 1
@@ -98,7 +101,11 @@ export const POCreateView: React.FC<POCreateViewProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!supplierId || lines.length === 0) {
-      setError('Please select a supplier and add at least one line item.');
+      setError(
+        locale === 'ar'
+          ? 'يرجى اختيار المورّد الشريك وإضافة بند واحد على الأقل.'
+          : 'Please select a supplier and add at least one line item.'
+      );
       return;
     }
 
@@ -124,7 +131,7 @@ export const POCreateView: React.FC<POCreateViewProps> = ({
         lines: formattedLines,
       });
     } catch (err: any) {
-      setError(err?.message || 'Failed to save purchase order draft');
+      setError(err?.message || (locale === 'ar' ? 'فشل حفظ مسودة أمر الشراء' : 'Failed to save purchase order draft'));
       setSubmitting(false);
     }
   };
@@ -133,15 +140,15 @@ export const POCreateView: React.FC<POCreateViewProps> = ({
     <div className="po-create-view">
       {/* Breadcrumb Navigation */}
       <button type="button" className="po-view-breadcrumb" onClick={onBack}>
-        <ArrowLeft style={{ width: 14, height: 14 }} />
-        <span>Back to Purchase Orders</span>
+        <ArrowLeft style={{ width: 14, height: 14, transform: locale === 'ar' ? 'rotate(180deg)' : 'none' }} />
+        <span>{locale === 'ar' ? 'العودة إلى أوامر الشراء' : 'Back to Purchase Orders'}</span>
       </button>
 
       {/* Header */}
       <div className="procurement-header" style={{ marginBottom: '0.5rem' }}>
         <div className="procurement-header-title-box">
-          <h1>Create Purchase Order</h1>
-          <p>Create a draft supplier order for stock replenishment.</p>
+          <h1>{locale === 'ar' ? 'إنشاء أمر شراء جديد' : 'Create Purchase Order'}</h1>
+          <p>{locale === 'ar' ? 'إنشاء مسودة أمر توريد وشراء لإعادة تعبئة أرصدة المخزون.' : 'Create a draft supplier order for stock replenishment.'}</p>
         </div>
       </div>
 
@@ -156,13 +163,15 @@ export const POCreateView: React.FC<POCreateViewProps> = ({
         {/* Section 1 — Order Information */}
         <div className="po-section-card">
           <div className="po-section-title">
-            <span>Section 1 — Order Information</span>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Supplier & Delivery Route</span>
+            <span>{locale === 'ar' ? 'القسم 1 — بيانات أمر الشراء' : 'Section 1 — Order Information'}</span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+              {locale === 'ar' ? 'المورّد ومسار التسليم' : 'Supplier & Delivery Route'}
+            </span>
           </div>
 
           <div className="po-form-grid-2">
             <div className="form-group">
-              <label className="form-label">Supplier Partner *</label>
+              <label className="form-label">{locale === 'ar' ? 'المورّد الشريك *' : 'Supplier Partner *'}</label>
               <select
                 className="form-select"
                 value={supplierId}
@@ -171,14 +180,14 @@ export const POCreateView: React.FC<POCreateViewProps> = ({
               >
                 {suppliers.map((s) => (
                   <option key={s.id} value={s.id}>
-                    {s.name} ({s.country || 'Domestic'}) {s.is_import ? '• Import' : ''}
+                    {s.name} ({s.country || (locale === 'ar' ? 'محلي' : 'Domestic')}) {s.is_import ? (locale === 'ar' ? '• استيراد خارجي' : '• Import') : ''}
                   </option>
                 ))}
               </select>
             </div>
 
             <div className="form-group">
-              <label className="form-label">Destination Warehouse *</label>
+              <label className="form-label">{locale === 'ar' ? 'مستودع الوجهة *' : 'Destination Warehouse *'}</label>
               <select
                 className="form-select"
                 value={defaultLocId}
@@ -187,7 +196,7 @@ export const POCreateView: React.FC<POCreateViewProps> = ({
               >
                 {locations.map((loc) => (
                   <option key={loc.id} value={loc.id}>
-                    {loc.name} ({loc.code}) {loc.is_default_replenishment ? '★ Default' : ''}
+                    {translateWarehouse(loc.name, locale)} ({loc.code}) {loc.is_default_replenishment ? (locale === 'ar' ? '★ المستودع الافتراضي' : '★ Default') : ''}
                   </option>
                 ))}
               </select>
@@ -196,7 +205,7 @@ export const POCreateView: React.FC<POCreateViewProps> = ({
 
           <div className="po-form-grid-2">
             <div className="form-group">
-              <label className="form-label">Expected Delivery Date (Optional)</label>
+              <label className="form-label">{locale === 'ar' ? 'تاريخ التوريد المتوقع (اختياري)' : 'Expected Delivery Date (Optional)'}</label>
               <input
                 type="date"
                 className="form-input"
@@ -206,11 +215,11 @@ export const POCreateView: React.FC<POCreateViewProps> = ({
             </div>
 
             <div className="form-group">
-              <label className="form-label">Internal Reference / Requisition Ref</label>
+              <label className="form-label">{locale === 'ar' ? 'المرجع الداخلي / رقم طلب الشراء' : 'Internal Reference / Requisition Ref'}</label>
               <input
                 type="text"
                 className="form-input"
-                placeholder="e.g. REQ-2026-RIG12 or WO-0045"
+                placeholder={locale === 'ar' ? 'مثال: REQ-2026-RIG12 أو WO-0045' : 'e.g. REQ-2026-RIG12 or WO-0045'}
                 value={internalRef}
                 onChange={(e) => setInternalRef(e.target.value)}
               />
@@ -218,11 +227,11 @@ export const POCreateView: React.FC<POCreateViewProps> = ({
           </div>
 
           <div className="form-group">
-            <label className="form-label">Procurement Notes / Instructions</label>
+            <label className="form-label">{locale === 'ar' ? 'ملاحظات وتوجيهات الشراء' : 'Procurement Notes / Instructions'}</label>
             <textarea
               className="form-input"
               rows={2}
-              placeholder="e.g. Urgent shipment required for drilling campaign replenishment"
+              placeholder={locale === 'ar' ? 'مثال: شحنة عاجلة لإعادة تعبئة قطع غيار منصة الحفر' : 'e.g. Urgent shipment required for drilling campaign replenishment'}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
             />
@@ -232,7 +241,7 @@ export const POCreateView: React.FC<POCreateViewProps> = ({
         {/* Section 2 — Line Items Table */}
         <div className="po-section-card">
           <div className="po-section-title">
-            <span>Section 2 — Purchase-Order Lines ({lines.length})</span>
+            <span>{locale === 'ar' ? `القسم 2 — بنود أمر الشراء (${lines.length})` : `Section 2 — Purchase-Order Lines (${lines.length})`}</span>
             <button
               type="button"
               className="btn btn-secondary"
@@ -240,16 +249,16 @@ export const POCreateView: React.FC<POCreateViewProps> = ({
               style={{ fontSize: '0.74rem', padding: '0.3rem 0.65rem' }}
             >
               <Plus style={{ width: 13, height: 13 }} />
-              <span>Add Item Line</span>
+              <span>{locale === 'ar' ? 'إضافة بند صنف' : 'Add Item Line'}</span>
             </button>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 100px 120px 120px 40px', gap: '0.75rem', padding: '0 0.85rem', fontSize: '0.72rem', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
-              <span>Inventory Item & SKU</span>
-              <span style={{ textAlign: 'right' }}>Quantity</span>
-              <span style={{ textAlign: 'right' }}>Unit Price ($)</span>
-              <span style={{ textAlign: 'right' }}>Subtotal ($)</span>
+              <span>{locale === 'ar' ? 'الصنف ورمز المخزون (SKU)' : 'Inventory Item & SKU'}</span>
+              <span style={{ textAlign: 'right' }}>{locale === 'ar' ? 'الكمية' : 'Quantity'}</span>
+              <span style={{ textAlign: 'right' }}>{locale === 'ar' ? 'سعر الوحدة ($)' : 'Unit Price ($)'}</span>
+              <span style={{ textAlign: 'right' }}>{locale === 'ar' ? 'الإجمالي الفرعي ($)' : 'Subtotal ($)'}</span>
               <span></span>
             </div>
 
@@ -267,13 +276,13 @@ export const POCreateView: React.FC<POCreateViewProps> = ({
                     >
                       {items.map((itm) => (
                         <option key={itm.id} value={itm.id}>
-                          {itm.sku} — {itm.name} (Stock: {itm.total_on_hand})
+                          {itm.sku} — {itm.name} ({locale === 'ar' ? 'الرصيد:' : 'Stock:'} {itm.total_on_hand})
                         </option>
                       ))}
                     </select>
                     {matchedItem && (
                       <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
-                        Category: {matchedItem.category_name || 'General'} • Criticality: {matchedItem.criticality}
+                        {locale === 'ar' ? 'الفئة:' : 'Category:'} {translateCategory(matchedItem.category_name || 'General', locale)} • {locale === 'ar' ? 'الأهمية:' : 'Criticality:'} {matchedItem.criticality}
                       </div>
                     )}
                   </div>
@@ -312,7 +321,7 @@ export const POCreateView: React.FC<POCreateViewProps> = ({
                       style={{ padding: '0.3rem', border: 'none', background: 'transparent', color: lines.length > 1 ? '#f87171' : 'var(--text-muted)', cursor: lines.length > 1 ? 'pointer' : 'not-allowed' }}
                       onClick={() => handleRemoveLine(idx)}
                       disabled={lines.length <= 1}
-                      title={lines.length <= 1 ? 'At least one line is required' : 'Remove Line'}
+                      title={lines.length <= 1 ? (locale === 'ar' ? 'مطلوب بند واحد على الأقل' : 'At least one line is required') : (locale === 'ar' ? 'حذف البند' : 'Remove Line')}
                     >
                       <Trash2 style={{ width: 14, height: 14 }} />
                     </button>
@@ -326,16 +335,16 @@ export const POCreateView: React.FC<POCreateViewProps> = ({
           <div className="po-estimated-footer">
             <div>
               <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-                Estimated Order Lines
+                {locale === 'ar' ? 'بنود الطلب التقديرية' : 'Estimated Order Lines'}
               </span>
               <div style={{ fontSize: '0.88rem', fontWeight: 600, color: '#ffffff' }}>
-                {lines.length} lines • {lines.reduce((acc, l) => acc + l.quantity, 0)} units total
+                {lines.length} {locale === 'ar' ? 'بنود' : 'lines'} • {lines.reduce((acc, l) => acc + l.quantity, 0)} {locale === 'ar' ? 'إجمالي الوحدات' : 'units total'}
               </div>
             </div>
 
-            <div style={{ textAlign: 'right' }}>
+            <div style={{ textAlign: locale === 'ar' ? 'left' : 'right' }}>
               <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-                Estimated Order Value
+                {locale === 'ar' ? 'القيمة التقديرية للطلب' : 'Estimated Order Value'}
               </span>
               <div style={{ fontSize: '1.45rem', fontWeight: 800, color: '#34d399', fontFamily: 'var(--font-mono)' }}>
                 ${totalCalculated.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -347,11 +356,11 @@ export const POCreateView: React.FC<POCreateViewProps> = ({
         {/* Footer Actions */}
         <div className="po-footer-actions">
           <button type="button" className="btn btn-secondary" onClick={onBack} disabled={submitting}>
-            Cancel
+            {locale === 'ar' ? 'إلغاء' : 'Cancel'}
           </button>
           <button type="submit" className="btn btn-primary" disabled={submitting || lines.length === 0}>
             <Save style={{ width: 14, height: 14 }} />
-            <span>{submitting ? 'Creating Draft PO...' : 'Save Draft Purchase Order'}</span>
+            <span>{submitting ? (locale === 'ar' ? 'جارٍ إنشاء مسودة أمر الشراء...' : 'Creating Draft PO...') : (locale === 'ar' ? 'حفظ مسودة أمر الشراء' : 'Save Draft Purchase Order')}</span>
           </button>
         </div>
       </form>

@@ -3,6 +3,8 @@ import { X, PackagePlus, Check, AlertCircle, ArrowRight, Printer } from 'lucide-
 import { InventoryItem, InventoryLocation, Supplier, Category, ItemCreatePayload } from '../types';
 import { api } from '../api/client';
 import { soundEffects } from '../utils/audio';
+import { useI18n } from '../i18n/I18nContext';
+import { translateCategory, translateWarehouse } from '../i18n/translations';
 
 interface NewItemModalProps {
   initialSku?: string;
@@ -37,6 +39,8 @@ export const NewItemModal: React.FC<NewItemModalProps> = ({
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [createdItem, setCreatedItem] = useState<InventoryItem | null>(null);
+
+  const { t, locale } = useI18n();
 
   // Fetch categories
   useEffect(() => {
@@ -114,9 +118,9 @@ export const NewItemModal: React.FC<NewItemModalProps> = ({
         <div className="label-modal-header">
           <div className="label-modal-title">
             <PackagePlus size={18} color="#38bdf8" />
-            <span>Master Data Catalog Onboarding</span>
+            <span>{t('new_item.title')}</span>
           </div>
-          <button className="btn-icon" onClick={onClose} title="Close (Esc)">
+          <button className="btn-icon" onClick={onClose} title={t('common.close')}>
             <X size={16} />
           </button>
         </div>
@@ -142,10 +146,10 @@ export const NewItemModal: React.FC<NewItemModalProps> = ({
             </div>
 
             <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#ffffff', margin: '0 0 0.5rem' }}>
-              Item Successfully Registered
+              {locale === 'ar' ? 'تم تسجيل الصنف بنجاح' : 'Item Successfully Registered'}
             </h3>
             <p style={{ fontSize: '0.85rem', color: '#a1a1aa', maxWidth: '420px', margin: '0 auto 1.5rem' }}>
-              <strong style={{ color: '#ffffff', fontFamily: 'monospace' }}>{createdItem.sku}</strong> — {createdItem.name} has been added to the master inventory catalog and double-entry ledger.
+              <strong style={{ color: '#ffffff', fontFamily: 'monospace' }}>{createdItem.sku}</strong> — {createdItem.name} {locale === 'ar' ? 'تمت إضافته إلى دليل المخزون وسجل القيد المزدوج.' : 'has been added to the master inventory catalog and double-entry ledger.'}
             </p>
 
             <div
@@ -154,7 +158,7 @@ export const NewItemModal: React.FC<NewItemModalProps> = ({
                 border: '1px solid #27272a',
                 borderRadius: '8px',
                 padding: '1rem',
-                textAlign: 'left',
+                textAlign: locale === 'ar' ? 'right' : 'left',
                 display: 'grid',
                 gridTemplateColumns: 'repeat(3, 1fr)',
                 gap: '0.75rem',
@@ -162,16 +166,24 @@ export const NewItemModal: React.FC<NewItemModalProps> = ({
               }}
             >
               <div>
-                <div style={{ fontSize: '0.65rem', color: '#71717a', textTransform: 'uppercase' }}>Initial Stock</div>
+                <div style={{ fontSize: '0.65rem', color: '#71717a', textTransform: 'uppercase' }}>
+                  {locale === 'ar' ? 'الرصيد الافتتاحي' : 'Initial Stock'}
+                </div>
                 <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#10b981' }}>{createdItem.total_on_hand} {createdItem.uom}</div>
               </div>
               <div>
-                <div style={{ fontSize: '0.65rem', color: '#71717a', textTransform: 'uppercase' }}>Unit Valuation</div>
+                <div style={{ fontSize: '0.65rem', color: '#71717a', textTransform: 'uppercase' }}>
+                  {locale === 'ar' ? 'سعر الوحدة' : 'Unit Valuation'}
+                </div>
                 <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#ffffff' }}>${(createdItem.unit_cost_minor / 100).toFixed(2)}</div>
               </div>
               <div>
-                <div style={{ fontSize: '0.65rem', color: '#71717a', textTransform: 'uppercase' }}>Storage Bay</div>
-                <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#38bdf8' }}>{createdItem.warehouse_name || 'Main Warehouse'}</div>
+                <div style={{ fontSize: '0.65rem', color: '#71717a', textTransform: 'uppercase' }}>
+                  {locale === 'ar' ? 'مستودع التخزين' : 'Storage Bay'}
+                </div>
+                <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#38bdf8' }}>
+                  {translateWarehouse(createdItem.warehouse_name || 'Main Warehouse', locale)}
+                </div>
               </div>
             </div>
 
@@ -186,11 +198,11 @@ export const NewItemModal: React.FC<NewItemModalProps> = ({
                   style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
                 >
                   <Printer size={15} />
-                  <span>Print 4"×2" Shelf Label</span>
+                  <span>{locale === 'ar' ? 'طباعة ملصق الرف 4"×2"' : 'Print 4"×2" Shelf Label'}</span>
                 </button>
               )}
               <button className="btn btn-secondary" onClick={onClose}>
-                Done & Close
+                {locale === 'ar' ? 'تم والإغلاق' : 'Done & Close'}
               </button>
             </div>
           </div>
@@ -221,7 +233,7 @@ export const NewItemModal: React.FC<NewItemModalProps> = ({
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '10px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#a1a1aa', marginBottom: '4px' }}>
-                    Internal SKU <span style={{ color: '#ef4444' }}>*</span>
+                    {t('new_item.sku')} <span style={{ color: '#ef4444' }}>*</span>
                   </label>
                   <input
                     type="text"
@@ -244,7 +256,7 @@ export const NewItemModal: React.FC<NewItemModalProps> = ({
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#a1a1aa', marginBottom: '4px' }}>
-                    Technical Part Name <span style={{ color: '#ef4444' }}>*</span>
+                    {t('new_item.name')} <span style={{ color: '#ef4444' }}>*</span>
                   </label>
                   <input
                     type="text"
@@ -268,7 +280,7 @@ export const NewItemModal: React.FC<NewItemModalProps> = ({
               {/* Description */}
               <div>
                 <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#a1a1aa', marginBottom: '4px' }}>
-                  Engineering Description / Spec
+                  {locale === 'ar' ? 'الوصف الفني / المواصفات الهندسية' : 'Engineering Description / Spec'}
                 </label>
                 <input
                   type="text"
@@ -292,7 +304,7 @@ export const NewItemModal: React.FC<NewItemModalProps> = ({
               <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '10px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#a1a1aa', marginBottom: '4px' }}>
-                    Catalog Category
+                    {t('new_item.category')}
                   </label>
                   <select
                     value={categoryId}
@@ -309,14 +321,14 @@ export const NewItemModal: React.FC<NewItemModalProps> = ({
                   >
                     {categories.map((c) => (
                       <option key={c.id} value={c.id}>
-                        {c.name}
+                        {translateCategory(c.name, locale)}
                       </option>
                     ))}
                   </select>
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#a1a1aa', marginBottom: '4px' }}>
-                    Unit of Measure
+                    {t('new_item.uom')}
                   </label>
                   <select
                     value={uom}
@@ -331,11 +343,11 @@ export const NewItemModal: React.FC<NewItemModalProps> = ({
                       boxSizing: 'border-box',
                     }}
                   >
-                    <option value="EA">EA (Each)</option>
-                    <option value="SET">SET (Assembly)</option>
-                    <option value="MTR">MTR (Meters)</option>
-                    <option value="DRUM">DRUM (55 Gal)</option>
-                    <option value="KG">KG (Kilograms)</option>
+                    <option value="EA">{locale === 'ar' ? 'EA (قطعة فردية)' : 'EA (Each)'}</option>
+                    <option value="SET">{locale === 'ar' ? 'SET (طقم تجميعي)' : 'SET (Assembly)'}</option>
+                    <option value="MTR">{locale === 'ar' ? 'MTR (أمتار)' : 'MTR (Meters)'}</option>
+                    <option value="DRUM">{locale === 'ar' ? 'DRUM (برميل 55 جالون)' : 'DRUM (55 Gal)'}</option>
+                    <option value="KG">{locale === 'ar' ? 'KG (كيلوجرام)' : 'KG (Kilograms)'}</option>
                   </select>
                 </div>
               </div>
@@ -344,7 +356,7 @@ export const NewItemModal: React.FC<NewItemModalProps> = ({
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#a1a1aa', marginBottom: '4px' }}>
-                    Unit Cost (USD $) <span style={{ color: '#ef4444' }}>*</span>
+                    {t('new_item.unit_cost')} <span style={{ color: '#ef4444' }}>*</span>
                   </label>
                   <input
                     type="number"
@@ -366,7 +378,7 @@ export const NewItemModal: React.FC<NewItemModalProps> = ({
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#a1a1aa', marginBottom: '4px' }}>
-                    Operational Criticality
+                    {t('new_item.criticality')}
                   </label>
                   <select
                     value={criticality}
@@ -381,9 +393,9 @@ export const NewItemModal: React.FC<NewItemModalProps> = ({
                       boxSizing: 'border-box',
                     }}
                   >
-                    <option value="CRITICAL">CRITICAL (Drilling / BOP Spare)</option>
-                    <option value="STANDARD">STANDARD (Routine Maintenance)</option>
-                    <option value="LOW">LOW (General Consumables)</option>
+                    <option value="CRITICAL">{locale === 'ar' ? 'حرجة (حفر / صمامات تفريغ)' : 'CRITICAL (Drilling / BOP Spare)'}</option>
+                    <option value="STANDARD">{locale === 'ar' ? 'قياسية (صيانة دورية)' : 'STANDARD (Routine Maintenance)'}</option>
+                    <option value="LOW">{locale === 'ar' ? 'منخفضة (مستهلكات عامة)' : 'LOW (General Consumables)'}</option>
                   </select>
                 </div>
               </div>
@@ -392,7 +404,7 @@ export const NewItemModal: React.FC<NewItemModalProps> = ({
               <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '10px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#a1a1aa', marginBottom: '4px' }}>
-                    Initial Storage Location
+                    {t('new_item.initial_loc')}
                   </label>
                   <select
                     value={locationId}
@@ -409,14 +421,14 @@ export const NewItemModal: React.FC<NewItemModalProps> = ({
                   >
                     {locations.map((l) => (
                       <option key={l.id} value={l.id}>
-                        {l.name} ({l.code})
+                        {translateWarehouse(l.name, locale)} ({l.code})
                       </option>
                     ))}
                   </select>
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#a1a1aa', marginBottom: '4px' }}>
-                    Initial Stock Count
+                    {t('new_item.initial_stock')}
                   </label>
                   <input
                     type="number"
@@ -440,7 +452,7 @@ export const NewItemModal: React.FC<NewItemModalProps> = ({
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', padding: '0.75rem', background: '#121216', borderRadius: '6px', border: '1px dashed #27272a' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#a1a1aa', marginBottom: '4px' }}>
-                    Primary Vendor / Supplier
+                    {t('new_item.supplier')}
                   </label>
                   <select
                     value={supplierId}
@@ -456,7 +468,7 @@ export const NewItemModal: React.FC<NewItemModalProps> = ({
                       boxSizing: 'border-box',
                     }}
                   >
-                    <option value="">None / Direct Fabrication</option>
+                    <option value="">{locale === 'ar' ? 'بدون / تصنيع مباشر' : 'None / Direct Fabrication'}</option>
                     {suppliers.map((s) => (
                       <option key={s.id} value={s.id}>
                         {s.name}
@@ -466,7 +478,7 @@ export const NewItemModal: React.FC<NewItemModalProps> = ({
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#a1a1aa', marginBottom: '4px' }}>
-                    Vendor Part # / Barcode Alias
+                    {t('new_item.vendor_sku')}
                   </label>
                   <input
                     type="text"
@@ -492,7 +504,7 @@ export const NewItemModal: React.FC<NewItemModalProps> = ({
             {/* Footer */}
             <div className="label-modal-footer">
               <button type="button" className="btn btn-secondary" onClick={onClose} disabled={loading}>
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 type="submit"
@@ -500,8 +512,8 @@ export const NewItemModal: React.FC<NewItemModalProps> = ({
                 disabled={loading}
                 style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
               >
-                <span>{loading ? 'Registering...' : 'Register SKU & Initialize'}</span>
-                <ArrowRight size={14} />
+                <span>{loading ? t('new_item.saving_btn') : (locale === 'ar' ? 'تسجيل الصنف واعتماده' : 'Register SKU & Initialize')}</span>
+                <ArrowRight size={14} style={{ transform: locale === 'ar' ? 'rotate(180deg)' : 'none' }} />
               </button>
             </div>
           </form>

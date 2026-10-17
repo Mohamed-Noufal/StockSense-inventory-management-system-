@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { X, Printer, ShieldCheck, Truck, MapPin, FileText, CheckCircle2 } from 'lucide-react';
 import { StockMovement, InventoryItem, InventoryLocation } from '../types';
 import { generateCode128Svg, generateQrCodeSvg } from '../utils/barcode';
+import { useI18n } from '../i18n/I18nContext';
 
 interface WaybillModalProps {
   movement: StockMovement;
@@ -16,6 +17,7 @@ export const WaybillModal: React.FC<WaybillModalProps> = ({
   locations,
   onClose,
 }) => {
+  const { locale } = useI18n();
   const item = items.find((i) => i.id === movement.item_id);
   const location = locations.find((l) => l.id === movement.location_id);
 
@@ -489,7 +491,7 @@ export const WaybillModal: React.FC<WaybillModalProps> = ({
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
             <FileText style={{ width: 18, height: 18, color: '#34d399' }} />
             <h3 style={{ fontSize: '0.95rem', fontWeight: 600, color: '#ffffff', margin: 0 }}>
-              Warehouse Delivery Docket & Transit Waybill
+              {locale === 'ar' ? 'إيصال تسليم المستودع وبوليصة الشحن والنقل' : 'Warehouse Delivery Docket & Transit Waybill'}
             </h3>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -500,14 +502,14 @@ export const WaybillModal: React.FC<WaybillModalProps> = ({
               style={{ padding: '0.4rem 0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
             >
               <Printer style={{ width: 14, height: 14 }} />
-              <span>Print Waybill (A4)</span>
+              <span>{locale === 'ar' ? 'طباعة بوليصة الشحن (A4)' : 'Print Waybill (A4)'}</span>
             </button>
             <button
               type="button"
               className="btn btn-secondary"
               onClick={onClose}
               style={{ padding: '0.4rem 0.6rem' }}
-              title="Close modal"
+              title={locale === 'ar' ? 'إغلاق النافذة' : 'Close modal'}
             >
               <X style={{ width: 16, height: 16 }} />
             </button>

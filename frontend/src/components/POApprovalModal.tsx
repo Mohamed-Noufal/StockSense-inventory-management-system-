@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { CheckCircle, X, ShieldAlert } from 'lucide-react';
 import { PurchaseOrder } from '../types';
+import { useI18n } from '../i18n/I18nContext';
 
 interface POApprovalModalProps {
   po: PurchaseOrder;
@@ -9,6 +10,7 @@ interface POApprovalModalProps {
 }
 
 export const POApprovalModal: React.FC<POApprovalModalProps> = ({ po, onClose, onConfirm }) => {
+  const { locale } = useI18n();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -19,7 +21,7 @@ export const POApprovalModal: React.FC<POApprovalModalProps> = ({ po, onClose, o
       await onConfirm(po.id);
       onClose();
     } catch (err: any) {
-      setError(err?.message || 'Failed to approve purchase order');
+      setError(err?.message || (locale === 'ar' ? 'فشل اعتماد أمر الشراء' : 'Failed to approve purchase order'));
     } finally {
       setSubmitting(false);
     }
@@ -36,7 +38,7 @@ export const POApprovalModal: React.FC<POApprovalModalProps> = ({ po, onClose, o
         <div className="modal-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <CheckCircle style={{ width: 18, height: 18, color: '#3b82f6' }} />
-            <h3>Approve Purchase Order?</h3>
+            <h3>{locale === 'ar' ? 'اعتماد أمر الشراء؟' : 'Approve Purchase Order?'}</h3>
           </div>
           <button
             type="button"
@@ -56,25 +58,27 @@ export const POApprovalModal: React.FC<POApprovalModalProps> = ({ po, onClose, o
         <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div style={{ background: '#121214', border: '1px solid var(--border-default)', borderRadius: '6px', padding: '0.85rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.45rem', fontSize: '0.82rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
-              <span>PO Identifier:</span>
+              <span>{locale === 'ar' ? 'رقم أمر الشراء:' : 'PO Identifier:'}</span>
               <span style={{ fontWeight: 600, color: '#ffffff', fontFamily: 'var(--font-mono)' }}>{po.po_number}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
-              <span>Supplier Partner:</span>
+              <span>{locale === 'ar' ? 'المورّد الشريك:' : 'Supplier Partner:'}</span>
               <span style={{ fontWeight: 500, color: '#ffffff' }}>{po.supplier_name || `Supplier #${po.supplier_id}`}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
-              <span>Line Items:</span>
-              <span style={{ color: '#ffffff' }}>{po.lines.length} lines</span>
+              <span>{locale === 'ar' ? 'بنود الطلب:' : 'Line Items:'}</span>
+              <span style={{ color: '#ffffff' }}>{po.lines.length} {locale === 'ar' ? 'بنود' : 'lines'}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
-              <span>Committed Value:</span>
+              <span>{locale === 'ar' ? 'القيمة الإجمالية:' : 'Committed Value:'}</span>
               <span style={{ fontWeight: 700, color: '#34d399', fontFamily: 'var(--font-mono)' }}>{formattedTotal}</span>
             </div>
             {po.expected_date && (
               <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
-                <span>Expected Arrival:</span>
-                <span style={{ color: '#ffffff' }}>{new Date(po.expected_date).toLocaleDateString()}</span>
+                <span>{locale === 'ar' ? 'تاريخ الوصول المتوقع:' : 'Expected Arrival:'}</span>
+                <span style={{ color: '#ffffff' }}>
+                  {new Date(po.expected_date).toLocaleDateString(locale === 'ar' ? 'ar-EG-u-nu-latn' : 'en-US')}
+                </span>
               </div>
             )}
           </div>
@@ -82,18 +86,20 @@ export const POApprovalModal: React.FC<POApprovalModalProps> = ({ po, onClose, o
           <div style={{ display: 'flex', gap: '0.6rem', padding: '0.75rem', background: 'rgba(245, 158, 11, 0.08)', border: '1px solid rgba(245, 158, 11, 0.25)', borderRadius: '6px', color: '#fbbf24', fontSize: '0.78rem', lineHeight: '1.4' }}>
             <ShieldAlert style={{ width: 16, height: 16, flexShrink: 0, marginTop: 2 }} />
             <span>
-              This action commits the draft into the approved purchasing workflow, notifying vendor tracking and authorizing receiving dock inbound.
+              {locale === 'ar'
+                ? 'يقوم هذا الإجراء بتحويل المسودة إلى مسار المشتريات المعتمد، مما يتيح تتبع شحنة المورّد ويصرّح لرصيف الاستلام في المستودع بقبول الشحنة الواردة.'
+                : 'This action commits the draft into the approved purchasing workflow, notifying vendor tracking and authorizing receiving dock inbound.'}
             </span>
           </div>
         </div>
 
         <div className="modal-footer">
           <button type="button" className="btn btn-secondary" onClick={onClose} disabled={submitting}>
-            Cancel
+            {locale === 'ar' ? 'إلغاء' : 'Cancel'}
           </button>
           <button type="button" className="btn btn-primary" onClick={handleApprove} disabled={submitting}>
             <CheckCircle style={{ width: 14, height: 14 }} />
-            <span>{submitting ? 'Approving...' : 'Confirm Approval'}</span>
+            <span>{submitting ? (locale === 'ar' ? 'جارٍ الاعتماد...' : 'Approving...') : (locale === 'ar' ? 'تأكيد الاعتماد' : 'Confirm Approval')}</span>
           </button>
         </div>
       </div>

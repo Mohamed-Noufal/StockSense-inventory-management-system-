@@ -10,6 +10,7 @@ import {
   PurchaseOrder, AIRecommendation, User
 } from '../types';
 import { useI18n } from '../i18n/I18nContext';
+import { translateCategory, translateWarehouse, translateRelativeTime } from '../i18n/translations';
 
 export interface OverviewViewProps {
   items: InventoryItem[];
@@ -43,6 +44,7 @@ const BAR_CHART_DATA: BarGroupData[] = [
 ];
 
 const StockLevelsBarChart: React.FC = () => {
+  const { t, locale } = useI18n();
   const [hoveredBar, setHoveredBar] = useState<{
     cat: string;
     loc: string;
@@ -133,8 +135,8 @@ const StockLevelsBarChart: React.FC = () => {
                 opacity={hoveredBar && hoveredBar.cat !== group.category ? 0.45 : 1}
                 onMouseEnter={() =>
                   setHoveredBar({
-                    cat: group.category,
-                    loc: 'Main Warehouse',
+                    cat: translateCategory(group.category, locale),
+                    loc: translateWarehouse('Main Warehouse', locale),
                     val: group.main,
                     x: startX + barWidth / 2,
                     y: chartHeight - mainHeight + 10,
@@ -156,8 +158,8 @@ const StockLevelsBarChart: React.FC = () => {
                 opacity={hoveredBar && hoveredBar.cat !== group.category ? 0.45 : 1}
                 onMouseEnter={() =>
                   setHoveredBar({
-                    cat: group.category,
-                    loc: 'Field Warehouse',
+                    cat: translateCategory(group.category, locale),
+                    loc: translateWarehouse('Field Warehouse', locale),
                     val: group.field,
                     x: startX + barWidth + 4 + barWidth / 2,
                     y: chartHeight - fieldHeight + 10,
@@ -179,8 +181,8 @@ const StockLevelsBarChart: React.FC = () => {
                 opacity={hoveredBar && hoveredBar.cat !== group.category ? 0.45 : 1}
                 onMouseEnter={() =>
                   setHoveredBar({
-                    cat: group.category,
-                    loc: 'Remote Site',
+                    cat: translateCategory(group.category, locale),
+                    loc: translateWarehouse('Remote Site', locale),
                     val: group.remote,
                     x: startX + (barWidth + 4) * 2 + barWidth / 2,
                     y: chartHeight - remoteHeight + 10,
@@ -199,7 +201,7 @@ const StockLevelsBarChart: React.FC = () => {
                 fontSize="11"
                 fontWeight="500"
               >
-                {group.category}
+                {translateCategory(group.category, locale)}
               </text>
             </g>
           );
@@ -266,7 +268,7 @@ const StockLevelsBarChart: React.FC = () => {
               {hoveredBar.val}
             </span>
             <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
-              units available
+              {t('overview.units_avail')}
             </span>
           </div>
 
@@ -296,6 +298,7 @@ const CATEGORIES_DATA: DonutCategory[] = [
 ];
 
 const StockCategoryDonutChart: React.FC<{ items: InventoryItem[]; totalCount: number; loading?: boolean }> = ({ items, totalCount, loading }) => {
+  const { t, locale } = useI18n();
   const [activeCategory, setActiveCategory] = useState<DonutCategory | null>(null);
 
   const categoriesData = useMemo(() => {
@@ -372,7 +375,7 @@ const StockCategoryDonutChart: React.FC<{ items: InventoryItem[]; totalCount: nu
         {/* Center Callout */}
         <div className="donut-center-metric">
           <div className="number">{loading && totalCount === 0 ? '—' : (activeCategory ? `${activeCategory.pct}%` : totalCount)}</div>
-          <div className="unit">{activeCategory ? activeCategory.name.split(' ')[0] : 'Items'}</div>
+          <div className="unit">{activeCategory ? translateCategory(activeCategory.name, locale).split(' ')[0] : t('overview.items_unit')}</div>
         </div>
       </div>
 
@@ -391,7 +394,7 @@ const StockCategoryDonutChart: React.FC<{ items: InventoryItem[]; totalCount: nu
           >
             <div className="donut-legend-info">
               <span className="legend-dot" style={{ backgroundColor: cat.color }} />
-              <span>{cat.name}</span>
+              <span>{translateCategory(cat.name, locale)}</span>
             </div>
             <span className="donut-legend-pct">{cat.pct}%</span>
           </div>
@@ -435,8 +438,8 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
     (o) => o.status === 'DRAFT' || o.status === 'APPROVED'
   ).length;
 
-  // Format Currency
-  const formattedStockValue = new Intl.NumberFormat(locale === 'ar' ? 'ar-SA' : 'en-US', {
+  // Format Currency (always US English digits: $1,111,184)
+  const formattedStockValue = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
     maximumFractionDigits: 0,
@@ -471,7 +474,58 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
     : (loading ? [] : fallbackLowStockItems);
 
   // Dynamic Recent Activity from live ledger with resilient fallback
-  const fallbackActivities = [
+  const fallbackActivities = locale === 'ar' ? [
+    {
+      id: 1,
+      type: 'RECEIPT',
+      title: 'تم استلام أمر الشراء #PO-1042',
+      sub: '10 وحدات · مضخة هيدروليكية',
+      time: 'منذ ساعتين',
+      color: '#10b981',
+      bg: 'rgba(16, 185, 129, 0.12)',
+      icon: CheckCircle2,
+    },
+    {
+      id: 2,
+      type: 'ISSUE',
+      title: 'تم صرف مخزون',
+      sub: '5 وحدات · لقمة حفر 3/4"',
+      time: 'منذ 4 ساعات',
+      color: '#ef4444',
+      bg: 'rgba(239, 68, 68, 0.12)',
+      icon: ArrowRight,
+    },
+    {
+      id: 3,
+      type: 'TRANSFER',
+      title: 'اكتمل التحويل المخزني',
+      sub: 'صمام (20 وحدة) · المستودع الرئيسي ← الحقل',
+      time: 'منذ 6 ساعات',
+      color: '#a855f7',
+      bg: 'rgba(168, 85, 247, 0.12)',
+      icon: ArrowLeftRight,
+    },
+    {
+      id: 4,
+      type: 'APPROVAL',
+      title: 'تم اعتماد أمر الشراء #PO-1041',
+      sub: '50 وحدة · فلتر شوائب',
+      time: 'منذ 8 ساعات',
+      color: '#a855f7',
+      bg: 'rgba(168, 85, 247, 0.12)',
+      icon: FileText,
+    },
+    {
+      id: 5,
+      type: 'ADJUSTMENT',
+      title: 'تسوية جردية لرصيد المخزون',
+      sub: '2 وحدة · زيت تشحيم هيدروليكي 5 لتر',
+      time: 'منذ يوم',
+      color: '#2dd4bf',
+      bg: 'rgba(45, 212, 191, 0.12)',
+      icon: SlidersHorizontal,
+    },
+  ] : [
     {
       id: 1,
       type: 'RECEIPT',
@@ -528,12 +582,19 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
     ? ledger.slice(0, 5).map((m, idx) => ({
         id: m.id || idx,
         type: m.movement_type,
-        title: m.movement_type === 'RECEIPT' ? `Stock received · ${m.item_sku || 'SKU'}` :
-               m.movement_type === 'ISSUE' ? `Stock issued · ${m.item_sku || 'SKU'}` :
-               m.movement_type.includes('TRANSFER') ? `Transfer: ${m.item_sku || 'SKU'}` :
-               `Adjusted: ${m.item_sku || 'SKU'}`,
-        sub: `${m.quantity} units · ${m.location_code || 'Warehouse'}${m.reason ? ` (${m.reason})` : ''}`,
-        time: `${idx * 2 + 1}h ago`,
+        title: locale === 'ar'
+          ? (m.movement_type === 'RECEIPT' ? `تم استلام مخزون · ${m.item_sku || 'صنف'}` :
+             m.movement_type === 'ISSUE' ? `تم صرف مخزون · ${m.item_sku || 'صنف'}` :
+             m.movement_type.includes('TRANSFER') ? `تحويل مخزون: ${m.item_sku || 'صنف'}` :
+             `تسوية جردية: ${m.item_sku || 'صنف'}`)
+          : (m.movement_type === 'RECEIPT' ? `Stock received · ${m.item_sku || 'SKU'}` :
+             m.movement_type === 'ISSUE' ? `Stock issued · ${m.item_sku || 'SKU'}` :
+             m.movement_type.includes('TRANSFER') ? `Transfer: ${m.item_sku || 'SKU'}` :
+             `Adjusted: ${m.item_sku || 'SKU'}`),
+        sub: locale === 'ar'
+          ? `${m.quantity} وحدة · ${translateWarehouse(m.location_code || 'Central Warehouse (Cairo Base)', locale)}${m.reason ? ` (${m.reason})` : ''}`
+          : `${m.quantity} units · ${m.location_code || 'Warehouse'}${m.reason ? ` (${m.reason})` : ''}`,
+        time: translateRelativeTime(`${idx * 2 + 1}h ago`, locale),
         color: m.movement_type === 'RECEIPT' ? '#10b981' : m.movement_type === 'ISSUE' ? '#ef4444' : '#a855f7',
         bg: m.movement_type === 'RECEIPT' ? 'rgba(16, 185, 129, 0.12)' : m.movement_type === 'ISSUE' ? 'rgba(239, 68, 68, 0.12)' : 'rgba(168, 85, 247, 0.12)',
         icon: m.movement_type === 'RECEIPT' ? CheckCircle2 : m.movement_type === 'ISSUE' ? ArrowRight : ArrowLeftRight,
@@ -542,14 +603,39 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
 
   // Warehouse location labels
   const locLabels = {
-    main: locations[0]?.name || 'Main Warehouse',
-    field: locations[1]?.name || 'Field Warehouse',
-    remote: locations[2]?.name || 'Remote Site',
+    main: translateWarehouse(locations[0]?.name || 'Central Warehouse (Cairo Base)', locale),
+    field: translateWarehouse(locations[1]?.name || 'Western Desert Field Yard', locale),
+    remote: translateWarehouse(locations[2]?.name || 'Gulf of Suez Rig Site 07', locale),
   };
 
   // AI Replenishment proposals
   const aiRecommendations = recommendations.filter((r) => r.status === 'OPEN').slice(0, 3);
-  const fallbackRecs = [
+  const fallbackRecs = locale === 'ar' ? [
+    {
+      id: 101,
+      title: 'إعادة طلب 12 وحدة',
+      sub: 'بناءً على توقعات الطلب خلال الـ 14 يوماً القادمة',
+      icon: Package,
+      color: '#f59e0b',
+      bg: 'rgba(245, 158, 11, 0.12)',
+    },
+    {
+      id: 102,
+      title: 'تجنب مخاطر نفاد المخزون',
+      sub: 'صنف لقمة الحفر 3/4" متوقع نفاده خلال 7 أيام',
+      icon: AlertTriangle,
+      color: '#f59e0b',
+      bg: 'rgba(245, 158, 11, 0.12)',
+    },
+    {
+      id: 103,
+      title: 'تحسين كميات التوريد والشراء',
+      sub: 'يُوصى بتخفيض كمية صمام (PV-042) بنسبة 20%',
+      icon: SlidersHorizontal,
+      color: '#a855f7',
+      bg: 'rgba(168, 85, 247, 0.12)',
+    },
+  ] : [
     {
       id: 101,
       title: 'Reorder 12 items',
@@ -639,7 +725,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
             <div className="kpi-trend positive">
               <ArrowUpRight style={{ width: 14, height: 14 }} />
               <span>2%</span>
-              <span className="kpi-trend-sub">vs. last week</span>
+              <span className="kpi-trend-sub">{t('overview.vs_last_week')}</span>
             </div>
           </div>
         </div>
@@ -679,7 +765,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
           <div className="overview-card-header">
             <div className="overview-card-title-group">
               <h3 className="overview-card-title">{t('overview.stock_by_category')}</h3>
-              <p className="overview-card-sub">Balance distribution across catalog</p>
+              <p className="overview-card-sub">{t('overview.balance_dist_desc')}</p>
             </div>
           </div>
 
@@ -702,7 +788,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
               className="overview-action-link"
               onClick={() => onNavigateTab('inventory')}
             >
-              <span>View all</span>
+              <span>{t('overview.view_all')}</span>
               <ArrowRight style={{ width: 12, height: 12 }} />
             </button>
           </div>
@@ -711,10 +797,10 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
             <table className="overview-table">
               <thead>
                 <tr>
-                  <th>Item</th>
-                  <th>SKU</th>
-                  <th>Current Stock</th>
-                  <th>Reorder Level</th>
+                  <th>{t('overview.col_item')}</th>
+                  <th>{t('overview.col_sku')}</th>
+                  <th>{t('overview.col_current')}</th>
+                  <th>{t('overview.col_reorder')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -750,14 +836,14 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
             <div className="overview-card-title-group">
               <h3 className="overview-card-title">
                 <Clock style={{ width: 16, height: 16, color: 'var(--text-secondary)' }} />
-                <span>Recent Activity</span>
+                <span>{t('overview.recent_act')}</span>
               </h3>
             </div>
             <button
               className="overview-action-link"
               onClick={() => onNavigateTab('ledger')}
             >
-              <span>View all</span>
+              <span>{t('overview.view_all')}</span>
               <ArrowRight style={{ width: 12, height: 12 }} />
             </button>
           </div>
@@ -787,14 +873,14 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
             <div className="overview-card-title-group">
               <h3 className="overview-card-title">
                 <Lightbulb style={{ width: 16, height: 16, color: 'var(--text-secondary)' }} />
-                <span>AI Recommendations</span>
+                <span>{t('overview.ai_recs')}</span>
               </h3>
             </div>
             <button
               className="overview-action-link"
               onClick={() => onNavigateTab('ai')}
             >
-              <span>View all</span>
+              <span>{t('overview.view_all')}</span>
               <ArrowRight style={{ width: 12, height: 12 }} />
             </button>
           </div>
@@ -812,8 +898,14 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                       <Package style={{ width: 15, height: 15 }} />
                     </div>
                     <div className="ai-rec-content">
-                      <div className="ai-rec-headline">Reorder {rec.suggested_qty} units</div>
-                      <div className="ai-rec-desc">{rec.summary_text || `Replenishment proposal for SKU ${rec.item_sku}`}</div>
+                      <div className="ai-rec-headline">
+                        {locale === 'ar' ? `إعادة طلب ${rec.suggested_qty} وحدة` : `Reorder ${rec.suggested_qty} units`}
+                      </div>
+                      <div className="ai-rec-desc">
+                        {locale === 'ar'
+                          ? (rec.summary_text || `مقترح إعادة تعبئة للصنف ${rec.item_sku || ''}`)
+                          : (rec.summary_text || `Replenishment proposal for SKU ${rec.item_sku}`)}
+                      </div>
                     </div>
                   </div>
                   <ChevronRight style={{ width: 16, height: 16 }} className="ai-rec-chevron" />
