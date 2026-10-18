@@ -198,169 +198,76 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
 
   return (
     <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.75)',
-        backdropFilter: 'blur(8px)',
-        zIndex: 9999,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '1rem',
-      }}
+      className="settings-overlay"
+      dir={locale === 'ar' ? 'rtl' : 'ltr'}
       onClick={onClose}
     >
-      <div
-        style={{
-          width: '100%',
-          maxWidth: '660px',
-          maxHeight: '88vh',
-          backgroundColor: '#0c0c0e',
-          border: '1px solid rgba(255, 255, 255, 0.12)',
-          borderRadius: '12px',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.9)',
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Sticky Header */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '1rem 1.25rem',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-            backgroundColor: '#111113',
-            flexShrink: 0,
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-            <div
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: '8px',
-                background: 'rgba(16, 185, 129, 0.12)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#10b981',
-                border: '1px solid rgba(16, 185, 129, 0.25)',
-              }}
-            >
+      <div className="settings-modal" onClick={(e) => e.stopPropagation()}>
+        {/* Modal Header */}
+        <div className="settings-header">
+          <div className="settings-title-group">
+            <div className="settings-icon-box">
               <Settings size={16} />
             </div>
             <div>
-              <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#f4f4f5' }}>
-                {t('workspace.modal_title')}
-              </div>
-              <div style={{ fontSize: '0.74rem', color: '#71717a' }}>
+              <h2 className="settings-title">{t('workspace.modal_title')}</h2>
+              <div className="settings-subtitle">
                 {workspaceInfo?.company_name || 'StockSense'}
               </div>
             </div>
           </div>
           <button
             type="button"
-            className="btn-icon"
+            className="settings-close-btn"
             onClick={onClose}
             title={t('common.close')}
-            style={{ color: '#a1a1aa' }}
           >
             <X size={16} />
           </button>
         </div>
 
-        {/* Current Workspace Status Banner */}
-        <div
-          style={{
-            padding: '0.75rem 1.25rem',
-            background: 'rgba(18, 18, 22, 0.95)',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '0.75rem',
-            flexShrink: 0,
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        {/* Status Strip */}
+        <div className="settings-status-strip">
+          <div className="settings-status-badge">
             <span
               style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                fontSize: '0.72rem',
-                fontWeight: 600,
-                color: workspaceInfo?.is_demo_dataset ? '#818cf8' : '#10b981',
-                padding: '0.2rem 0.55rem',
-                borderRadius: '9999px',
-                background: workspaceInfo?.is_demo_dataset ? 'rgba(99, 102, 241, 0.12)' : 'rgba(16, 185, 129, 0.12)',
-                border: `1px solid ${workspaceInfo?.is_demo_dataset ? 'rgba(99, 102, 241, 0.25)' : 'rgba(16, 185, 129, 0.25)'}`,
+                width: 6,
+                height: 6,
+                borderRadius: '50%',
+                backgroundColor: workspaceInfo?.is_demo_dataset ? '#818cf8' : '#10b981',
               }}
-            >
-              <span
-                style={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: '50%',
-                  backgroundColor: workspaceInfo?.is_demo_dataset ? '#818cf8' : '#10b981',
-                }}
-              />
+            />
+            <span>
               {workspaceInfo?.is_demo_dataset
                 ? t('workspace.demo_mode_badge')
                 : t('workspace.custom_mode_badge')}
             </span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', fontSize: '0.76rem', color: '#a1a1aa' }}>
+          <div className="settings-status-counts">
             <div>
               <span style={{ color: '#71717a' }}>{t('workspace.items_count')}: </span>
-              <strong style={{ color: '#ffffff', fontFamily: 'monospace' }}>
+              <strong style={{ color: '#ffffff', fontFamily: 'var(--font-mono, monospace)' }}>
                 {workspaceInfo?.total_items ?? '...'}
               </strong>
             </div>
             <div>
               <span style={{ color: '#71717a' }}>{t('workspace.locations_count')}: </span>
-              <strong style={{ color: '#ffffff', fontFamily: 'monospace' }}>
+              <strong style={{ color: '#ffffff', fontFamily: 'var(--font-mono, monospace)' }}>
                 {workspaceInfo?.total_locations ?? locations.length}
               </strong>
             </div>
           </div>
         </div>
 
-        {/* Tab Switcher (Vercel Style) */}
-        <div
-          style={{
-            display: 'flex',
-            padding: '0.5rem 1.25rem',
-            gap: '0.35rem',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
-            background: '#09090b',
-            flexShrink: 0,
-          }}
-        >
+        {/* Linear-style Navigation Tabs */}
+        <div className="settings-tabs" role="tablist">
           <button
             type="button"
+            role="tab"
+            aria-selected={activeTab === 'profile'}
+            className={`settings-tab-btn ${activeTab === 'profile' ? 'active' : ''}`}
             onClick={() => { setActiveTab('profile'); setError(null); setSuccess(null); }}
-            style={{
-              padding: '0.45rem 0.85rem',
-              fontSize: '0.8rem',
-              fontWeight: 600,
-              borderRadius: '6px',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              background: activeTab === 'profile' ? '#27272a' : 'transparent',
-              color: activeTab === 'profile' ? '#ffffff' : '#71717a',
-              transition: 'all 0.15s ease',
-            }}
           >
             <Building2 size={14} />
             <span>{t('workspace.tab_profile')}</span>
@@ -368,21 +275,10 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
 
           <button
             type="button"
+            role="tab"
+            aria-selected={activeTab === 'locations'}
+            className={`settings-tab-btn ${activeTab === 'locations' ? 'active' : ''}`}
             onClick={() => { setActiveTab('locations'); setError(null); setSuccess(null); }}
-            style={{
-              padding: '0.45rem 0.85rem',
-              fontSize: '0.8rem',
-              fontWeight: 600,
-              borderRadius: '6px',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              background: activeTab === 'locations' ? '#27272a' : 'transparent',
-              color: activeTab === 'locations' ? '#ffffff' : '#71717a',
-              transition: 'all 0.15s ease',
-            }}
           >
             <MapPin size={14} />
             <span>{t('workspace.tab_locations')}</span>
@@ -390,70 +286,27 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
 
           <button
             type="button"
+            role="tab"
+            aria-selected={activeTab === 'data'}
+            className={`settings-tab-btn ${activeTab === 'data' ? 'active' : ''}`}
             onClick={() => { setActiveTab('data'); setError(null); setSuccess(null); }}
-            style={{
-              padding: '0.45rem 0.85rem',
-              fontSize: '0.8rem',
-              fontWeight: 600,
-              borderRadius: '6px',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              background: activeTab === 'data' ? '#27272a' : 'transparent',
-              color: activeTab === 'data' ? '#ffffff' : '#71717a',
-              transition: 'all 0.15s ease',
-            }}
           >
             <RotateCcw size={14} />
             <span>{t('workspace.tab_data')}</span>
           </button>
         </div>
 
-        {/* Scrollable Modal Body */}
-        <div
-          style={{
-            flex: 1,
-            overflowY: 'auto',
-            padding: '1.25rem 1.5rem',
-          }}
-        >
+        {/* Scrollable Body */}
+        <div className="settings-body">
           {error && (
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                background: 'rgba(239, 68, 68, 0.1)',
-                border: '1px solid rgba(239, 68, 68, 0.25)',
-                color: '#fca5a5',
-                padding: '0.65rem 0.85rem',
-                borderRadius: '8px',
-                fontSize: '0.8rem',
-                marginBottom: '1rem',
-              }}
-            >
+            <div className="settings-alert settings-alert-error" role="alert">
               <AlertTriangle size={15} style={{ flexShrink: 0 }} />
               <span>{error}</span>
             </div>
           )}
 
           {success && (
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                background: 'rgba(16, 185, 129, 0.1)',
-                border: '1px solid rgba(16, 185, 129, 0.25)',
-                color: '#6ee7b7',
-                padding: '0.65rem 0.85rem',
-                borderRadius: '8px',
-                fontSize: '0.8rem',
-                marginBottom: '1rem',
-              }}
-            >
+            <div className="settings-alert settings-alert-success" role="status">
               <CheckCircle2 size={15} style={{ flexShrink: 0 }} />
               <span>{success}</span>
             </div>
@@ -461,33 +314,19 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
 
           {/* TAB 1: Store & Company Profile */}
           {activeTab === 'profile' && (
-            <div>
-              <div
-                style={{
-                  background: 'rgba(255, 255, 255, 0.02)',
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
-                  borderRadius: '10px',
-                  padding: '1rem',
-                  marginBottom: '1.25rem',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                  <Building2 size={16} color="#10b981" />
-                  <span style={{ fontSize: '0.88rem', fontWeight: 600, color: '#ffffff' }}>
-                    {t('workspace.profile_heading')}
-                  </span>
-                </div>
-                <p style={{ fontSize: '0.78rem', color: '#a1a1aa', lineHeight: 1.5, margin: 0 }}>
-                  {t('workspace.profile_desc')}
-                </p>
+            <div className="settings-section-card">
+              <div className="settings-card-header">
+                <Building2 size={15} />
+                <span className="settings-card-title">{t('workspace.profile_heading')}</span>
               </div>
+              <p className="settings-card-desc">{t('workspace.profile_desc')}</p>
 
               <form onSubmit={handleUpdateProfile}>
-                <div className="form-group" style={{ marginBottom: '1rem' }}>
-                  <label className="form-label">{t('workspace.company_name_label')}</label>
+                <div className="settings-form-group">
+                  <label className="settings-label">{t('workspace.company_name_label')}</label>
                   <input
                     type="text"
-                    className="form-input"
+                    className="settings-input"
                     value={companyName}
                     onChange={(e) => setCompanyName(e.target.value)}
                     placeholder={t('workspace.company_name_placeholder')}
@@ -495,10 +334,10 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                   />
                 </div>
 
-                <div className="form-group" style={{ marginBottom: '1.25rem' }}>
-                  <label className="form-label">{t('workspace.industry_label')}</label>
+                <div className="settings-form-group">
+                  <label className="settings-label">{t('workspace.industry_label')}</label>
                   <select
-                    className="form-select"
+                    className="settings-select"
                     value={industry}
                     onChange={(e) => setIndustry(e.target.value)}
                   >
@@ -509,23 +348,19 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                   </select>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.25rem' }}>
                   <button
                     type="submit"
-                    className="btn btn-primary"
+                    className="settings-btn-primary"
                     disabled={submittingProfile}
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.65rem 1.25rem' }}
                   >
                     {submittingProfile ? (
                       <>
-                        <Loader2 size={14} className="animate-spin" />
+                        <Loader2 size={13} className="spin" />
                         <span>{t('common.loading')}</span>
                       </>
                     ) : (
-                      <>
-                        <Building2 size={14} />
-                        <span>{t('workspace.save_profile_btn')}</span>
-                      </>
+                      <span>{t('workspace.save_profile_btn')}</span>
                     )}
                   </button>
                 </div>
@@ -535,101 +370,37 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
 
           {/* TAB 2: Warehouses & Stores */}
           {activeTab === 'locations' && (
-            <div>
-              {/* Existing Locations with Scroll & Delete */}
-              <div style={{ marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              {/* Existing Locations */}
+              <div>
                 <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#d4d4d8', marginBottom: '0.6rem' }}>
                   {t('inventory.all_locations')} ({locations.length})
                 </div>
 
-                <div
-                  style={{
-                    background: '#121214',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    borderRadius: '8px',
-                    maxHeight: '220px',
-                    overflowY: 'auto',
-                  }}
-                >
-                  {locations.map((loc, idx) => {
+                <div className="settings-loc-list">
+                  {locations.map((loc) => {
                     const isDeleting = deletingLocId === loc.id;
                     return (
-                      <div
-                        key={loc.id}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          padding: '0.65rem 0.85rem',
-                          borderBottom: idx < locations.length - 1 ? '1px solid rgba(255, 255, 255, 0.05)' : 'none',
-                          fontSize: '0.8rem',
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', minWidth: 0 }}>
-                          <span
-                            className="font-mono"
-                            style={{
-                              fontSize: '0.74rem',
-                              padding: '0.15rem 0.4rem',
-                              background: '#27272a',
-                              borderRadius: '4px',
-                              color: '#e4e4e7',
-                              flexShrink: 0,
-                            }}
-                          >
-                            {loc.code}
-                          </span>
-                          <span style={{ color: '#ffffff', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {loc.name}
-                          </span>
+                      <div key={loc.id} className="settings-loc-item">
+                        <div className="settings-loc-left">
+                          <span className="settings-loc-code">{loc.code}</span>
+                          <span className="settings-loc-name">{loc.name}</span>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
-                          <span
-                            style={{
-                              fontSize: '0.68rem',
-                              padding: '0.1rem 0.4rem',
-                              borderRadius: '4px',
-                              background: 'rgba(255, 255, 255, 0.05)',
-                              color: '#a1a1aa',
-                            }}
-                          >
-                            {loc.location_type}
-                          </span>
+                        <div className="settings-loc-right">
+                          <span className="settings-loc-type">{loc.location_type}</span>
                           {loc.is_default_replenishment === 1 && (
-                            <span
-                              style={{
-                                fontSize: '0.68rem',
-                                padding: '0.1rem 0.4rem',
-                                borderRadius: '4px',
-                                background: 'rgba(16, 185, 129, 0.12)',
-                                color: '#10b981',
-                                border: '1px solid rgba(16, 185, 129, 0.25)',
-                              }}
-                            >
-                              Default
-                            </span>
+                            <span className="settings-loc-default">Default</span>
                           )}
 
                           {locations.length > 1 && (
                             <button
                               type="button"
+                              className="settings-loc-delete"
                               onClick={() => handleDeleteLocation(loc.id, loc.name)}
                               disabled={isDeleting}
                               title={t('workspace.delete_location_btn')}
-                              style={{
-                                background: 'transparent',
-                                border: 'none',
-                                color: '#71717a',
-                                cursor: 'pointer',
-                                padding: '0.2rem',
-                                display: 'flex',
-                                alignItems: 'center',
-                                transition: 'color 0.15s ease',
-                              }}
-                              onMouseEnter={(e) => (e.currentTarget.style.color = '#ef4444')}
-                              onMouseLeave={(e) => (e.currentTarget.style.color = '#71717a')}
                             >
-                              {isDeleting ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+                              {isDeleting ? <Loader2 size={13} className="spin" /> : <Trash2 size={13} />}
                             </button>
                           )}
                         </div>
@@ -640,39 +411,30 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
               </div>
 
               {/* Add New Location Card */}
-              <div
-                style={{
-                  background: 'rgba(255, 255, 255, 0.02)',
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
-                  borderRadius: '10px',
-                  padding: '1.15rem',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.85rem' }}>
-                  <Plus size={15} color="#10b981" />
-                  <span style={{ fontSize: '0.84rem', fontWeight: 600, color: '#ffffff' }}>
-                    {t('workspace.add_location_title')}
-                  </span>
+              <div className="settings-section-card">
+                <div className="settings-card-header">
+                  <Plus size={15} />
+                  <span className="settings-card-title">{t('workspace.add_location_title')}</span>
                 </div>
 
                 <form onSubmit={handleAddLocation}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
-                    <div className="form-group">
-                      <label className="form-label">{t('workspace.loc_code')}</label>
+                  <div className="settings-form-row">
+                    <div className="settings-form-group">
+                      <label className="settings-label">{t('workspace.loc_code')}</label>
                       <input
                         type="text"
-                        className="form-input font-mono"
+                        className="settings-input"
                         value={locCode}
                         onChange={(e) => setLocCode(e.target.value.toUpperCase())}
                         placeholder="STORE-02"
                         required
                       />
                     </div>
-                    <div className="form-group">
-                      <label className="form-label">{t('workspace.loc_name')}</label>
+                    <div className="settings-form-group">
+                      <label className="settings-label">{t('workspace.loc_name')}</label>
                       <input
                         type="text"
-                        className="form-input"
+                        className="settings-input"
                         value={locName}
                         onChange={(e) => setLocName(e.target.value)}
                         placeholder="e.g. Downtown Retail Store"
@@ -681,11 +443,11 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                     </div>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1rem', alignItems: 'center' }}>
-                    <div className="form-group">
-                      <label className="form-label">{t('workspace.loc_type')}</label>
+                  <div className="settings-form-row" style={{ alignItems: 'center' }}>
+                    <div className="settings-form-group">
+                      <label className="settings-label">{t('workspace.loc_type')}</label>
                       <select
-                        className="form-select"
+                        className="settings-select"
                         value={locType}
                         onChange={(e: any) => setLocType(e.target.value)}
                       >
@@ -701,7 +463,7 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                         id="loc-default-check"
                         checked={isDefaultReplenishment}
                         onChange={(e) => setIsDefaultReplenishment(e.target.checked)}
-                        style={{ cursor: 'pointer' }}
+                        style={{ cursor: 'pointer', accentColor: '#ffffff' }}
                       />
                       <label
                         htmlFor="loc-default-check"
@@ -712,69 +474,59 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                     </div>
                   </div>
 
-                  <button
-                    type="submit"
-                    className="btn btn-secondary"
-                    disabled={submittingLoc}
-                    style={{ width: '100%', justifyContent: 'center', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
-                  >
-                    {submittingLoc ? (
-                      <>
-                        <Loader2 size={14} className="animate-spin" />
-                        <span>{t('common.loading')}</span>
-                      </>
-                    ) : (
-                      <>
-                        <Plus size={14} />
-                        <span>{t('workspace.add_location_btn')}</span>
-                      </>
-                    )}
-                  </button>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.85rem' }}>
+                    <button
+                      type="submit"
+                      className="settings-btn-secondary"
+                      disabled={submittingLoc}
+                    >
+                      {submittingLoc ? (
+                        <>
+                          <Loader2 size={13} className="spin" />
+                          <span>{t('common.loading')}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Plus size={13} />
+                          <span>{t('workspace.add_location_btn')}</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </form>
               </div>
             </div>
           )}
 
-          {/* TAB 3: Data & Reset (Empty Store / Load Demo) */}
+          {/* TAB 3: Data & Reset (Danger Zone & Demo Data) */}
           {activeTab === 'data' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               {/* Card 1: Clear All Data (Start Fresh) */}
-              <div
-                style={{
-                  background: 'rgba(239, 68, 68, 0.03)',
-                  border: '1px solid rgba(239, 68, 68, 0.2)',
-                  borderRadius: '10px',
-                  padding: '1.15rem',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
-                  <ShieldAlert size={16} color="#ef4444" />
-                  <span style={{ fontSize: '0.88rem', fontWeight: 600, color: '#ffffff' }}>
-                    {t('workspace.clean_fresh_title')}
-                  </span>
+              <div className="settings-danger-card">
+                <div className="settings-card-header">
+                  <ShieldAlert size={15} color="#f87171" />
+                  <span className="settings-card-title">{t('workspace.clean_fresh_title')}</span>
                 </div>
-                <p style={{ fontSize: '0.78rem', color: '#a1a1aa', lineHeight: 1.55, margin: '0 0 1rem 0' }}>
-                  {t('workspace.clean_fresh_desc')}
-                </p>
+                <p className="settings-card-desc">{t('workspace.clean_fresh_desc')}</p>
 
                 {showConfirmClean ? (
                   <form onSubmit={handleInitClean}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
-                      <div className="form-group">
-                        <label className="form-label">{t('workspace.company_name_label')}</label>
+                    <div className="settings-form-row">
+                      <div className="settings-form-group">
+                        <label className="settings-label">{t('workspace.company_name_label')}</label>
                         <input
                           type="text"
-                          className="form-input"
+                          className="settings-input"
                           value={cleanCompanyName}
                           onChange={(e) => setCleanCompanyName(e.target.value)}
                           placeholder="e.g. Zara Boutique"
                           required
                         />
                       </div>
-                      <div className="form-group">
-                        <label className="form-label">{t('workspace.industry_label')}</label>
+                      <div className="settings-form-group">
+                        <label className="settings-label">{t('workspace.industry_label')}</label>
                         <select
-                          className="form-select"
+                          className="settings-select"
                           value={cleanIndustry}
                           onChange={(e) => setCleanIndustry(e.target.value)}
                         >
@@ -786,23 +538,23 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                       </div>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
-                      <div className="form-group">
-                        <label className="form-label">{t('workspace.wh_name_label')}</label>
+                    <div className="settings-form-row">
+                      <div className="settings-form-group">
+                        <label className="settings-label">{t('workspace.wh_name_label')}</label>
                         <input
                           type="text"
-                          className="form-input"
+                          className="settings-input"
                           value={cleanWarehouseName}
                           onChange={(e) => setCleanWarehouseName(e.target.value)}
                           placeholder="e.g. Main Store"
                           required
                         />
                       </div>
-                      <div className="form-group">
-                        <label className="form-label">{t('workspace.wh_code_label')}</label>
+                      <div className="settings-form-group">
+                        <label className="settings-label">{t('workspace.wh_code_label')}</label>
                         <input
                           type="text"
-                          className="form-input font-mono"
+                          className="settings-input"
                           value={cleanWarehouseCode}
                           onChange={(e) => setCleanWarehouseCode(e.target.value.toUpperCase())}
                           placeholder="WH-01"
@@ -811,10 +563,10 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                       </div>
                     </div>
 
-                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '0.85rem' }}>
                       <button
                         type="button"
-                        className="btn btn-secondary"
+                        className="settings-btn-secondary"
                         onClick={() => setShowConfirmClean(false)}
                         disabled={submittingClean}
                       >
@@ -822,18 +574,17 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                       </button>
                       <button
                         type="submit"
-                        className="btn btn-primary"
-                        style={{ background: '#ef4444', borderColor: '#ef4444', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
+                        className="settings-btn-danger"
                         disabled={submittingClean}
                       >
                         {submittingClean ? (
                           <>
-                            <Loader2 size={14} className="animate-spin" />
+                            <Loader2 size={13} className="spin" />
                             <span>{t('common.loading')}</span>
                           </>
                         ) : (
                           <>
-                            <Trash2 size={14} />
+                            <Trash2 size={13} />
                             <span>{t('workspace.clean_fresh_confirm_btn')}</span>
                           </>
                         )}
@@ -848,48 +599,28 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                       setCleanWarehouseName(locale === 'ar' ? 'المستودع الرئيسي' : 'Main Warehouse');
                       setShowConfirmClean(true);
                     }}
-                    className="btn btn-secondary"
-                    style={{
-                      borderColor: 'rgba(239, 68, 68, 0.4)',
-                      color: '#f87171',
-                      width: '100%',
-                      justifyContent: 'center',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      padding: '0.65rem',
-                    }}
+                    className="settings-btn-danger"
+                    style={{ width: '100%' }}
                   >
-                    <Trash2 size={15} />
+                    <Trash2 size={14} />
                     <span>{t('workspace.clean_fresh_btn')}</span>
                   </button>
                 )}
               </div>
 
-              {/* Card 2: Load Demo Products (Preview) */}
-              <div
-                style={{
-                  background: 'rgba(99, 102, 241, 0.04)',
-                  border: '1px solid rgba(99, 102, 241, 0.2)',
-                  borderRadius: '10px',
-                  padding: '1.15rem',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
-                  <Sparkles size={16} color="#818cf8" />
-                  <span style={{ fontSize: '0.88rem', fontWeight: 600, color: '#f4f4f5' }}>
-                    {t('workspace.restore_demo_title')}
-                  </span>
+              {/* Card 2: Load Demo Products */}
+              <div className="settings-section-card">
+                <div className="settings-card-header">
+                  <Sparkles size={15} />
+                  <span className="settings-card-title">{t('workspace.restore_demo_title')}</span>
                 </div>
-                <p style={{ fontSize: '0.78rem', color: '#a1a1aa', lineHeight: 1.55, margin: '0 0 1rem 0' }}>
-                  {t('workspace.restore_demo_desc')}
-                </p>
+                <p className="settings-card-desc">{t('workspace.restore_demo_desc')}</p>
 
                 {showConfirmRestore ? (
                   <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                     <button
                       type="button"
-                      className="btn btn-secondary"
+                      className="settings-btn-secondary"
                       onClick={() => setShowConfirmRestore(false)}
                       disabled={submittingRestore}
                     >
@@ -898,18 +629,17 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                     <button
                       type="button"
                       onClick={handleRestoreDemo}
-                      className="btn btn-primary"
+                      className="settings-btn-primary"
                       disabled={submittingRestore}
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
                     >
                       {submittingRestore ? (
                         <>
-                          <Loader2 size={14} className="animate-spin" />
+                          <Loader2 size={13} className="spin" />
                           <span>{t('common.loading')}</span>
                         </>
                       ) : (
                         <>
-                          <RotateCcw size={14} />
+                          <RotateCcw size={13} />
                           <span>{t('workspace.restore_demo_btn')}</span>
                         </>
                       )}
@@ -919,19 +649,10 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setShowConfirmRestore(true)}
-                    className="btn btn-secondary"
-                    style={{
-                      width: '100%',
-                      justifyContent: 'center',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      padding: '0.65rem',
-                      borderColor: 'rgba(99, 102, 241, 0.3)',
-                      color: '#a5b4fc',
-                    }}
+                    className="settings-btn-secondary"
+                    style={{ width: '100%' }}
                   >
-                    <RotateCcw size={15} />
+                    <RotateCcw size={14} />
                     <span>{t('workspace.restore_demo_btn')}</span>
                   </button>
                 )}
@@ -940,18 +661,9 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
           )}
         </div>
 
-        {/* Sticky Footer */}
-        <div
-          style={{
-            padding: '0.75rem 1.25rem',
-            borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-            backgroundColor: '#09090b',
-            display: 'flex',
-            justifyContent: 'flex-end',
-            flexShrink: 0,
-          }}
-        >
-          <button type="button" className="btn btn-secondary" onClick={onClose}>
+        {/* Modal Footer */}
+        <div className="settings-footer">
+          <button type="button" className="settings-btn-secondary" onClick={onClose}>
             {t('common.close')}
           </button>
         </div>

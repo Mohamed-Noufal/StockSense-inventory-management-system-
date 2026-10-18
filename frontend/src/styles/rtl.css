@@ -170,6 +170,14 @@ body[dir="rtl"] {
   text-align: right;
 }
 
+/* Linear-style Settings Modal RTL */
+[dir="rtl"] .settings-select {
+  padding-right: 0.8rem;
+  padding-left: 2rem;
+  background-position: left 0.75rem center;
+  text-align: right;
+}
+
 /* Language Toggle Button Component */
 .lang-toggle-btn {
   display: inline-flex;
