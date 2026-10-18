@@ -360,6 +360,14 @@ def seed(profile: str = "demo", reset: bool = False, seed_value: int = 42):
             print("✓ Seeded 15 items, 52-week ledger history, POs, and sample attachments.")
             report = run_integrity_check(db)
             print(f"✓ Integrity verification: {report.status} (Mismatches: {report.mismatches_count})")
+            try:
+                from backend.ai.service import AIService
+                from backend.ai.schemas import AIRunTriggerRequest
+                req = AIRunTriggerRequest(service_level=0.95, default_method="CROSTON")
+                AIService.execute_ai_run(db, req)
+                print("✓ Initial AI pipeline executed: Replenishment recommendations ready.")
+            except Exception as e:
+                print(f"ℹ AI run can be triggered from UI: {e}")
 
         print("==========================================================")
         print("  ✓ Database seeding successfully completed!")
