@@ -49,16 +49,19 @@ yarn-error.log*
 pnpm-debug.log*
 
 # Database & Runtime State
-data/*.db
+data/*.db*
+data/*.sqlite*
 data/*.db-wal
 data/*.db-shm
-data/*.sqlite*
+data/*.db-journal
 data/attachments/*
 !data/attachments/.gitkeep
 backend/data/
 !data/.gitkeep
 *.db
-*.sqlite
+*.db-*
+*.sqlite*
+*.sqlite3*
 
 # Environment Variables & Secrets
 .env
