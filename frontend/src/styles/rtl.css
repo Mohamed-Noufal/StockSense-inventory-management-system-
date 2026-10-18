@@ -512,5 +512,62 @@ body[dir="rtl"] {
   font-weight: 600;
 }
 
+/* Operations Table RTL Refinements */
+[dir="rtl"] .ops-table-title {
+  font-family: 'Cairo', 'IBM Plex Sans Arabic', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+[dir="rtl"] .ops-link-btn svg {
+  transform: rotate(180deg);
+}
+
+[dir="rtl"] .ops-filter-tab {
+  font-size: 0.82rem;
+  font-weight: 500;
+  padding: 0.35rem 0.85rem;
+}
+
+[dir="rtl"] .ops-data-table th {
+  text-align: right;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #a1a1aa;
+}
+
+[dir="rtl"] .ops-data-table td {
+  text-align: right;
+  font-size: 0.84rem;
+  color: #e4e4e7;
+}
+
+[dir="rtl"] .ops-data-table th.ops-col-qty,
+[dir="rtl"] .ops-data-table td.ops-col-qty {
+  text-align: center;
+}
+
+[dir="rtl"] .ops-pill {
+  font-size: 0.8rem;
+  font-weight: 550;
+}
+
+[dir="rtl"] .ops-status-indicator {
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+[dir="rtl"] .ops-menu-item {
+  text-align: right;
+  font-size: 0.8rem;
+}
+
+[dir="rtl"] .ops-menu-popover {
+  right: auto;
+  left: 0;
+}
+
+
 
 

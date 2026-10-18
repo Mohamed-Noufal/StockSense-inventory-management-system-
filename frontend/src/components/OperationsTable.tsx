@@ -101,20 +101,36 @@ export const OperationsTable: React.FC<OperationsTableProps> = ({
   const formatSignedQty = (mov: StockMovement) => {
     const qty = mov.quantity;
     if (mov.movement_type === 'RECEIPT') {
-      return <span style={{ color: '#34d399', fontWeight: 600 }}>+{Math.abs(qty)}</span>;
+      return (
+        <span className="ops-signed-qty" style={{ color: '#34d399', fontWeight: 600, direction: 'ltr', display: 'inline-block', unicodeBidi: 'isolate' }}>
+          +{Math.abs(qty)}
+        </span>
+      );
     } else if (mov.movement_type === 'ISSUE') {
-      return <span style={{ color: '#f87171', fontWeight: 600 }}>-{Math.abs(qty)}</span>;
+      return (
+        <span className="ops-signed-qty" style={{ color: '#f87171', fontWeight: 600, direction: 'ltr', display: 'inline-block', unicodeBidi: 'isolate' }}>
+          -{Math.abs(qty)}
+        </span>
+      );
     } else if (mov.movement_type === 'TRANSFER_OUT' || mov.movement_type === 'TRANSFER_IN') {
-      return <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{qty > 0 ? `+${qty}` : qty}</span>;
+      return (
+        <span className="ops-signed-qty" style={{ color: 'var(--text-primary)', fontWeight: 600, direction: 'ltr', display: 'inline-block', unicodeBidi: 'isolate' }}>
+          {qty > 0 ? `+${qty}` : qty}
+        </span>
+      );
     } else if (mov.movement_type === 'ADJUSTMENT') {
       const isPositive = qty >= 0;
       return (
-        <span style={{ color: isPositive ? '#34d399' : '#f87171', fontWeight: 600 }}>
+        <span className="ops-signed-qty" style={{ color: isPositive ? '#34d399' : '#f87171', fontWeight: 600, direction: 'ltr', display: 'inline-block', unicodeBidi: 'isolate' }}>
           {isPositive ? `+${qty}` : qty}
         </span>
       );
     }
-    return <span>{qty}</span>;
+    return (
+      <span className="ops-signed-qty" style={{ direction: 'ltr', display: 'inline-block', unicodeBidi: 'isolate' }}>
+        {qty}
+      </span>
+    );
   };
 
   return (
@@ -133,7 +149,7 @@ export const OperationsTable: React.FC<OperationsTableProps> = ({
           title="View all recorded operations"
         >
           <span>{t('operations.view_all')}</span>
-          <ArrowRight style={{ width: 13, height: 13 }} />
+          <ArrowRight style={{ width: 13, height: 13, transform: locale === 'ar' ? 'rotate(180deg)' : 'none' }} />
         </button>
       </div>
 
@@ -178,7 +194,7 @@ export const OperationsTable: React.FC<OperationsTableProps> = ({
             <tr>
               <th
                 onClick={() => setSortAsc(!sortAsc)}
-                style={{ cursor: 'pointer', userSelect: 'none' }}
+                style={{ cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap' }}
                 title="Sort by date"
               >
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
@@ -186,14 +202,14 @@ export const OperationsTable: React.FC<OperationsTableProps> = ({
                   <ArrowUpDown style={{ width: 12, height: 12, opacity: 0.7 }} />
                 </div>
               </th>
-              <th>{t('operations.col_type')}</th>
-              <th>{t('operations.col_item')}</th>
-              <th>{t('operations.col_sku')}</th>
-              <th style={{ textAlign: 'right' }}>{t('operations.col_quantity')}</th>
-              <th>{t('operations.col_from_to')}</th>
-              <th>{t('operations.col_reference')}</th>
-              <th>{t('operations.col_status')}</th>
-              <th style={{ textAlign: 'center', width: 44 }}>{t('operations.col_actions')}</th>
+              <th style={{ whiteSpace: 'nowrap' }}>{t('operations.col_type')}</th>
+              <th style={{ whiteSpace: 'nowrap' }}>{t('operations.col_item')}</th>
+              <th style={{ whiteSpace: 'nowrap' }}>{t('operations.col_sku')}</th>
+              <th className="ops-col-qty" style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>{t('operations.col_quantity')}</th>
+              <th style={{ whiteSpace: 'nowrap' }}>{t('operations.col_from_to')}</th>
+              <th style={{ whiteSpace: 'nowrap' }}>{t('operations.col_reference')}</th>
+              <th style={{ whiteSpace: 'nowrap' }}>{t('operations.col_status')}</th>
+              <th style={{ textAlign: 'center', width: 44, whiteSpace: 'nowrap' }}>{t('operations.col_actions')}</th>
             </tr>
           </thead>
           <tbody>
@@ -214,7 +230,7 @@ export const OperationsTable: React.FC<OperationsTableProps> = ({
                     </td>
 
                     {/* Type Badge */}
-                    <td>{getTypeBadge(mov.movement_type)}</td>
+                    <td style={{ whiteSpace: 'nowrap' }}>{getTypeBadge(mov.movement_type)}</td>
 
                     {/* Item Name */}
                     <td style={{ fontWeight: 500, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
@@ -222,23 +238,27 @@ export const OperationsTable: React.FC<OperationsTableProps> = ({
                     </td>
 
                     {/* SKU */}
-                    <td>
+                    <td style={{ whiteSpace: 'nowrap' }}>
                       <span className="ops-sku-pill">{mov.item_sku || '—'}</span>
                     </td>
 
                     {/* Quantity */}
-                    <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: '0.82rem' }}>
+                    <td className="ops-col-qty" style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
                       {formatSignedQty(mov)}
                     </td>
 
                     {/* From -> To Route */}
                     <td style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
-                      {translateWarehouse(mov.route_display || mov.location_code || 'Central Warehouse (Cairo Base)', locale)}
+                      <span style={{ direction: 'ltr', display: 'inline-block', unicodeBidi: 'isolate' }}>
+                        {translateWarehouse(mov.route_display || mov.location_code || 'Central Warehouse (Cairo Base)', locale)}
+                      </span>
                     </td>
 
                     {/* Reference */}
                     <td>
-                      <span className="ops-ref-text">{mov.reference_display || '—'}</span>
+                      <span className="ops-ref-text" title={mov.reference_display || ''}>
+                        {mov.reference_display || '—'}
+                      </span>
                     </td>
 
                     {/* Status */}

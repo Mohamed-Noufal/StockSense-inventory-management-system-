@@ -373,6 +373,7 @@
 
 .ops-data-table {
   width: 100%;
+  min-width: 920px;
   border-collapse: separate;
   border-spacing: 0;
 }
@@ -385,6 +386,7 @@
   border-bottom: 1px solid var(--border-subtle);
   background: #0c0c0e;
   text-align: left;
+  white-space: nowrap;
 }
 
 .ops-data-table td {
@@ -477,12 +479,30 @@
   padding: 0.15rem 0.45rem;
   border-radius: 4px;
   color: var(--text-secondary);
+  white-space: nowrap;
+  display: inline-block;
+  direction: ltr;
+  unicode-bidi: isolate;
 }
 
 .ops-ref-text {
   font-family: var(--font-mono);
   font-size: 0.76rem;
   color: var(--text-muted);
+  white-space: nowrap;
+  max-width: 170px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.ops-signed-qty {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  direction: ltr;
+  unicode-bidi: isolate;
+  display: inline-block;
 }
 
 .ops-status-indicator {
