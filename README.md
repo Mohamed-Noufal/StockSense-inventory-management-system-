@@ -486,11 +486,6 @@ StockSense currently functions as a battle-tested reference architecture and hig
 - [ ] **Offline-First PWA & Edge Sync**: Add service worker caching and IndexedDB queueing so warehouse staff can continue barcode scanning and dock receiving in remote yard dead zones with automatic sync upon reconnection.
 - [ ] **Dedicated Mobile Warehouse HUD**: Package barcode scanning and quick stock lookups as a dedicated mobile application (Capacitor / React Native) with native camera barcode scanning (ZXing / ML Kit) for rugged Zebra and Honeywell Android handheld terminals.
 
-### 6. Automated Testing & Observability
-- [ ] **End-to-End Test Suite**: Add comprehensive Playwright / Cypress browser test suites covering the Golden Demo scenario (dock receipt -> AI proposal -> PO approval -> waybill print).
-- [ ] **OpenTelemetry & Prometheus Metrics**: Instrument FastAPI endpoints and SQLAlchemy queries with OpenTelemetry spans and Prometheus `/metrics` exporters for Grafana dashboard monitoring.
-- [ ] **Automated Benchmark Suite**: Introduce continuous load testing scripts (`locust` or `k6`) in CI to guarantee that ledger writes remain under 50ms at 500 concurrent operations.
-
 ---
 
 ## License
