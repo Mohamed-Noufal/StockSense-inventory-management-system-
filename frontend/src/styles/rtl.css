@@ -178,6 +178,16 @@ body[dir="rtl"] {
   text-align: right;
 }
 
+/* Sidebar user pill & popover RTL */
+[dir="rtl"] .sidebar-user-pill {
+  text-align: right;
+}
+
+[dir="rtl"] .sidebar-user-popover {
+  left: auto;
+  right: 0.5rem;
+}
+
 /* Language Toggle Button Component */
 .lang-toggle-btn {
   display: inline-flex;

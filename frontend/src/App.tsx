@@ -532,6 +532,10 @@ const App: React.FC = () => {
         isCollapsed={isCollapsed}
         onToggleCollapse={handleToggleCollapse}
         onOpenSettings={() => setShowWorkspaceModal(true)}
+        currentUser={currentUser}
+        users={users}
+        onSelectUser={handleSelectUser}
+        onLogout={handleLogout}
       />
 
       <main className="main-content">

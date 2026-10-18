@@ -1,12 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Plus, Bell,
-  ChevronDown, PanelLeft,
-  CheckCircle2, AlertTriangle, Users, ShieldCheck, Scan, LogOut, Globe, Settings
+  PanelLeft,
+  CheckCircle2, AlertTriangle, ShieldCheck, Scan, Globe
 } from 'lucide-react';
 import { IntegrityCheckResponse, User, WorkspaceInfo } from '../types';
 import { useI18n } from '../i18n/I18nContext';
-import { translateUserRole } from '../i18n/translations';
 
 interface HeaderProps {
   activeTab: string;
@@ -17,10 +16,10 @@ interface HeaderProps {
   onOpenModal: () => void;
   isCollapsed: boolean;
   onToggleCollapse: () => void;
-  users: User[];
-  currentUser: User | null;
-  onSelectUser: (user: User) => void;
-  onNavigateTab: (tab: any) => void;
+  users?: User[];
+  currentUser?: User | null;
+  onSelectUser?: (user: User) => void;
+  onNavigateTab?: (tab: any) => void;
   onOpenScanner?: () => void;
   onLogout?: () => void;
   workspaceInfo?: WorkspaceInfo | null;
@@ -36,28 +35,16 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenModal,
   isCollapsed,
   onToggleCollapse,
-  users,
-  currentUser,
-  onSelectUser,
-  onNavigateTab,
   onOpenScanner,
-  onLogout,
   workspaceInfo,
-  onOpenWorkspace,
 }) => {
   const { t, locale, toggleLocale } = useI18n();
-  const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
-
-  const userMenuRef = useRef<HTMLDivElement>(null);
   const notifMenuRef = useRef<HTMLDivElement>(null);
 
-  // Close menus when clicking outside
+  // Close notifications menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
-        setShowUserMenu(false);
-      }
       if (notifMenuRef.current && !notifMenuRef.current.contains(event.target as Node)) {
         setShowNotifications(false);
       }
@@ -75,12 +62,6 @@ export const Header: React.FC<HeaderProps> = ({
     ai: t('nav.ai'),
     activity: t('nav.activity'),
     users: t('nav.users'),
-  };
-
-  const getInitials = (name: string) => {
-    const parts = name.split(' ');
-    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-    return name.slice(0, 2).toUpperCase();
   };
 
   const notifications = locale === 'ar' ? [
@@ -219,111 +200,6 @@ export const Header: React.FC<HeaderProps> = ({
                     </div>
                   );
                 })}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Active Employee Profile Pill & Switcher */}
-        <div style={{ position: 'relative' }} ref={userMenuRef}>
-          <button
-            className="user-profile-pill"
-            onClick={() => setShowUserMenu(!showUserMenu)}
-            title="Active employee identity for ledger auditing"
-          >
-            <div className="user-avatar-circle">
-              {currentUser ? getInitials(currentUser.full_name) : 'AF'}
-            </div>
-            <div className="user-pill-text">
-              <span className="user-pill-name">{currentUser ? currentUser.full_name : 'Ahmed Fawzy'}</span>
-              <span className="user-pill-role">
-                {translateUserRole(currentUser ? currentUser.role : 'STOREKEEPER', locale)}
-              </span>
-            </div>
-            <ChevronDown style={{ width: 13, height: 13, color: 'var(--text-muted)' }} />
-          </button>
-
-          {showUserMenu && (
-            <div className="header-popover-menu user-popover">
-              <div className="popover-header user-card-header">
-                <div className="user-avatar-circle large">
-                  {currentUser ? getInitials(currentUser.full_name) : 'AF'}
-                </div>
-                <div style={{ minWidth: 0, flex: 1 }}>
-                  <div className="user-card-name">{currentUser?.full_name || 'Ahmed Fawzy'}</div>
-                  <div className="user-card-email">{currentUser?.email || 'ahmed.fawzy@stocksense.oilfield'}</div>
-                  <span className="badge badge-info" style={{ marginTop: '0.35rem', display: 'inline-block', fontSize: '0.68rem' }}>
-                    {translateUserRole(currentUser?.role || 'STOREKEEPER', locale)}
-                  </span>
-                </div>
-              </div>
-
-              <div className="user-switcher-section">
-                <div className="user-switcher-label">
-                  <span>{t('header.switch_employee')}</span>
-                </div>
-                <div className="user-switcher-list">
-                  {users.map((u) => {
-                    const isSelected = currentUser?.id === u.id;
-                    return (
-                      <button
-                        key={u.id}
-                        className={`user-switcher-item ${isSelected ? 'selected' : ''}`}
-                        onClick={() => {
-                          onSelectUser(u);
-                          setShowUserMenu(false);
-                        }}
-                      >
-                        <div className="user-avatar-circle small">
-                          {getInitials(u.full_name)}
-                        </div>
-                        <div style={{ textAlign: locale === 'ar' ? 'right' : 'left', flex: 1, minWidth: 0 }}>
-                          <div className="user-switch-name">{u.full_name}</div>
-                          <div className="user-switch-role">{translateUserRole(u.role, locale)}</div>
-                        </div>
-                        {isSelected && <span style={{ color: '#10b981', fontSize: '0.75rem', fontWeight: 500 }}>✓ {t('header.active')}</span>}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="user-popover-footer" style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                <button
-                  className="popover-footer-link"
-                  onClick={() => {
-                    onNavigateTab('users');
-                    setShowUserMenu(false);
-                  }}
-                >
-                  <Users style={{ width: 14, height: 14 }} />
-                  <span>{t('header.team_directory')}</span>
-                </button>
-                {onOpenWorkspace && (
-                  <button
-                    className="popover-footer-link"
-                    onClick={() => {
-                      onOpenWorkspace();
-                      setShowUserMenu(false);
-                    }}
-                  >
-                    <Settings style={{ width: 14, height: 14 }} />
-                    <span>{t('nav.settings')}</span>
-                  </button>
-                )}
-                {onLogout && (
-                  <button
-                    className="popover-footer-link"
-                    style={{ color: '#ef4444', borderTop: '1px solid var(--border-subtle)', paddingTop: '0.5rem', marginTop: '0.25rem' }}
-                    onClick={() => {
-                      setShowUserMenu(false);
-                      onLogout();
-                    }}
-                  >
-                    <LogOut style={{ width: 14, height: 14 }} />
-                    <span>{t('header.sign_out')}</span>
-                  </button>
-                )}
               </div>
             </div>
           )}
