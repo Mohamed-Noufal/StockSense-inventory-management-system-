@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import {
-  Layers, Globe, Lock, Mail, User, UserPlus,
-  LogIn, AlertCircle, PackageCheck, ShieldCheck, Activity,
-  MapPin, Sparkles
+  Layers, Globe, Eye, EyeOff, Loader2, AlertCircle
 } from 'lucide-react';
 import { api } from '../api/client';
 import { User as UserType } from '../types';
@@ -15,25 +13,30 @@ interface LoginViewProps {
 export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
   const { t, locale, toggleLocale } = useI18n();
   const [tab, setTab] = useState<'signin' | 'signup'>('signin');
-  
+
   // Sign In state
   const [signInEmail, setSignInEmail] = useState('');
   const [signInPassword, setSignInPassword] = useState('');
+  const [showSignInPassword, setShowSignInPassword] = useState(false);
 
   // Sign Up state
   const [fullName, setFullName] = useState('');
   const [signUpEmail, setSignUpEmail] = useState('');
   const [signUpPassword, setSignUpPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showSignUpPassword, setShowSignUpPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [role, setRole] = useState('STOREKEEPER');
 
   const [loading, setLoading] = useState(false);
+  const [demoLoadingId, setDemoLoadingId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [forgotNotice, setForgotNotice] = useState(false);
 
   const demoRoles = [
-    { id: 1, name: 'John Doe', role: 'Storekeeper', color: '#10b981' },
-    { id: 2, name: 'Sara Mansour', role: 'Procurement', color: '#6366f1' },
-    { id: 3, name: 'Khaled Hassan', role: 'Operations Mgr', color: '#f59e0b' },
+    { id: 1, name: 'John Doe', roleTitle: 'Storekeeper' },
+    { id: 2, name: 'Sara Mansour', roleTitle: 'Procurement' },
+    { id: 3, name: 'Khaled Hassan', roleTitle: 'Operations' },
   ];
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -73,7 +76,6 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
     setError(null);
     setLoading(true);
     try {
-      // 1. Register new user in DB
       await api.registerUser({
         full_name: fullName,
         email: signUpEmail,
@@ -81,7 +83,6 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
         password: signUpPassword,
       });
 
-      // 2. Seamlessly authenticate to obtain JWT
       const loginRes = await api.login({
         email: signUpEmail,
         password: signUpPassword,
@@ -100,6 +101,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
   const handleQuickDemo = async (userId: number) => {
     setError(null);
     setLoading(true);
+    setDemoLoadingId(userId);
     try {
       const res = await api.demoLogin({ user_id: userId });
       localStorage.setItem('stocksense_token', res.access_token);
@@ -109,313 +111,330 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
       setError(err.message || 'Demo authentication failed');
     } finally {
       setLoading(false);
+      setDemoLoadingId(null);
     }
   };
 
   return (
-    <div className="login-viewport">
-      {/* -------------------------------------------------------------
-          Left Panel: Industrial Operational Hero
-          ------------------------------------------------------------- */}
-      <div className="login-hero-panel">
-        <div className="login-hero-top">
-          <div className="login-hero-badge">
-            <span className="hero-pulse-dot" />
-            <span>{t('login.hero_badge')}</span>
-          </div>
-        </div>
-
-        <div className="login-hero-center">
-          <h1 className="login-hero-title">{t('login.hero_title')}</h1>
-          <p className="login-hero-desc">{t('login.hero_desc')}</p>
-
-          <div className="login-telemetry-grid">
-            <div className="telemetry-card">
-              <div className="telemetry-card-icon emerald">
-                <PackageCheck style={{ width: 18, height: 18 }} />
-              </div>
-              <div className="telemetry-stat-value">{t('login.metric_assets')}</div>
-              <div className="telemetry-stat-label">{t('login.metric_assets_label')}</div>
-            </div>
-
-            <div className="telemetry-card">
-              <div className="telemetry-card-icon indigo">
-                <ShieldCheck style={{ width: 18, height: 18 }} />
-              </div>
-              <div className="telemetry-stat-value">{t('login.metric_wal')}</div>
-              <div className="telemetry-stat-label">{t('login.metric_wal_label')}</div>
-            </div>
-
-            <div className="telemetry-card">
-              <div className="telemetry-card-icon amber">
-                <Activity style={{ width: 18, height: 18 }} />
-              </div>
-              <div className="telemetry-stat-value">{t('login.metric_uptime')}</div>
-              <div className="telemetry-stat-label">{t('login.metric_uptime_label')}</div>
-            </div>
-          </div>
-        </div>
-
-        <div className="login-hero-footer">
-          <div className="hero-facility-tag">
-            <MapPin style={{ width: 14, height: 14, color: '#10b981' }} />
-            <span>{t('login.facility_label')}</span>
-          </div>
-          <span className="font-mono" style={{ fontSize: '0.74rem' }}>StockSense v2.4-PROD</span>
-        </div>
+    <div className="auth-viewport" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+      {/* Top Bar with Language Switcher */}
+      <div className="auth-top-bar">
+        <button
+          type="button"
+          className="auth-lang-btn"
+          onClick={toggleLocale}
+          id="auth-lang-toggle"
+          title={locale === 'en' ? 'التبديل إلى العربية' : 'Switch to English'}
+        >
+          <Globe style={{ width: 14, height: 14 }} />
+          <span>{locale === 'en' ? 'العربية' : 'English'}</span>
+        </button>
       </div>
 
-      {/* -------------------------------------------------------------
-          Right Panel: Interactive Authentication Station
-          ------------------------------------------------------------- */}
-      <div className="login-auth-panel">
-        <div className="login-auth-container">
-          {/* Top Bar with Brand & Language Toggle */}
-          <div className="login-auth-top-bar">
-            <div className="login-brand-group">
-              <div className="login-brand-icon">
-                <Layers style={{ width: 22, height: 22 }} />
-              </div>
-              <div>
-                <div className="login-brand-title">{t('login.title')}</div>
-                <div className="login-brand-sub">{t('login.subtitle')}</div>
+      {/* Centered Minimal Authentication Card */}
+      <div className="auth-card">
+        {/* Brand Header */}
+        <div className="auth-header">
+          <div className="auth-logo-wrap">
+            <Layers style={{ width: 22, height: 22 }} />
+          </div>
+          <h1 className="auth-title">
+            {tab === 'signin' ? t('login.welcome_title') : t('login.signup_heading')}
+          </h1>
+          <p className="auth-subtitle">
+            {tab === 'signin' ? t('login.welcome_sub') : t('login.signup_sub')}
+          </p>
+        </div>
+
+        {/* Tab Switcher */}
+        <div className="auth-tabs" role="tablist">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === 'signin'}
+            className={`auth-tab-btn ${tab === 'signin' ? 'active' : ''}`}
+            onClick={() => {
+              setTab('signin');
+              setError(null);
+            }}
+          >
+            <span>{t('login.tab_signin')}</span>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === 'signup'}
+            className={`auth-tab-btn ${tab === 'signup' ? 'active' : ''}`}
+            onClick={() => {
+              setTab('signup');
+              setError(null);
+            }}
+          >
+            <span>{t('login.tab_signup')}</span>
+          </button>
+        </div>
+
+        {/* Error Alert */}
+        {error && (
+          <div className="auth-error-alert" role="alert">
+            <AlertCircle style={{ width: 16, height: 16, flexShrink: 0, marginTop: 1 }} />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {/* Forgot Credentials Helper Hint */}
+        {forgotNotice && (
+          <div className="auth-error-alert" style={{ background: 'rgba(255, 255, 255, 0.05)', borderColor: 'rgba(255, 255, 255, 0.1)', color: '#d4d4d8' }}>
+            <span>
+              {locale === 'ar'
+                ? 'للوصول السريع، انقر على أحد أدوار العرض التجريبي المباشرة في الأسفل.'
+                : 'For instant review, choose one of the demo access roles below.'}
+            </span>
+          </div>
+        )}
+
+        {/* Sign In Form */}
+        {tab === 'signin' && (
+          <form className="auth-form" onSubmit={handleSignIn} id="signin-form">
+            <div className="auth-field">
+              <label className="auth-label" htmlFor="signin-email">
+                {t('login.email_label')}
+              </label>
+              <div className="auth-input-wrapper">
+                <input
+                  id="signin-email"
+                  type="email"
+                  className="auth-input"
+                  value={signInEmail}
+                  onChange={(e) => setSignInEmail(e.target.value)}
+                  placeholder="name@company.com"
+                  required
+                  autoComplete="email"
+                />
               </div>
             </div>
 
-            <button
-              type="button"
-              className="lang-toggle-btn"
-              onClick={toggleLocale}
-              title={locale === 'en' ? 'التبديل إلى العربية' : 'Switch to English'}
-              id="auth-lang-toggle"
-            >
-              <Globe style={{ width: 14, height: 14, color: '#10b981' }} />
-              <span>{t('header.language')}</span>
-            </button>
-          </div>
-
-          {/* Tab Switcher: Sign In vs Create Account */}
-          <div className="login-tabs">
-            <button
-              type="button"
-              id="tab-signin-btn"
-              className={`login-tab-btn ${tab === 'signin' ? 'active' : ''}`}
-              onClick={() => {
-                setTab('signin');
-                setError(null);
-              }}
-            >
-              <LogIn style={{ width: 15, height: 15 }} />
-              <span>{t('login.tab_signin')}</span>
-            </button>
-            <button
-              type="button"
-              id="tab-signup-btn"
-              className={`login-tab-btn ${tab === 'signup' ? 'active' : ''}`}
-              onClick={() => {
-                setTab('signup');
-                setError(null);
-              }}
-            >
-              <UserPlus style={{ width: 15, height: 15 }} />
-              <span>{t('login.tab_signup')}</span>
-            </button>
-          </div>
-
-          {/* Error Alert Display */}
-          {error && (
-            <div className="login-error-alert" role="alert">
-              <AlertCircle style={{ width: 16, height: 16, flexShrink: 0, marginTop: 1 }} />
-              <span>{error}</span>
-            </div>
-          )}
-
-          {/* Form 1: Sign In */}
-          {tab === 'signin' && (
-            <form className="login-form" onSubmit={handleSignIn} id="signin-form">
-              <div className="form-group">
-                <label className="form-label" htmlFor="signin-email">
-                  {t('login.email_label')}
-                </label>
-                <div className="form-input-wrapper">
-                  <input
-                    id="signin-email"
-                    type="email"
-                    className="form-input ltr-field"
-                    value={signInEmail}
-                    onChange={(e) => setSignInEmail(e.target.value)}
-                    placeholder="name@company.oilfield"
-                    required
-                    autoComplete="email"
-                  />
-                  <Mail style={{ width: 15, height: 15 }} className="form-input-icon" />
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label" htmlFor="signin-password">
+            <div className="auth-field">
+              <div className="auth-label-row">
+                <label className="auth-label" htmlFor="signin-password">
                   {t('login.password_label')}
                 </label>
-                <div className="form-input-wrapper">
-                  <input
-                    id="signin-password"
-                    type="password"
-                    className="form-input ltr-field"
-                    value={signInPassword}
-                    onChange={(e) => setSignInPassword(e.target.value)}
-                    placeholder="••••••••••••"
-                    required
-                    autoComplete="current-password"
-                  />
-                  <Lock style={{ width: 15, height: 15 }} className="form-input-icon" />
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                id="submit-signin-btn"
-                className="login-submit-btn"
-                disabled={loading}
-              >
-                <LogIn style={{ width: 16, height: 16 }} />
-                <span>{loading ? t('login.authenticating') : t('login.signin_btn')}</span>
-              </button>
-            </form>
-          )}
-
-          {/* Form 2: Sign Up / Create Account */}
-          {tab === 'signup' && (
-            <form className="login-form" onSubmit={handleSignUp} id="signup-form">
-              <div className="form-group">
-                <label className="form-label" htmlFor="signup-name">
-                  {t('login.fullname_label')}
-                </label>
-                <div className="form-input-wrapper">
-                  <input
-                    id="signup-name"
-                    type="text"
-                    className="form-input"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder={t('login.fullname_placeholder')}
-                    required
-                  />
-                  <User style={{ width: 15, height: 15 }} className="form-input-icon" />
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label" htmlFor="signup-email">
-                  {t('login.email_label')}
-                </label>
-                <div className="form-input-wrapper">
-                  <input
-                    id="signup-email"
-                    type="email"
-                    className="form-input ltr-field"
-                    value={signUpEmail}
-                    onChange={(e) => setSignUpEmail(e.target.value)}
-                    placeholder="name@company.oilfield"
-                    required
-                    autoComplete="email"
-                  />
-                  <Mail style={{ width: 15, height: 15 }} className="form-input-icon" />
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label" htmlFor="signup-role">
-                  {t('login.role_label')}
-                </label>
-                <div className="form-input-wrapper">
-                  <select
-                    id="signup-role"
-                    className="form-select"
-                    value={role}
-                    onChange={(e) => setRole(e.target.value)}
-                  >
-                    <option value="STOREKEEPER">{t('login.role_storekeeper')}</option>
-                    <option value="PROCUREMENT_OFFICER">{t('login.role_procurement')}</option>
-                    <option value="MANAGER">{t('login.role_manager')}</option>
-                    <option value="AUDITOR">{t('login.role_auditor')}</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label" htmlFor="signup-password">
-                  {t('login.password_label')}
-                </label>
-                <div className="form-input-wrapper">
-                  <input
-                    id="signup-password"
-                    type="password"
-                    className="form-input ltr-field"
-                    value={signUpPassword}
-                    onChange={(e) => setSignUpPassword(e.target.value)}
-                    placeholder="••••••••••••"
-                    required
-                    autoComplete="new-password"
-                  />
-                  <Lock style={{ width: 15, height: 15 }} className="form-input-icon" />
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label" htmlFor="signup-confirm-password">
-                  {t('login.confirm_password_label')}
-                </label>
-                <div className="form-input-wrapper">
-                  <input
-                    id="signup-confirm-password"
-                    type="password"
-                    className="form-input ltr-field"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="••••••••••••"
-                    required
-                    autoComplete="new-password"
-                  />
-                  <Lock style={{ width: 15, height: 15 }} className="form-input-icon" />
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                id="submit-signup-btn"
-                className="login-submit-btn"
-                disabled={loading}
-              >
-                <UserPlus style={{ width: 16, height: 16 }} />
-                <span>{loading ? t('login.creating_account') : t('login.signup_btn')}</span>
-              </button>
-            </form>
-          )}
-
-          {/* Quick-Access Demo Sandbox Bar */}
-          <div className="login-demo-bar">
-            <div className="login-demo-bar-title">
-              <Sparkles style={{ width: 13, height: 13, color: '#10b981' }} />
-              <span>{t('login.demo_bar_title')}</span>
-            </div>
-            <div className="login-demo-pills">
-              {demoRoles.map((demo) => (
                 <button
-                  key={demo.id}
                   type="button"
-                  id={`demo-user-btn-${demo.id}`}
-                  className="demo-role-btn"
-                  onClick={() => handleQuickDemo(demo.id)}
-                  disabled={loading}
-                  title={`1-Click Instant Login as ${demo.name}`}
+                  className="auth-forgot-link"
+                  onClick={() => setForgotNotice(!forgotNotice)}
                 >
-                  <span className="demo-role-dot" style={{ backgroundColor: demo.color }} />
-                  <span>{demo.name}</span>
-                  <span style={{ fontSize: '0.7rem', color: '#71717a' }}>({demo.role})</span>
+                  {t('login.forgot_password')}
                 </button>
-              ))}
+              </div>
+              <div className="auth-input-wrapper">
+                <input
+                  id="signin-password"
+                  type={showSignInPassword ? 'text' : 'password'}
+                  className="auth-input auth-input-password"
+                  value={signInPassword}
+                  onChange={(e) => setSignInPassword(e.target.value)}
+                  placeholder="••••••••••••"
+                  required
+                  autoComplete="current-password"
+                />
+                <button
+                  type="button"
+                  className="auth-password-toggle"
+                  onClick={() => setShowSignInPassword(!showSignInPassword)}
+                  title={showSignInPassword ? 'Hide password' : 'Show password'}
+                  aria-label={showSignInPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showSignInPassword ? (
+                    <EyeOff style={{ width: 14, height: 14 }} />
+                  ) : (
+                    <Eye style={{ width: 14, height: 14 }} />
+                  )}
+                </button>
+              </div>
             </div>
-          </div>
+
+            <button
+              type="submit"
+              id="submit-signin-btn"
+              className="auth-submit-btn"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <Loader2 style={{ width: 15, height: 15 }} className="spin" />
+                  <span>{t('login.authenticating')}</span>
+                </>
+              ) : (
+                <span>{t('login.tab_signin')}</span>
+              )}
+            </button>
+          </form>
+        )}
+
+        {/* Sign Up Form */}
+        {tab === 'signup' && (
+          <form className="auth-form" onSubmit={handleSignUp} id="signup-form">
+            <div className="auth-field">
+              <label className="auth-label" htmlFor="signup-name">
+                {t('login.fullname_label')}
+              </label>
+              <input
+                id="signup-name"
+                type="text"
+                className="auth-input"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder={t('login.fullname_placeholder')}
+                required
+              />
+            </div>
+
+            <div className="auth-field">
+              <label className="auth-label" htmlFor="signup-email">
+                {t('login.email_label')}
+              </label>
+              <input
+                id="signup-email"
+                type="email"
+                className="auth-input"
+                value={signUpEmail}
+                onChange={(e) => setSignUpEmail(e.target.value)}
+                placeholder="name@company.com"
+                required
+                autoComplete="email"
+              />
+            </div>
+
+            <div className="auth-field">
+              <label className="auth-label" htmlFor="signup-role">
+                {t('login.role_label')}
+              </label>
+              <select
+                id="signup-role"
+                className="auth-select"
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+              >
+                <option value="STOREKEEPER">{t('login.role_storekeeper')}</option>
+                <option value="PROCUREMENT_OFFICER">{t('login.role_procurement')}</option>
+                <option value="MANAGER">{t('login.role_manager')}</option>
+                <option value="AUDITOR">{t('login.role_auditor')}</option>
+              </select>
+            </div>
+
+            <div className="auth-field">
+              <label className="auth-label" htmlFor="signup-password">
+                {t('login.password_label')}
+              </label>
+              <div className="auth-input-wrapper">
+                <input
+                  id="signup-password"
+                  type={showSignUpPassword ? 'text' : 'password'}
+                  className="auth-input auth-input-password"
+                  value={signUpPassword}
+                  onChange={(e) => setSignUpPassword(e.target.value)}
+                  placeholder="••••••••••••"
+                  required
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  className="auth-password-toggle"
+                  onClick={() => setShowSignUpPassword(!showSignUpPassword)}
+                  aria-label={showSignUpPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showSignUpPassword ? (
+                    <EyeOff style={{ width: 14, height: 14 }} />
+                  ) : (
+                    <Eye style={{ width: 14, height: 14 }} />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <div className="auth-field">
+              <label className="auth-label" htmlFor="signup-confirm-password">
+                {t('login.confirm_password_label')}
+              </label>
+              <div className="auth-input-wrapper">
+                <input
+                  id="signup-confirm-password"
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  className="auth-input auth-input-password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="••••••••••••"
+                  required
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  className="auth-password-toggle"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff style={{ width: 14, height: 14 }} />
+                  ) : (
+                    <Eye style={{ width: 14, height: 14 }} />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              id="submit-signup-btn"
+              className="auth-submit-btn"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <Loader2 style={{ width: 15, height: 15 }} className="spin" />
+                  <span>{t('login.creating_account')}</span>
+                </>
+              ) : (
+                <span>{t('login.tab_signup')}</span>
+              )}
+            </button>
+          </form>
+        )}
+
+        {/* Demo Roles Access */}
+        <div className="auth-divider">
+          <span>{t('login.demo_divider')}</span>
+        </div>
+
+        <div className="auth-demo-grid">
+          {demoRoles.map((demo) => {
+            const isThisLoading = demoLoadingId === demo.id;
+            return (
+              <button
+                key={demo.id}
+                type="button"
+                id={`demo-user-btn-${demo.id}`}
+                className="auth-demo-btn"
+                onClick={() => handleQuickDemo(demo.id)}
+                disabled={loading}
+                title={`Sign in as ${demo.name}`}
+              >
+                {isThisLoading ? (
+                  <Loader2 style={{ width: 14, height: 14 }} className="spin" />
+                ) : (
+                  <>
+                    <span>{demo.roleTitle}</span>
+                    <span className="auth-demo-sub">{demo.name}</span>
+                  </>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Minimal Footer */}
+        <div className="auth-footer">
+          <span>StockSense Platform</span>
         </div>
       </div>
     </div>

@@ -147,11 +147,26 @@ body[dir="rtl"] {
   flex-direction: row;
 }
 
-[dir="rtl"] .login-demo-bar {
-  text-align: right;
+/* Linear-style auth component RTL */
+[dir="rtl"] .auth-top-bar {
+  right: auto;
+  left: 2rem;
 }
 
-[dir="rtl"] .demo-role-btn {
+[dir="rtl"] .auth-password-toggle {
+  right: auto;
+  left: 0.65rem;
+}
+
+[dir="rtl"] .auth-input-password {
+  padding-right: 0.85rem;
+  padding-left: 2.35rem;
+}
+
+[dir="rtl"] .auth-select {
+  padding-right: 0.85rem;
+  padding-left: 2.25rem;
+  background-position: left 0.75rem center;
   text-align: right;
 }
 
