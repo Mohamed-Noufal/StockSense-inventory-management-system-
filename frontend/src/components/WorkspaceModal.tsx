@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   X, Building2, MapPin, RotateCcw, Plus,
-  CheckCircle2, AlertTriangle, Loader2, Sparkles, Trash2, Settings, ShieldAlert
+  CheckCircle2, AlertTriangle, Loader2, Sparkles, Trash2, Settings
 } from 'lucide-react';
 import { WorkspaceInfo, InventoryLocation, LocationCreatePayload, User } from '../types';
 import { api } from '../api/client';
@@ -26,14 +26,14 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
 
   // Profile Form State
   const [companyName, setCompanyName] = useState<string>('');
-  const [industry, setIndustry] = useState<string>('GENERAL');
+  const [industry, setIndustry] = useState<string>('INDUSTRIAL');
   const [submittingProfile, setSubmittingProfile] = useState<boolean>(false);
 
   // Setup Clean Form State
   const [cleanCompanyName, setCleanCompanyName] = useState<string>('');
   const [cleanWarehouseName, setCleanWarehouseName] = useState<string>('');
   const [cleanWarehouseCode, setCleanWarehouseCode] = useState<string>('WH-01');
-  const [cleanIndustry, setCleanIndustry] = useState<string>('GENERAL');
+  const [cleanIndustry, setCleanIndustry] = useState<string>('INDUSTRIAL');
   const [showConfirmClean, setShowConfirmClean] = useState<boolean>(false);
   const [submittingClean, setSubmittingClean] = useState<boolean>(false);
 
@@ -367,10 +367,10 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                     value={industry}
                     onChange={(e) => setIndustry(e.target.value)}
                   >
-                    <option value="GENERAL">{t('workspace.industry_general')}</option>
-                    <option value="APPAREL">{t('workspace.industry_apparel')}</option>
-                    <option value="ELECTRONICS">{t('workspace.industry_electronics')}</option>
                     <option value="INDUSTRIAL">{t('workspace.industry_industrial')}</option>
+                    <option value="GENERAL">{t('workspace.industry_general')}</option>
+                    <option value="ELECTRONICS">{t('workspace.industry_electronics')}</option>
+                    <option value="APPAREL">{t('workspace.industry_apparel')}</option>
                   </select>
                 </div>
 
@@ -391,6 +391,57 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                   </button>
                 </div>
               </form>
+
+              {/* Quick Inventory Setup & Mode Switcher */}
+              <div className="settings-section-card" style={{ marginTop: '1.25rem', border: '1px solid rgba(255, 255, 255, 0.1)', background: 'rgba(255, 255, 255, 0.03)' }}>
+                <div className="settings-card-header">
+                  <Sparkles size={15} color="#38bdf8" />
+                  <span className="settings-card-title">
+                    {locale === 'ar' ? 'حالة المخزون وتهيئة كتالوج جديد' : 'Inventory Mode & Setup'}
+                  </span>
+                </div>
+                <p className="settings-card-desc" style={{ marginBottom: '0.85rem' }}>
+                  {workspaceInfo?.is_demo_dataset
+                    ? (locale === 'ar'
+                        ? 'أنت تتصفح حالياً الوضع التجريبي (15 قطعة غيار لحقول النفط مع نموذج سنوي لتجربة التنبؤ الذكي). هل أنت مستعد للبدء بمخزونك الحقيقي النظيف؟'
+                        : 'You are currently in Demo Exploration Mode (15 oilfield spare parts with 52-week AI forecasting history). Ready to initialize your real clean inventory?')
+                    : (locale === 'ar'
+                        ? 'المخزون مخصص لمنشأتك وجاهز لإضافة قطع الغيار والبيانات الحقيقية. يمكنك في أي وقت إعادة تحميل البيانات التجريبية للمعاينة.'
+                        : 'Your workspace is in live enterprise mode, ready for your own products. You can reload sample demo items anytime for testing.')}
+                </p>
+                <div style={{ display: 'flex', gap: '0.65rem', flexWrap: 'wrap' }}>
+                  {workspaceInfo?.is_demo_dataset ? (
+                    <button
+                      type="button"
+                      className="settings-btn-primary"
+                      onClick={() => {
+                        setCleanCompanyName(companyName || 'StockSense Energy Logistics');
+                        setCleanWarehouseName(locale === 'ar' ? 'المستودع المركزي' : 'Central Base Warehouse');
+                        setCleanIndustry('INDUSTRIAL');
+                        setActiveTab('data');
+                        setShowConfirmClean(true);
+                      }}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}
+                    >
+                      <Plus size={14} />
+                      <span>{locale === 'ar' ? 'إنشاء مخزون جديد خاص بي (0 صنف)' : 'Create Clean Inventory for My Facility'}</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="settings-btn-secondary"
+                      onClick={() => {
+                        setActiveTab('data');
+                        setShowConfirmRestore(true);
+                      }}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}
+                    >
+                      <RotateCcw size={14} />
+                      <span>{locale === 'ar' ? 'استعادة الكتالوج التجريبي للاختبار' : 'Load Sample Demo Catalog'}</span>
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
           )}
 
@@ -452,7 +503,7 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                         className="settings-input"
                         value={locCode}
                         onChange={(e) => setLocCode(e.target.value.toUpperCase())}
-                        placeholder="STORE-02"
+                        placeholder="WH-02"
                         required
                       />
                     </div>
@@ -463,7 +514,7 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                         className="settings-input"
                         value={locName}
                         onChange={(e) => setLocName(e.target.value)}
-                        placeholder="e.g. Downtown Retail Store"
+                        placeholder={locale === 'ar' ? 'مثال: ساحة تخزين الأنابيب أو قاعدة الإمداد' : 'e.g. Field Pipe Yard or Rig Supply Base'}
                         required
                       />
                     </div>
@@ -591,13 +642,13 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                 )}
               </div>
 
-              {/* Card 2: Factory Clean Workspace (Admin Only - Wipes all catalog) */}
-              <div className="settings-danger-card">
+              {/* Card 2: Create & Initialize Clean Inventory (0 Items) */}
+              <div className="settings-section-card" style={{ border: '1px solid rgba(56, 189, 248, 0.25)', background: 'rgba(56, 189, 248, 0.03)' }}>
                 <div className="settings-card-header">
-                  <ShieldAlert size={15} color="#f87171" />
+                  <Sparkles size={15} color="#38bdf8" />
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <span className="settings-card-title">{t('workspace.clean_fresh_title')}</span>
-                    <span className="badge badge-warning" style={{ fontSize: '0.65rem' }}>ADMIN ONLY</span>
+                    <span className="badge badge-info" style={{ fontSize: '0.65rem' }}>{locale === 'ar' ? 'تهيئة مخصصة' : 'CUSTOM SETUP'}</span>
                   </div>
                 </div>
                 <p className="settings-card-desc">{t('workspace.clean_fresh_desc')}</p>
@@ -612,7 +663,7 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                           className="settings-input"
                           value={cleanCompanyName}
                           onChange={(e) => setCleanCompanyName(e.target.value)}
-                          placeholder="e.g. Zara Boutique"
+                          placeholder="e.g. StockSense Energy Logistics"
                           required
                         />
                       </div>
@@ -623,10 +674,10 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                           value={cleanIndustry}
                           onChange={(e) => setCleanIndustry(e.target.value)}
                         >
-                          <option value="GENERAL">{t('workspace.industry_general')}</option>
-                          <option value="APPAREL">{t('workspace.industry_apparel')}</option>
-                          <option value="ELECTRONICS">{t('workspace.industry_electronics')}</option>
                           <option value="INDUSTRIAL">{t('workspace.industry_industrial')}</option>
+                          <option value="GENERAL">{t('workspace.industry_general')}</option>
+                          <option value="ELECTRONICS">{t('workspace.industry_electronics')}</option>
+                          <option value="APPAREL">{t('workspace.industry_apparel')}</option>
                         </select>
                       </div>
                     </div>
@@ -639,7 +690,7 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                           className="settings-input"
                           value={cleanWarehouseName}
                           onChange={(e) => setCleanWarehouseName(e.target.value)}
-                          placeholder="e.g. Main Store"
+                          placeholder="e.g. Central Logistics Base"
                           required
                         />
                       </div>
@@ -667,7 +718,7 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                       </button>
                       <button
                         type="submit"
-                        className="settings-btn-danger"
+                        className="settings-btn-primary"
                         disabled={submittingClean}
                       >
                         {submittingClean ? (
@@ -677,7 +728,7 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                           </>
                         ) : (
                           <>
-                            <Trash2 size={13} />
+                            <Plus size={13} />
                             <span>{t('workspace.clean_fresh_confirm_btn')}</span>
                           </>
                         )}
@@ -688,14 +739,15 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                   <button
                     type="button"
                     onClick={() => {
-                      setCleanCompanyName(companyName || 'My Company');
-                      setCleanWarehouseName(locale === 'ar' ? 'المستودع الرئيسي' : 'Main Warehouse');
+                      setCleanCompanyName(companyName || 'StockSense Energy Logistics');
+                      setCleanWarehouseName(locale === 'ar' ? 'المستودع المركزي' : 'Central Base Warehouse');
+                      setCleanIndustry('INDUSTRIAL');
                       setShowConfirmClean(true);
                     }}
-                    className="settings-btn-danger"
+                    className="settings-btn-primary"
                     style={{ width: '100%' }}
                   >
-                    <Trash2 size={14} />
+                    <Plus size={14} />
                     <span>{t('workspace.clean_fresh_btn')}</span>
                   </button>
                 )}
