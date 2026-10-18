@@ -3,10 +3,22 @@
    Optimized for MENA Energy & Oilfield Supply Chain Workstations
    ========================================================================== */
 
-/* Optical scale: Arabic glyphs have lower optical x-height than Latin.
-   Bumping root font-size from 14px to 15px restores perfect optical parity */
+/* Optical scale & Contrast Hierarchy for Arabic:
+   1. Optical Scale: Arabic glyphs (loops, teeth, diacritics) have a lower optical body than Latin Inter.
+      Setting font-size: 16px (restoring standard root) + component-level optical adjustments gives perfect parity.
+   2. Dark Mode Luminance Elevation:
+      On pure black background (#000000), fine Arabic connecting strokes and dots suffer from optical irradiation.
+      We elevate secondary and muted tokens to prevent dark gray text degradation.
+*/
 html[dir="rtl"] {
-  font-size: 15px;
+  font-size: 16px;
+  --text-primary: #ffffff;
+  --text-secondary: #d4d4d8;  /* Zinc-300: High-clarity readable secondary */
+  --text-muted: #a1a1aa;      /* Zinc-400: Crisp metadata & subtitles (was #71717a) */
+  --text-dim: #71717a;        /* Zinc-500: Deep tertiary */
+
+  /* Arabic-safe monospace fallback */
+  --font-mono: 'JetBrains Mono', 'IBM Plex Sans Arabic', monospace;
 }
 
 html[dir="rtl"],
@@ -14,9 +26,20 @@ body[dir="rtl"] {
   font-family: 'IBM Plex Sans Arabic', 'Cairo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   direction: rtl;
   text-align: right;
-  line-height: 1.6;
+  line-height: 1.65;
+  font-weight: 450;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Force form elements and buttons to inherit the Arabic font stack */
+[dir="rtl"] button,
+[dir="rtl"] input,
+[dir="rtl"] select,
+[dir="rtl"] textarea,
+[dir="rtl"] optgroup {
+  font-family: 'IBM Plex Sans Arabic', 'Cairo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 /* Arabic Typography Hierarchy:
@@ -29,10 +52,22 @@ body[dir="rtl"] {
 [dir="rtl"] .login-hero-title,
 [dir="rtl"] .login-form-title,
 [dir="rtl"] .page-title,
-[dir="rtl"] .modal-title {
+[dir="rtl"] .modal-title,
+[dir="rtl"] .ai-header-title-box h1 {
   font-family: 'Cairo', 'IBM Plex Sans Arabic', sans-serif;
   letter-spacing: normal !important;
-  line-height: 1.35;
+  line-height: 1.4;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+[dir="rtl"] p,
+[dir="rtl"] .page-sub,
+[dir="rtl"] .ai-header-title-box p {
+  color: #d4d4d8;
+  font-size: 0.86rem;
+  font-weight: 450;
+  line-height: 1.6;
 }
 
 /* CRITICAL: Arabic cursive ligatures break when letter-spacing/tracking is applied */
@@ -282,5 +317,200 @@ body[dir="rtl"] {
 [dir="rtl"] .ai-policy-comparison-table td {
   text-align: right;
 }
+
+/* ==========================================================================
+   StockSense RTL Enterprise Typography Tuning (High-Contrast & Clarity)
+   ========================================================================== */
+
+/* Buttons & Interactive Elements */
+[dir="rtl"] .btn {
+  font-size: 0.84rem;
+  font-weight: 550;
+  line-height: 1.35;
+}
+
+[dir="rtl"] .badge,
+[dir="rtl"] .urgency-badge {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: normal !important;
+  text-transform: none;
+  padding: 0.22rem 0.6rem;
+}
+
+/* Metric & Summary Cards */
+[dir="rtl"] .metric-title,
+[dir="rtl"] .ai-summary-card-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #d4d4d8;
+  letter-spacing: normal !important;
+  text-transform: none;
+}
+
+[dir="rtl"] .metric-value,
+[dir="rtl"] .ai-summary-card-value {
+  font-weight: 700;
+  letter-spacing: normal !important;
+}
+
+[dir="rtl"] .metric-sub,
+[dir="rtl"] .ai-summary-card-sub {
+  font-size: 0.8rem;
+  font-weight: 450;
+  color: #a1a1aa;
+  line-height: 1.5;
+}
+
+/* Engine Metadata Strip */
+[dir="rtl"] .ai-engine-meta-strip {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #d4d4d8;
+  padding: 0.45rem 0.85rem;
+}
+
+/* Tab Navigation */
+[dir="rtl"] .ai-tab-btn {
+  font-size: 0.86rem;
+  font-weight: 500;
+  color: #d4d4d8;
+  padding: 0.45rem 0.9rem;
+}
+
+[dir="rtl"] .ai-tab-btn.active {
+  font-weight: 600;
+  color: #ffffff;
+}
+
+/* Filter Controls & Search Input */
+[dir="rtl"] .ai-filter-group {
+  gap: 0.35rem;
+  padding: 0.25rem 0.35rem;
+}
+
+[dir="rtl"] .ai-filter-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #a1a1aa;
+  padding-right: 0.45rem;
+  padding-left: 0.25rem;
+}
+
+[dir="rtl"] .ai-filter-chip {
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 0.3rem 0.65rem;
+  color: #d4d4d8;
+}
+
+[dir="rtl"] .ai-filter-chip.active {
+  font-weight: 600;
+  color: #ffffff;
+}
+
+[dir="rtl"] .ai-search-input {
+  font-size: 0.85rem;
+  font-weight: 450;
+}
+
+[dir="rtl"] .ai-search-input::placeholder {
+  color: #a1a1aa;
+}
+
+/* Data Tables */
+[dir="rtl"] .table th,
+[dir="rtl"] .data-table th,
+[dir="rtl"] .ai-policy-comparison-table th {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #a1a1aa;
+  letter-spacing: normal !important;
+  text-transform: none;
+  padding: 0.85rem 1rem;
+}
+
+[dir="rtl"] .table td,
+[dir="rtl"] .data-table td,
+[dir="rtl"] .ai-policy-comparison-table td {
+  font-size: 0.86rem;
+  color: #e4e4e7;
+  line-height: 1.6;
+  padding: 0.85rem 1rem;
+}
+
+[dir="rtl"] .ai-table-action-btn {
+  font-size: 0.8rem;
+  font-weight: 550;
+  padding: 0.3rem 0.65rem;
+}
+
+[dir="rtl"] .ai-table-meta-text,
+[dir="rtl"] .table-subtext {
+  font-size: 0.8rem;
+  color: #a1a1aa;
+  font-weight: 450;
+}
+
+[dir="rtl"] .ai-pattern-tag {
+  font-family: 'IBM Plex Sans Arabic', sans-serif !important;
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 0.2rem 0.55rem;
+  color: #ffffff;
+}
+
+/* Drawer & Modals */
+[dir="rtl"] .ai-drawer-section-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #d4d4d8;
+  letter-spacing: normal !important;
+  text-transform: none;
+}
+
+[dir="rtl"] .ai-drawer-metric-label {
+  font-size: 0.76rem;
+  font-weight: 500;
+  color: #a1a1aa;
+  letter-spacing: normal !important;
+  text-transform: none;
+}
+
+[dir="rtl"] .ai-disclaimer-box {
+  font-size: 0.84rem;
+  color: #d4d4d8;
+  line-height: 1.65;
+}
+
+/* Sidebar & Header */
+[dir="rtl"] .nav-item {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: #d4d4d8;
+}
+
+[dir="rtl"] .nav-section-label {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #a1a1aa;
+  letter-spacing: normal !important;
+  text-transform: none;
+}
+
+[dir="rtl"] .header-breadcrumbs {
+  font-size: 0.86rem;
+  font-weight: 500;
+}
+
+[dir="rtl"] .breadcrumb-org {
+  color: #a1a1aa;
+}
+
+[dir="rtl"] .breadcrumb-active {
+  color: #ffffff;
+  font-weight: 600;
+}
+
 
 

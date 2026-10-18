@@ -223,8 +223,9 @@ export const AIInsightsView: React.FC<AIInsightsViewProps> = ({
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.3rem',
-                fontFamily: 'var(--font-mono)',
-                fontSize: '0.72rem',
+                fontFamily: locale === 'ar' ? 'inherit' : 'var(--font-mono)',
+                fontSize: locale === 'ar' ? '0.78rem' : '0.72rem',
+                fontWeight: locale === 'ar' ? 500 : 400,
               }}
               title={locale === 'ar' ? 'الحركات التاريخية مستمدة من سجل نموذجي يمتد لـ 52 أسبوعاً' : 'Historical movements originate from synthetic 52-week ledger'}
             >
@@ -377,8 +378,8 @@ export const AIInsightsView: React.FC<AIInsightsViewProps> = ({
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-              <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center', background: '#09090b', padding: '0.2rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-default)' }}>
-                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', paddingLeft: '0.5rem', paddingRight: '0.25rem' }}>{t('ai.urgency_label')}</span>
+              <div className="ai-filter-group">
+                <span className="ai-filter-label">{t('ai.urgency_label')}</span>
                 {['ALL', 'CRITICAL', 'HIGH', 'NORMAL'].map((u) => {
                   const label = u === 'ALL'
                     ? (locale === 'ar' ? 'الكل' : 'ALL')
@@ -387,16 +388,7 @@ export const AIInsightsView: React.FC<AIInsightsViewProps> = ({
                     <button
                       key={u}
                       onClick={() => { setUrgencyFilter(u); setActiveCardFilter('ALL'); }}
-                      style={{
-                        background: urgencyFilter === u ? '#27272a' : 'transparent',
-                        border: 'none',
-                        color: urgencyFilter === u ? '#ffffff' : 'var(--text-secondary)',
-                        fontSize: '0.72rem',
-                        padding: '0.25rem 0.55rem',
-                        borderRadius: 'var(--radius-sm)',
-                        cursor: 'pointer',
-                        fontWeight: urgencyFilter === u ? 600 : 400,
-                      }}
+                      className={`ai-filter-chip ${urgencyFilter === u ? 'active' : ''}`}
                     >
                       {label}
                     </button>
@@ -404,8 +396,8 @@ export const AIInsightsView: React.FC<AIInsightsViewProps> = ({
                 })}
               </div>
 
-              <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center', background: '#09090b', padding: '0.2rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-default)' }}>
-                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', paddingLeft: '0.5rem', paddingRight: '0.25rem' }}>{t('ai.status_label')}</span>
+              <div className="ai-filter-group">
+                <span className="ai-filter-label">{t('ai.status_label')}</span>
                 {['ALL', 'OPEN', 'APPROVED', 'DISMISSED'].map((st) => {
                   const label = st === 'ALL'
                     ? (locale === 'ar' ? 'الكل' : 'ALL')
@@ -418,16 +410,7 @@ export const AIInsightsView: React.FC<AIInsightsViewProps> = ({
                     <button
                       key={st}
                       onClick={() => { setStatusFilter(st); setActiveCardFilter('ALL'); }}
-                      style={{
-                        background: statusFilter === st ? '#27272a' : 'transparent',
-                        border: 'none',
-                        color: statusFilter === st ? '#ffffff' : 'var(--text-secondary)',
-                        fontSize: '0.72rem',
-                        padding: '0.25rem 0.55rem',
-                        borderRadius: 'var(--radius-sm)',
-                        cursor: 'pointer',
-                        fontWeight: statusFilter === st ? 600 : 400,
-                      }}
+                      className={`ai-filter-chip ${statusFilter === st ? 'active' : ''}`}
                     >
                       {label}
                     </button>
@@ -550,13 +533,14 @@ export const AIInsightsView: React.FC<AIInsightsViewProps> = ({
                             style={{
                               display: 'inline-flex',
                               alignItems: 'center',
-                              fontSize: '0.72rem',
-                              fontFamily: 'var(--font-mono)',
-                              padding: '0.15rem 0.45rem',
+                              fontSize: locale === 'ar' ? '0.78rem' : '0.72rem',
+                              fontFamily: locale === 'ar' ? 'inherit' : 'var(--font-mono)',
+                              padding: locale === 'ar' ? '0.2rem 0.55rem' : '0.15rem 0.45rem',
                               borderRadius: 3,
                               background: '#18181b',
                               border: '1px solid var(--border-default)',
                               color: 'var(--accent-blue)',
+                              fontWeight: locale === 'ar' ? 500 : 400,
                             }}
                           >
                             {translateDemandPattern(pattern, locale)}
@@ -568,13 +552,13 @@ export const AIInsightsView: React.FC<AIInsightsViewProps> = ({
                             <span style={{ fontWeight: 700, color: isBelowRop ? '#ef4444' : '#10b981', fontVariantNumeric: 'tabular-nums' }}>
                               {rec.on_hand}
                             </span>
-                            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{locale === 'ar' ? 'رصيد حالي' : 'on hand'}</span>
+                            <span className="ai-table-meta-text">{locale === 'ar' ? 'رصيد حالي' : 'on hand'}</span>
                             {rec.on_order > 0 && (
-                              <span style={{ fontSize: '0.72rem', color: '#f59e0b' }}>
+                              <span style={{ fontSize: locale === 'ar' ? '0.78rem' : '0.72rem', color: '#f59e0b' }}>
                                 (+{rec.on_order} {locale === 'ar' ? 'قيد التوريد' : 'ordered'})
                               </span>
                             )}
-                            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>/ {locale === 'ar' ? 'حد الطلب' : 'ROP'} {rop}</span>
+                            <span className="ai-table-meta-text">/ {locale === 'ar' ? 'حد الطلب' : 'ROP'} {rop}</span>
                           </div>
                         </td>
 
@@ -633,12 +617,11 @@ export const AIInsightsView: React.FC<AIInsightsViewProps> = ({
                         <td style={{ textAlign: 'right' }} onClick={(e) => e.stopPropagation()}>
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.4rem' }}>
                             <button
-                              className="btn btn-secondary"
+                              className="btn btn-secondary ai-table-action-btn"
                               onClick={() => {
                                 setInspectingRec(rec);
                                 onInspectRec?.(rec);
                               }}
-                              style={{ padding: '0.25rem 0.55rem', fontSize: '0.72rem' }}
                               title={locale === 'ar' ? 'لماذا هذا الصنف؟ فتح تفاصيل التفسير والنموذج' : 'Why this item? Open full explanation drawer'}
                             >
                               {t('ai.btn_explain')}
@@ -647,16 +630,15 @@ export const AIInsightsView: React.FC<AIInsightsViewProps> = ({
                             {rec.status === 'OPEN' && (
                               <>
                                 <button
-                                  className="btn btn-primary"
+                                  className="btn btn-primary ai-table-action-btn"
                                   onClick={() => setApprovingRec(rec)}
-                                  style={{ padding: '0.25rem 0.55rem', fontSize: '0.72rem' }}
                                 >
                                   {t('ai.btn_approve')}
                                 </button>
                                 <button
-                                  className="btn btn-secondary"
+                                  className="btn btn-secondary ai-table-action-btn"
                                   onClick={() => setDismissingRec(rec)}
-                                  style={{ padding: '0.25rem 0.55rem', fontSize: '0.72rem', color: 'var(--text-muted)' }}
+                                  style={{ color: 'var(--text-muted)' }}
                                   title={locale === 'ar' ? 'استبعاد المقترح' : 'Dismiss proposal'}
                                 >
                                   {t('ai.btn_dismiss')}
