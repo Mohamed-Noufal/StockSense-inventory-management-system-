@@ -826,6 +826,7 @@ const App: React.FC = () => {
       {showWorkspaceModal && (
         <WorkspaceModal
           locations={locations}
+          currentUser={currentUser}
           onClose={() => setShowWorkspaceModal(false)}
           onWorkspaceUpdated={async () => {
             await fetchData();

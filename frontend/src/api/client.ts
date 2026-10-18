@@ -4,7 +4,7 @@ import {
   OperationsStats, IntegrityCheckResponse, Supplier, PurchaseOrder, POCreatePayload, POReceivePayload,
   AIRun, AIRecommendation, AIRunTriggerPayload, User, AlertItem, AlertAcknowledgePayload, AlertResolvePayload,
   DocumentAttachment, ItemCreatePayload, Category, WorkspaceInfo, LocationCreatePayload,
-  InitCleanWorkspacePayload, UpdateWorkspaceProfilePayload
+  InitCleanWorkspacePayload, UpdateWorkspaceProfilePayload, PurgeUserDataResponse
 } from '../types';
 
 const API_BASE = '/api/v1';
@@ -95,6 +95,11 @@ export const api = {
     request<WorkspaceInfo>('/workspace/init-clean', {
       method: 'POST',
       body: JSON.stringify(payload),
+    }),
+  purgeUserData: (userId?: number) =>
+    request<PurgeUserDataResponse>('/workspace/purge-user-data', {
+      method: 'POST',
+      body: JSON.stringify(userId ? { user_id: userId } : {}),
     }),
   restoreDemoWorkspace: () =>
     request<WorkspaceInfo>('/workspace/restore-demo', {

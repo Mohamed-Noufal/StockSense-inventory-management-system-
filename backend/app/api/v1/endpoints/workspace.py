@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -17,6 +18,8 @@ from backend.app.models.stock_movements import StockMovement
 from backend.app.models.purchase_orders import PurchaseOrder, PurchaseOrderLine
 from backend.app.models.alerts import Alert
 from backend.app.models.attachments import DocumentAttachment
+from backend.app.models.users import User
+from backend.app.core.auth import get_current_user
 from backend.ai.models import Recommendation, Forecast, BacktestResult, ItemPolicy, AIRun
 from backend.scripts.seed import seed_master_data, seed_demo_items_and_ledger
 
@@ -41,6 +44,18 @@ class InitCleanWorkspaceRequest(BaseModel):
 class UpdateWorkspaceProfileRequest(BaseModel):
     company_name: str = Field(min_length=2, max_length=120)
     industry: Optional[str] = Field(default="GENERAL", max_length=50)
+
+class PurgeUserDataRequest(BaseModel):
+    user_id: Optional[int] = None
+
+class PurgeUserDataResponse(BaseModel):
+    success: bool
+    user_id: int
+    user_name: str
+    deleted_movements: int
+    deleted_purchase_orders: int
+    affected_items_reconciled: int
+    message: str
 
 def get_setting_value(db: Session, key: str, default: str) -> str:
     setting = db.query(WorkspaceSetting).filter_by(key=key).first()
@@ -97,6 +112,92 @@ def update_workspace_profile(payload: UpdateWorkspaceProfileRequest, db: Session
         set_setting_value(db, "industry", payload.industry.strip())
     db.commit()
     return get_workspace_info(db)
+
+@router.post("/purge-user-data", response_model=PurgeUserDataResponse)
+def purge_user_data(
+    payload: Optional[PurgeUserDataRequest] = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Deletes all operational data created by a specific user (or the current user).
+    Reconciles stock balances from the remaining movements so that test data
+    and other users' records remain 100% intact and consistent.
+    """
+    target_user_id = current_user.id
+    if payload and payload.user_id:
+        if current_user.role == "ADMIN" or payload.user_id == current_user.id:
+            target_user_id = payload.user_id
+        else:
+            raise HTTPException(status_code=403, detail="Only administrators can delete data for other users.")
+
+    target_user = db.query(User).filter_by(id=target_user_id).first()
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found.")
+
+    try:
+        # 1. Identify and delete stock movements logged by target user
+        user_movements = db.query(StockMovement).filter(StockMovement.actor_user_id == target_user_id).all()
+        affected_pairs = set((m.item_id, m.location_id) for m in user_movements)
+        count_movements = len(user_movements)
+
+        if count_movements > 0:
+            db.query(StockMovement).filter(StockMovement.actor_user_id == target_user_id).delete(synchronize_session=False)
+
+        # 2. Reconcile StockBalance for all affected (item_id, location_id) pairs
+        reconciled_items = 0
+        now_iso = datetime.now(timezone.utc).isoformat()
+        for item_id, loc_id in affected_pairs:
+            remaining_sum = (
+                db.query(func.sum(StockMovement.quantity))
+                .filter(StockMovement.item_id == item_id, StockMovement.location_id == loc_id)
+                .scalar()
+            ) or 0
+            bal = db.query(StockBalance).filter_by(item_id=item_id, location_id=loc_id).first()
+            if bal:
+                bal.quantity_on_hand = max(0, int(remaining_sum))
+                bal.updated_at = now_iso
+                reconciled_items += 1
+
+        # 3. Identify and delete purchase orders created by target user
+        user_pos = db.query(PurchaseOrder).filter(PurchaseOrder.created_by_user_id == target_user_id).all()
+        po_ids = [po.id for po in user_pos]
+        count_pos = len(po_ids)
+
+        if po_ids:
+            db.query(PurchaseOrderLine).filter(PurchaseOrderLine.po_id.in_(po_ids)).delete(synchronize_session=False)
+            db.query(PurchaseOrder).filter(PurchaseOrder.id.in_(po_ids)).delete(synchronize_session=False)
+
+        # 4. Clean up attachments uploaded by target user
+        db.query(DocumentAttachment).filter(DocumentAttachment.uploaded_by_user_id == target_user_id).delete(synchronize_session=False)
+
+        # 5. Reset alerts where target user was acknowledged/resolved
+        db.query(Alert).filter(Alert.acknowledged_by_user_id == target_user_id).update(
+            {"acknowledged_by_user_id": None, "acknowledged_at": None, "status": "OPEN"},
+            synchronize_session=False
+        )
+        db.query(Alert).filter(Alert.resolved_by_user_id == target_user_id).update(
+            {"resolved_by_user_id": None, "resolved_at": None, "status": "OPEN"},
+            synchronize_session=False
+        )
+
+        db.commit()
+
+        return PurgeUserDataResponse(
+            success=True,
+            user_id=target_user_id,
+            user_name=target_user.full_name,
+            deleted_movements=count_movements,
+            deleted_purchase_orders=count_pos,
+            affected_items_reconciled=reconciled_items,
+            message=(
+                f"Successfully deleted {count_movements} movements and {count_pos} purchase orders "
+                f"for user '{target_user.full_name}'. Shared baseline test data and other users' records were preserved."
+            )
+        )
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to purge user data: {str(e)}")
 
 @router.post("/init-clean", response_model=WorkspaceInfoResponse)
 def init_clean_workspace(payload: InitCleanWorkspaceRequest, db: Session = Depends(get_db)):

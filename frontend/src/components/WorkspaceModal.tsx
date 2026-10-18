@@ -3,7 +3,7 @@ import {
   X, Building2, MapPin, RotateCcw, Plus,
   CheckCircle2, AlertTriangle, Loader2, Sparkles, Trash2, Settings, ShieldAlert
 } from 'lucide-react';
-import { WorkspaceInfo, InventoryLocation, LocationCreatePayload } from '../types';
+import { WorkspaceInfo, InventoryLocation, LocationCreatePayload, User } from '../types';
 import { api } from '../api/client';
 import { useI18n } from '../i18n/I18nContext';
 
@@ -11,12 +11,14 @@ interface WorkspaceModalProps {
   onClose: () => void;
   onWorkspaceUpdated: () => void;
   locations: InventoryLocation[];
+  currentUser?: User | null;
 }
 
 export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
   onClose,
   onWorkspaceUpdated,
   locations,
+  currentUser,
 }) => {
   const { t, locale } = useI18n();
   const [activeTab, setActiveTab] = useState<'profile' | 'locations' | 'data'>('profile');
@@ -35,6 +37,10 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
   const [showConfirmClean, setShowConfirmClean] = useState<boolean>(false);
   const [submittingClean, setSubmittingClean] = useState<boolean>(false);
 
+  // User-Scoped Purge State
+  const [showConfirmPurgeUser, setShowConfirmPurgeUser] = useState<boolean>(false);
+  const [submittingPurgeUser, setSubmittingPurgeUser] = useState<boolean>(false);
+
   // Add Location Form State
   const [locCode, setLocCode] = useState<string>('');
   const [locName, setLocName] = useState<string>('');
@@ -49,6 +55,26 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
 
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  const handlePurgeUserData = async () => {
+    setError(null);
+    setSubmittingPurgeUser(true);
+    try {
+      const res = await api.purgeUserData(currentUser?.id);
+      setSuccess(
+        locale === 'ar'
+          ? `تم مسح حركات ونشاطات المستخدم (${res.user_name}) بنجاح. تم الحفاظ على البيانات التجريبية وسجلات باقي المستخدمين.`
+          : `Successfully deleted ${res.deleted_movements} movements and ${res.deleted_purchase_orders} POs for ${res.user_name}. Shared test data preserved.`
+      );
+      setShowConfirmPurgeUser(false);
+      onWorkspaceUpdated();
+      fetchWorkspace();
+    } catch (err: any) {
+      setError(err.message || 'Failed to purge user data');
+    } finally {
+      setSubmittingPurgeUser(false);
+    }
+  };
 
   const fetchWorkspace = async () => {
     try {
@@ -498,14 +524,81 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
             </div>
           )}
 
-          {/* TAB 3: Data & Reset (Danger Zone & Demo Data) */}
+          {/* TAB 3: Data & Reset (User Purge, Demo Data & Factory Reset) */}
           {activeTab === 'data' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              {/* Card 1: Clear All Data (Start Fresh) */}
+              {/* Card 1: User-Scoped Deletion (Deletes ONLY by User ID, preserves test data) */}
+              <div className="settings-section-card" style={{ border: '1px solid rgba(239, 68, 68, 0.25)', background: 'rgba(239, 68, 68, 0.03)' }}>
+                <div className="settings-card-header">
+                  <Trash2 size={15} color="#f87171" />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <span className="settings-card-title">{t('workspace.purge_user_title')}</span>
+                    {currentUser && (
+                      <span className="badge badge-info" style={{ fontSize: '0.68rem', padding: '0.1rem 0.45rem' }}>
+                        {currentUser.full_name} (#{currentUser.id})
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <p className="settings-card-desc">{t('workspace.purge_user_desc')}</p>
+
+                {showConfirmPurgeUser ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.5rem' }}>
+                    <div style={{ fontSize: '0.78rem', color: '#f87171', background: 'rgba(239, 68, 68, 0.08)', padding: '0.6rem 0.85rem', borderRadius: '6px', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+                      {locale === 'ar'
+                        ? `هل أنت متأكد من مسح جميع الحركات وأوامر الشراء المسجلة باسم "${currentUser?.full_name || 'المستخدم'}"؟ البيانات التجريبية وسجلات باقي الموظفين ستبقى محفوظة بالكامل.`
+                        : `Are you sure you want to delete movements and purchase orders logged by "${currentUser?.full_name || 'this user'}"? Baseline test data and other employees' data will remain intact.`}
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                      <button
+                        type="button"
+                        className="settings-btn-secondary"
+                        onClick={() => setShowConfirmPurgeUser(false)}
+                        disabled={submittingPurgeUser}
+                      >
+                        {t('common.cancel')}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handlePurgeUserData}
+                        className="settings-btn-danger"
+                        disabled={submittingPurgeUser}
+                      >
+                        {submittingPurgeUser ? (
+                          <>
+                            <Loader2 size={13} className="spin" />
+                            <span>{t('common.loading')}</span>
+                          </>
+                        ) : (
+                          <>
+                            <Trash2 size={13} />
+                            <span>{t('workspace.purge_user_confirm_btn')}</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPurgeUser(true)}
+                    className="settings-btn-secondary"
+                    style={{ width: '100%', borderColor: 'rgba(239, 68, 68, 0.3)', color: '#f87171' }}
+                  >
+                    <Trash2 size={14} />
+                    <span>{t('workspace.purge_user_btn')} ({currentUser?.full_name || 'User'})</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Card 2: Factory Clean Workspace (Admin Only - Wipes all catalog) */}
               <div className="settings-danger-card">
                 <div className="settings-card-header">
                   <ShieldAlert size={15} color="#f87171" />
-                  <span className="settings-card-title">{t('workspace.clean_fresh_title')}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span className="settings-card-title">{t('workspace.clean_fresh_title')}</span>
+                    <span className="badge badge-warning" style={{ fontSize: '0.65rem' }}>ADMIN ONLY</span>
+                  </div>
                 </div>
                 <p className="settings-card-desc">{t('workspace.clean_fresh_desc')}</p>
 

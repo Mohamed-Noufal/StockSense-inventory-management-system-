@@ -196,7 +196,7 @@ export const AIInsightsView: React.FC<AIInsightsViewProps> = ({
       <div className="ai-header-bar">
         <div className="ai-header-title-box">
           <h1>
-            <Sparkles style={{ width: 22, height: 22, color: 'var(--accent-blue)' }} />
+            <Sparkles style={{ width: 18, height: 18, color: '#ffffff' }} />
             {t('ai.title')}
           </h1>
           <p>
@@ -204,30 +204,32 @@ export const AIInsightsView: React.FC<AIInsightsViewProps> = ({
           </p>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
           <div className="ai-engine-meta-strip">
             <span className={`ai-status-pulse ${runningAi ? 'running' : ''}`} />
-            <span style={{ fontWeight: 600, color: '#ffffff' }}>
+            <span style={{ fontWeight: 500, color: '#f4f4f5' }}>
               {runningAi ? t('ai.running_pipeline') : t('ai.engine_active')}
             </span>
             <span style={{ color: 'var(--text-muted)' }}>•</span>
-            <span>
+            <span style={{ color: 'var(--text-secondary)' }}>
               {latestRun
                 ? (locale === 'ar' ? `آخر تحليل #${latestRun.id} (${latestRun.status})` : `Last Run #${latestRun.id} (${latestRun.status})`)
-                : (locale === 'ar' ? 'لا توجد تحليلات سابقة' : 'No prior runs recorded')}
+                : (locale === 'ar' ? 'لا توجد تحليلات سابقة' : 'No prior runs')}
             </span>
             <span style={{ color: 'var(--text-muted)' }}>•</span>
             <span
               style={{
-                color: '#f59e0b',
+                color: 'var(--text-muted)',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '0.25rem',
+                gap: '0.3rem',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '0.72rem',
               }}
               title={locale === 'ar' ? 'الحركات التاريخية مستمدة من سجل نموذجي يمتد لـ 52 أسبوعاً' : 'Historical movements originate from synthetic 52-week ledger'}
             >
-              <Info style={{ width: 12, height: 12 }} />
-              {locale === 'ar' ? 'بيانات تاريخية (نموذج 52 أسبوعاً)' : 'Synthetic Dataset (34-40 wk zero demand)'}
+              <Info style={{ width: 12, height: 12, color: 'var(--text-muted)' }} />
+              {locale === 'ar' ? 'نموذج 52 أسبوعاً' : '52-Wk Model'}
             </span>
           </div>
 
@@ -235,12 +237,12 @@ export const AIInsightsView: React.FC<AIInsightsViewProps> = ({
             className="btn btn-primary"
             onClick={() => setShowRunModal(true)}
             disabled={runningAi}
-            style={{ padding: '0.55rem 0.95rem' }}
+            style={{ padding: '0.45rem 0.85rem', fontSize: '0.8rem', fontWeight: 500 }}
           >
             {runningAi ? (
-              <RefreshCw className="animate-spin" style={{ width: 14, height: 14 }} />
+              <RefreshCw className="animate-spin" style={{ width: 13, height: 13 }} />
             ) : (
-              <Play style={{ width: 14, height: 14, fill: '#000000' }} />
+              <Play style={{ width: 13, height: 13, fill: '#000000' }} />
             )}
             <span>{runningAi ? t('ai.analyzing') : t('ai.run_btn')}</span>
           </button>
@@ -460,12 +462,44 @@ export const AIInsightsView: React.FC<AIInsightsViewProps> = ({
                   </tr>
                 ) : filteredRecs.length === 0 ? (
                   <tr>
-                    <td colSpan={8} style={{ textAlign: 'center', padding: '3.5rem', color: 'var(--text-muted)' }}>
-                      <div style={{ fontSize: '0.9rem', color: '#ffffff', marginBottom: '0.25rem' }}>
-                        {t('ai.empty_filter')}
-                      </div>
-                      <div style={{ fontSize: '0.76rem' }}>
-                        {t('ai.empty_filter_sub')}
+                    <td colSpan={8} style={{ padding: '2rem 1rem' }}>
+                      <div className="ai-empty-state">
+                        <div className="ai-empty-icon-circle">
+                          <Sparkles size={16} color="#a1a1aa" />
+                        </div>
+                        <div className="ai-empty-title">
+                          {t('ai.empty_filter')}
+                        </div>
+                        <div className="ai-empty-desc">
+                          {t('ai.empty_filter_sub')}
+                        </div>
+                        {searchQuery || urgencyFilter !== 'ALL' || statusFilter !== 'ALL' || activeCardFilter !== 'ALL' ? (
+                          <button
+                            type="button"
+                            className="btn btn-secondary"
+                            style={{ margin: '0 auto', fontSize: '0.78rem', padding: '0.4rem 0.85rem' }}
+                            onClick={() => {
+                              setSearchQuery('');
+                              setUrgencyFilter('ALL');
+                              setStatusFilter('ALL');
+                              setActiveCardFilter('ALL');
+                            }}
+                          >
+                            <X size={13} />
+                            <span>{locale === 'ar' ? 'إعادة ضبط التصفية' : 'Reset Filters'}</span>
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            className="btn btn-primary"
+                            style={{ margin: '0 auto', fontSize: '0.78rem', padding: '0.45rem 1rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+                            onClick={() => setShowRunModal(true)}
+                            disabled={runningAi}
+                          >
+                            <Play size={12} fill="#000000" />
+                            <span>{t('ai.run_btn')}</span>
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

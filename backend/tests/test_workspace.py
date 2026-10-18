@@ -80,3 +80,28 @@ def test_delete_location(client: TestClient):
     del_resp = client.delete(f"/api/v1/inventory/locations/{loc_id}")
     assert del_resp.status_code == 200
     assert del_resp.json()["success"] is True
+
+def test_purge_user_data_preserves_test_catalog(client: TestClient):
+    # 1. Login as storekeeper
+    login_resp = client.post("/api/v1/auth/demo-login", json={"role": "STOREKEEPER"})
+    assert login_resp.status_code == 200
+    token = login_resp.json()["access_token"]
+    user = login_resp.json()["user"]
+
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # 2. Check items count before purge
+    items_before = client.get("/api/v1/inventory/items").json()
+    assert len(items_before) >= 15
+
+    # 3. Call purge user data
+    purge_resp = client.post("/api/v1/workspace/purge-user-data", json={"user_id": user["id"]}, headers=headers)
+    assert purge_resp.status_code == 200
+    purge_data = purge_resp.json()
+    assert purge_data["success"] is True
+    assert purge_data["user_id"] == user["id"]
+
+    # 4. Crucial: verify that the 15 baseline test items remain completely intact!
+    items_after = client.get("/api/v1/inventory/items").json()
+    assert len(items_after) == len(items_before)
+

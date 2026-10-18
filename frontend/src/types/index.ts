@@ -351,6 +351,16 @@ export interface LocationCreatePayload {
   is_default_replenishment: number;
 }
 
+export interface PurgeUserDataResponse {
+  success: boolean;
+  user_id: number;
+  user_name: string;
+  deleted_movements: number;
+  deleted_purchase_orders: number;
+  affected_items_reconciled: number;
+  message: string;
+}
+
 
 
 

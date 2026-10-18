@@ -257,3 +257,30 @@ body[dir="rtl"] {
   text-align: left;
 }
 
+/* AI Replenishment View RTL Support */
+[dir="rtl"] .ai-summary-card {
+  text-align: right;
+}
+
+[dir="rtl"] .ai-drawer-overlay {
+  justify-content: flex-start;
+}
+
+[dir="rtl"] .ai-drawer-panel {
+  border-left: none;
+  border-right: 1px solid var(--border-subtle);
+  box-shadow: 12px 0 36px rgba(0, 0, 0, 0.85);
+  animation: slideDrawerRtl 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideDrawerRtl {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+[dir="rtl"] .ai-policy-comparison-table th,
+[dir="rtl"] .ai-policy-comparison-table td {
+  text-align: right;
+}
+
+
