@@ -188,8 +188,10 @@ npm run dev
 
 ## 3. Key Capabilities & Differentiators
 
-- **Multi-Industry Store Configuration & 100% Clean Workspace Onboarding**: Adapts to any business domain—including **Fashion & Apparel**, **Electronics & IT Devices**, **Retail Consumer Goods**, or **Industrial MRO & Oilfield**. Store managers can configure company identity, manage branch locations with deletion safety guards, and initialize an empty store (0 items, 0 balances, preserved user accounts) or load preview demo products with 1 click.
-- **Bilingual English & Arabic Precision UI**: Premium typography powered by Google Fonts Almarai for Arabic, high-contrast dark zinc surfaces (Vercel-inspired), and full RTL readability without AI styling artifacts.
+- **Industrial Facility Configuration & 100% Clean Workspace Onboarding**: Engineered specifically for **Oilfield Supply Chains, Energy Logistics, and Industrial MRO Operations**. Facility operators can configure entity identity, manage multi-facility storage yards with deletion safety guards, and initialize a 100% clean inventory (0 items, 0 balances, 0 movements, preserved user credentials) with standard industrial categories (`MECHANICAL_PARTS`, `PIPES_TUBING`, `VALVES_PRESSURE`, `ELECTRICAL_INSTRUMENT`, `TOOLS_HARDWARE`, `CHEMICALS_LUBRICANTS`) or load a 15-item preview demo catalog with 1 click.
+- **User-Scoped Data Management & Safe Deletion**: Deleting test transactions or resetting workspace records from Settings targets only records belonging to the authenticated `user_id`, preventing accidental deletion of shared demo catalogs or peer accounts.
+- **Git-Ignored Fresh Clone Guarantees**: SQLite database files (`data/stocksense.db*`) are excluded from version control via `.gitignore`. Any developer or reviewer cloning the repository from GitHub gets a fresh, clean local environment that automatically builds schema and seeds canonical test data on first launch via `./run.sh` or `docker compose up`.
+- **Bilingual English & Arabic Precision UI with Optical Scaling**: Premium typography powered by `IBM Plex Sans Arabic` and `Cairo`, an elevated high-contrast dark zinc palette (`#ffffff`, `#d4d4d8`, `#a1a1aa`), proper RTL Unicode Bidi isolation (`direction: ltr; unicode-bidi: isolate;` for negative numbers like `-6`), smart inward table popover positioning (`left: 6px; right: auto;`), and upward-opening menus near the bottom of tables.
 - **Authoritative Append-Only Ledger**: Every receipt, issue, transfer, and cycle adjustment commits an immutable event to `stock_movements`. Real-time `stock_balances` act as transactionally synchronized read projections protected by `CHECK (quantity_on_hand >= 0)`.
 - **Zero-Mismatches Ledger Integrity Verification**: One-click internal consistency audit confirms $\sum \text{Ledger deltas} \equiv \text{Current Balance}$ across all items and warehouse locations, detecting any state drift or concurrency discrepancy with 100% mathematical certainty.
 - **Teunter-Syntetos-Babai (TSB) & Syntetos-Boylan Approximation (SBA)**: Decouples demand probability from non-zero order size, eliminating Croston’s classical upward bias and detecting obsolescence risk.
@@ -307,7 +309,7 @@ StockSense Workstations
 5. **AI Replenishment Intelligence (`#/ai`)**: Human-in-the-loop decision queue, 6-section explainability drawer (*"Why this order?"*), 52-week historical issue timelines, probabilistic quantile ribbons (P50/P90), and empirical backtest accuracy reports.
 6. **Activity & Integrity Center (`#/activity`)**: Immutable stock ledger with signed quantity indicators, operational alert triage, and 1-click database reconciliation certificate confirming 0 mismatches.
 7. **Team & RBAC Audit Directory (`#/users`)**: Database user directory, role breakdown metrics, and interactive employee switcher that stamps every movement and receiving transaction with a non-repudiable actor label.
-8. **Store & Workspace Settings (`⚙️ Settings`)**: Multi-industry company and warehouse configuration workstation. Allows business managers to define their store profile (fashion/apparel, retail goods, electronics, or industrial MRO), manage multi-branch storage locations with dynamic deletion safety guards, initialize a 100% clean empty store (0 items, 0 POs, preserved user accounts), or restore an optional 15-item sample demo catalog.
+8. **Facility & Workspace Settings (`⚙️ Settings`)**: Enterprise facility and inventory configuration hub. Allows logistics managers to configure corporate identity, manage multi-site storage locations (bases, rigs, yards) with dynamic deletion safety guards, safely clear personal test transactions without affecting peer accounts, and 1-click initialize a pristine empty inventory (0 items, 0 POs, preserved user credentials) with standard industrial categories (`MECHANICAL_PARTS`, `PIPES_TUBING`, `VALVES_PRESSURE`, etc.) or restore the 15-item sample demo catalog.
 
 ---
 
@@ -371,7 +373,7 @@ StockSense provides a fully documented REST API under `/api/v1`. Interactive Ope
 | `PUT` | `/api/v1/workspace/profile` | Update company profile and industry without modifying item data. |
 | `POST` | `/api/v1/workspace/init-clean` | Initialize a pristine empty store (0 items, preserved user logins). |
 | `POST` | `/api/v1/workspace/restore-demo` | 1-click restore of the 15 sample items and 52-week ledger history. |
-| `POST` | `/api/v1/inventory/locations` | Add a new warehouse, storage yard, or retail branch. |
+| `POST` | `/api/v1/inventory/locations` | Add a new warehouse, storage yard, or field base. |
 | `DELETE` | `/api/v1/inventory/locations/{id}` | Delete a storage location (enforces zero active balance safety guard). |
 | `GET` | `/api/v1/users` | Personnel directory with roles and transaction audit statistics. |
 | `GET` | `/api/v1/alerts` | Active operational exceptions, stockout risks, and discrepancy alerts. |
