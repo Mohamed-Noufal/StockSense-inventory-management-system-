@@ -35,7 +35,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   aiCount,
   activityCount = 0,
   usersCount = 0,
-  health,
+  health: _health,
   isCollapsed,
   onToggleCollapse,
   onOpenSettings,
@@ -273,7 +273,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {currentUser && (
           <button
             type="button"
-            className="sidebar-user-pill"
+            className={`sidebar-user-pill ${showUserMenu ? 'active' : ''}`}
             onClick={() => setShowUserMenu(!showUserMenu)}
             title={currentUser.full_name}
           >
@@ -291,8 +291,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {!isCollapsed && (
               <ChevronDown
                 style={{
-                  width: 13,
-                  height: 13,
+                  width: 14,
+                  height: 14,
                   color: 'var(--text-muted)',
                   marginLeft: locale === 'ar' ? 0 : 'auto',
                   marginRight: locale === 'ar' ? 'auto' : 0,
@@ -316,16 +316,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {!isCollapsed && <span>{t('nav.settings') || 'Settings'}</span>}
           </button>
         )}
-
-        {/* Engine status indicator */}
-        <div className="sidebar-engine-status">
-          <span
-            className="pulse-dot"
-            style={{ backgroundColor: health?.status === 'healthy' ? '#10b981' : '#f59e0b' }}
-            title={health?.status === 'healthy' ? 'Engine: SQLite WAL (Online)' : 'Connecting to database...'}
-          />
-          {!isCollapsed && <span>SQLite WAL</span>}
-        </div>
       </div>
     </aside>
   );
