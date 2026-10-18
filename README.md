@@ -34,6 +34,8 @@
 8. [API Reference & OpenAPI Specification](#8-api-reference--openapi-specification)
 9. [Verification, Quality Assurance & Test Suite](#9-verification-quality-assurance--test-suite)
 10. [Repository Structure & System Organization](#10-repository-structure--system-organization)
+11. [Production Roadmap & Engineering Next Steps](#11-production-roadmap--engineering-next-steps)
+12. [License](#license)
 
 ---
 
@@ -450,6 +452,44 @@ stocksense/
 ├── data/                       # Local SQLite WAL database and file attachments
 └── scripts/                    # Developer tooling, system verification, and Docker entrypoint
 ```
+
+---
+
+## 11. Production Roadmap & Engineering Next Steps
+
+StockSense currently functions as a battle-tested reference architecture and high-fidelity prototype. For engineering teams, contributors, or reviewers looking to scale StockSense into a full-scale, multi-facility enterprise warehouse management system (WMS), this roadmap outlines the recommended technical milestones:
+
+### 1. Database Tier & Concurrent Scaling
+- [ ] **PostgreSQL 16 & Connection Pooling**: Migrate from local SQLite WAL mode to managed PostgreSQL 16 using `asyncpg` and PgBouncer. While SQLite handles single-writer transactions cleanly, PostgreSQL provides true concurrent multi-dock writes, advisory locks, and Row-Level Security (RLS).
+- [ ] **Alembic Schema Migrations**: Implement formal database migration tracking (`alembic revision --autogenerate`) to replace SQLite auto-migration hooks for zero-downtime blue/green schema deployments.
+- [ ] **Read Replicas & Analytical Caching**: Direct read-heavy analytics (12-week inventory trends, 52-week demand series) to dedicated read replicas with Redis caching for sub-millisecond response times.
+
+### 2. Asynchronous Task Queue & Distributed AI Workers
+- [ ] **Celery / ARQ Background Execution**: Move batch AI replenishment forecasting and 52-week Monte Carlo policy simulations out of the FastAPI HTTP request cycle into asynchronous background workers backed by Redis or RabbitMQ.
+- [ ] **Scheduled Model Recalibration**: Establish automated cron/heartbeat jobs (e.g., nightly at 02:00 UTC) that recalculate lead-time variations, safety buffers, and demand classifications across all SKUs without operator intervention.
+- [ ] **Event-Driven Alerting (Webhooks / Kafka)**: Broadcast real-time stockout risk events, over-issue alerts, and PO approval notifications to enterprise channels (Slack, Microsoft Teams, PagerDuty, or ERP webhooks).
+
+### 3. Enterprise Multi-Tenancy & Hardened Security
+- [ ] **Row-Level Tenant Isolation**: Introduce `tenant_id` on all 17 core tables with PostgreSQL Row-Level Security (RLS) policies to support SaaS multi-organization isolation.
+- [ ] **OIDC / SAML 2.0 Enterprise Single Sign-On (SSO)**: Add Okta, Microsoft Azure AD (Entra ID), and Google Workspace identity integrations alongside existing JWT bearer authentication.
+- [ ] **Token Refresh Rotation & Sliding Sessions**: Implement secure HTTP-only cookie-based refresh tokens with rotating secrets and IP-fingerprinted revocation.
+- [ ] **API Rate Limiting & DoS Protection**: Enforce Redis Token-Bucket rate limiting (e.g., 60 req/min for general routes, 5 req/min for auth) and payload size caps.
+
+### 4. Advanced MRO & Supply Chain Domain Logic
+- [ ] **Batch, Lot & Shelf-Life Expiry Tracking**: Add `lot_number`, `heat_number` (metallurgical certs for oilfield pipes), and expiration date tracking with First-Expired, First-Out (FEFO) picking logic for chemicals, sealants, and O-rings.
+- [ ] **Multi-Currency & Tax Engine**: Expand procurement with real-time foreign exchange conversions (USD / SAR / AED / EUR) and tax rate rules for cross-border logistics.
+- [ ] **ERP Integration Adapters (SAP & NetSuite)**: Build standardized bi-directional sync adapters for SAP S/4HANA (BAPI / OData) and Oracle NetSuite to reconcile Purchase Orders and Ledger movements with general ledgers.
+- [ ] **Cryptographic Hash-Chained Audit Ledger**: Implement SHA-256 hash chaining across `stock_movements` (block-level cryptographic parent hashing) to provide mathematically immutable audit trails for SOC 2 and ISO 27001 regulatory compliance.
+
+### 5. Frontend Performance & Mobile Native Readiness
+- [ ] **Route-Level Code Splitting**: Implement `React.lazy` and `Suspense` chunking across workstation tabs to reduce the initial JavaScript bundle from ~660 kB to <200 kB.
+- [ ] **Offline-First PWA & Edge Sync**: Add service worker caching and IndexedDB queueing so warehouse staff can continue barcode scanning and dock receiving in remote yard dead zones with automatic sync upon reconnection.
+- [ ] **Dedicated Mobile Warehouse HUD**: Package barcode scanning and quick stock lookups as a dedicated mobile application (Capacitor / React Native) with native camera barcode scanning (ZXing / ML Kit) for rugged Zebra and Honeywell Android handheld terminals.
+
+### 6. Automated Testing & Observability
+- [ ] **End-to-End Test Suite**: Add comprehensive Playwright / Cypress browser test suites covering the Golden Demo scenario (dock receipt -> AI proposal -> PO approval -> waybill print).
+- [ ] **OpenTelemetry & Prometheus Metrics**: Instrument FastAPI endpoints and SQLAlchemy queries with OpenTelemetry spans and Prometheus `/metrics` exporters for Grafana dashboard monitoring.
+- [ ] **Automated Benchmark Suite**: Introduce continuous load testing scripts (`locust` or `k6`) in CI to guarantee that ledger writes remain under 50ms at 500 concurrent operations.
 
 ---
 
