@@ -568,6 +568,31 @@ body[dir="rtl"] {
   left: 0;
 }
 
+/* Inventory Table Action Dropdown & Rows in RTL */
+[dir="rtl"] .inventory-data-table {
+  text-align: right;
+}
 
+[dir="rtl"] .inventory-data-table th,
+[dir="rtl"] .inventory-data-table td {
+  text-align: right;
+}
 
+[dir="rtl"] .inventory-data-table th:last-child,
+[dir="rtl"] .inventory-data-table td:last-child {
+  text-align: center;
+}
 
+[dir="rtl"] .table-actions-menu {
+  right: auto;
+  left: 6px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+[dir="rtl"] .actions-menu-item {
+  text-align: right;
+  font-family: var(--font-arabic, 'IBM Plex Sans Arabic', 'Cairo', sans-serif);
+  font-size: 0.82rem;
+  font-weight: 500;
+  gap: 0.6rem;
+}

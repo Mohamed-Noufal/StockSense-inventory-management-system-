@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   MoreHorizontal, ChevronLeft, ChevronRight,
   ArrowUpDown, ArrowUpRight, ArrowLeftRight, Check,
@@ -36,6 +36,18 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
   const [actionMenuOpenId, setActionMenuOpenId] = useState<number | null>(null);
   const [sortField, setSortField] = useState<string>('name');
   const [sortAsc, setSortAsc] = useState<boolean>(true);
+
+  // Close action dropdown on click outside
+  useEffect(() => {
+    if (actionMenuOpenId === null) return;
+    const handleDocumentClick = () => {
+      setActionMenuOpenId(null);
+    };
+    window.addEventListener('click', handleDocumentClick);
+    return () => {
+      window.removeEventListener('click', handleDocumentClick);
+    };
+  }, [actionMenuOpenId]);
 
   // Toggle single row selection
   const handleToggleSelectRow = (id: number, e: React.MouseEvent) => {
@@ -171,12 +183,13 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
                 </td>
               </tr>
             ) : (
-              sortedItems.map((item) => {
+              sortedItems.map((item, index) => {
                 const isSelected = selectedItem?.id === item.id;
                 const isChecked = selectedIds.has(item.id);
                 const onHand = item.total_on_hand ?? 0;
                 const reserved = item.reserved_qty ?? (onHand > 5 ? Math.max(1, Math.floor(onHand * 0.12)) : (onHand > 2 ? 1 : 0));
                 const available = item.available_qty ?? Math.max(0, onHand - reserved);
+                const isNearBottom = index >= sortedItems.length - 2 && sortedItems.length > 2;
 
                 return (
                   <tr
@@ -262,7 +275,7 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
                       {/* Dropdown Menu */}
                       {actionMenuOpenId === item.id && (
                         <div
-                          className="table-actions-menu"
+                          className={`table-actions-menu ${isNearBottom ? 'open-upward' : ''}`}
                           onClick={(e) => e.stopPropagation()}
                         >
                           <button
