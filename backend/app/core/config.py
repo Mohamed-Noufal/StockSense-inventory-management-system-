@@ -76,6 +76,18 @@ class Settings(BaseSettings):
         if self.ENVIRONMENT.lower() == "production" and "DEBUG" not in os.environ:
             self.DEBUG = False
 
+        # In production, strictly reject default placeholder SECRET_KEY
+        default_insecure_keys = [
+            "stocksense-super-secret-jwt-key-2026-oilfield-production-safe",
+            "stocksense-dev-secret-key-change-in-production-min-32-chars",
+        ]
+        if self.ENVIRONMENT.lower() == "production":
+            if not self.SECRET_KEY or self.SECRET_KEY in default_insecure_keys or len(self.SECRET_KEY) < 32:
+                raise ValueError(
+                    "CRITICAL SECURITY CONFIGURATION: In production mode, you must set a secure, unique "
+                    "SECRET_KEY of at least 32 characters in your .env or environment variables."
+                )
+
         return self
 
 settings = Settings()

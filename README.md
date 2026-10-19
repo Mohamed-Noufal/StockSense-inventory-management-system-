@@ -5,7 +5,7 @@
 [![Docker](https://img.shields.io/badge/Container-Docker%20%26%20Compose-2496ED?logo=docker&logoColor=white)](https://www.docker.com)
 [![SQLite](https://img.shields.io/badge/Database-SQLite%20(WAL%20Mode)-003B57?logo=sqlite&logoColor=white)](https://sqlite.org)
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](https://python.org)
-[![Tests](https://img.shields.io/badge/Tests-60%2F60%20Passing%20(100%25)-brightgreen)](backend/tests)
+[![Tests](https://img.shields.io/badge/Tests-62%2F62%20Passing%20(100%25)-brightgreen)](backend/tests)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 > [!NOTE]
@@ -34,7 +34,7 @@
 8. [API Reference & OpenAPI Specification](#8-api-reference--openapi-specification)
 9. [Verification, Quality Assurance & Test Suite](#9-verification-quality-assurance--test-suite)
 10. [Repository Structure & System Organization](#10-repository-structure--system-organization)
-11. [Production Roadmap & Engineering Next Steps](#11-production-roadmap--engineering-next-steps)
+11. [Production Readiness & Engineering Roadmap: What is Needed for Daily Live Use?](#11-production-readiness--engineering-roadmap-what-is-needed-for-daily-live-use)
 12. [License](#license)
 
 ---
@@ -147,7 +147,7 @@ StockSense enforces **Bearer JWT authentication** with **Role-Based Access Contr
 StockSense includes an end-to-end automated test harness covering stock ledger invariants, over-issue rejection, zero-leakage AI forecasting, empirical holdout evaluations, and JWT authentication:
 
 ```bash
-# Run complete test suite (60 tests, 100% passing)
+# Run complete test suite (62 tests, 100% passing)
 .venv/bin/pytest backend/tests/ -v
 ```
 
@@ -373,11 +373,13 @@ StockSense provides a fully documented REST API under `/api/v1`. Interactive Ope
 | `GET` | `/api/v1/ai/model-report` | Out-of-sample holdout metrics (RMSSE, MASE, Forecast Bias %). |
 | `GET` | `/api/v1/workspace/info` | Current company name, facility, industry, and demo dataset status. |
 | `PUT` | `/api/v1/workspace/profile` | Update company profile and industry without modifying item data. |
-| `POST` | `/api/v1/workspace/init-clean` | Initialize a pristine empty store (0 items, preserved user logins). |
-| `POST` | `/api/v1/workspace/restore-demo` | 1-click restore of the 15 sample items and 52-week ledger history. |
+| `POST` | `/api/v1/workspace/init-clean` | Initialize pristine empty store (Requires `ADMIN` or `MANAGER`). |
+| `POST` | `/api/v1/workspace/restore-demo` | 1-click restore sample demo items & ledger (Requires `ADMIN` or `MANAGER`). |
 | `POST` | `/api/v1/inventory/locations` | Add a new warehouse, storage yard, or field base. |
 | `DELETE` | `/api/v1/inventory/locations/{id}` | Delete a storage location (enforces zero active balance safety guard). |
 | `GET` | `/api/v1/users` | Personnel directory with roles and transaction audit statistics. |
+| `POST` | `/api/v1/users` | Register user account (Provisioning `ADMIN` role requires administrator session). |
+| `GET` | `/api/v1/auth/me` | Fetch active authenticated user profile via Bearer JWT token. |
 | `GET` | `/api/v1/alerts` | Active operational exceptions, stockout risks, and discrepancy alerts. |
 | `POST` | `/api/v1/attachments/upload` | Upload supporting delivery dockets, inspection photos, or PDF waybills. |
 
@@ -392,7 +394,7 @@ The system includes a comprehensive automated test suite verifying invariant enf
 .venv/bin/pytest backend/tests/ -v
 ```
 
-### Verified Test Matrix (60 Passed Tests)
+### Verified Test Matrix (62 Passed Tests)
 - `backend/tests/test_ai.py` (7 tests): TSB, Croston, SBA convergence, quantile policies, zero-demand intervals.
 - `backend/tests/test_ai_integration.py` (5 tests): Temporal cutoffs, zero future data leakage, atomic proposal $\rightarrow$ PO conversion.
 - `backend/tests/test_inventory.py` (11 tests): Atomic movements, non-negative constraint (`CHECK >= 0`), over-issue rejection (`HTTP 400`), double-entry transfer pairing.
@@ -400,7 +402,7 @@ The system includes a comprehensive automated test suite verifying invariant enf
 - `backend/tests/test_alerts.py` (2 tests): Operational alert acknowledgment and resolution logging.
 - `backend/tests/test_attachments.py` (8 tests): Multipart document uploads, MIME validation, and disk persistence.
 - `backend/tests/test_auth.py` (6 tests): JWT tokens, password hashing, and role verification.
-- `backend/tests/test_users.py` (3 tests): User directory, role definitions, and actor identity tracking.
+- `backend/tests/test_users.py` (4 tests): User directory, role definitions, actor identity tracking, and privilege escalation prevention.
 - `backend/tests/test_health.py` (3 tests): Database WAL mode, table creation, and API readiness probes.
 - `backend/tests/test_workspace.py` (5 tests): Workspace info, profile updates, multi-industry clean init, demo restore, location creation & deletion.
 - `backend/tests/test_golden_flow.py` (1 test): Complete end-to-end integration flow from stock issue to AI replenishment, PO creation, dock receiving, and zero-mismatch final reconciliation.
@@ -455,36 +457,125 @@ stocksense/
 
 ---
 
-## 11. Production Roadmap & Engineering Next Steps
+## 11. Production Readiness & Engineering Roadmap: What is Needed for Daily Live Use?
 
-StockSense currently functions as a battle-tested reference architecture and high-fidelity prototype. For engineering teams, contributors, or reviewers looking to scale StockSense into a full-scale, multi-facility enterprise warehouse management system (WMS), this roadmap outlines the recommended technical milestones:
+> [!IMPORTANT]
+> **Production Status Assessment**: StockSense currently operates as a **high-fidelity reference architecture and functional MVP (~70% complete towards enterprise WMS)**. 
+> 
+> Its core data integrity engine (append-only ledger, non-negative DB constraints, and zero-leakage intermittent demand forecasting) is production-grade. However, before an inventory owner or enterprise deploys this for **live, daily warehouse operations**, critical infrastructural, operational, and commercial capabilities must be implemented.
 
-### 1. Database Tier & Concurrent Scaling
-- [ ] **PostgreSQL 16 & Connection Pooling**: Migrate from local SQLite WAL mode to managed PostgreSQL 16 using `asyncpg` and PgBouncer. While SQLite handles single-writer transactions cleanly, PostgreSQL provides true concurrent multi-dock writes, advisory locks, and Row-Level Security (RLS).
-- [ ] **Alembic Schema Migrations**: Implement formal database migration tracking (`alembic revision --autogenerate`) to replace SQLite auto-migration hooks for zero-downtime blue/green schema deployments.
-- [ ] **Read Replicas & Analytical Caching**: Direct read-heavy analytics (12-week inventory trends, 52-week demand series) to dedicated read replicas with Redis caching for sub-millisecond response times.
+Below is the gap analysis and engineering blueprint detailing what is already production-ready versus what must be built to support a real-world business.
 
-### 2. Asynchronous Task Queue & Distributed AI Workers
-- [ ] **Celery / ARQ Background Execution**: Move batch AI replenishment forecasting and 52-week Monte Carlo policy simulations out of the FastAPI HTTP request cycle into asynchronous background workers backed by Redis or RabbitMQ.
-- [ ] **Scheduled Model Recalibration**: Establish automated cron/heartbeat jobs (e.g., nightly at 02:00 UTC) that recalculate lead-time variations, safety buffers, and demand classifications across all SKUs without operator intervention.
-- [ ] **Event-Driven Alerting (Webhooks / Kafka)**: Broadcast real-time stockout risk events, over-issue alerts, and PO approval notifications to enterprise channels (Slack, Microsoft Teams, PagerDuty, or ERP webhooks).
+---
 
-### 3. Enterprise Multi-Tenancy & Hardened Security
-- [ ] **Row-Level Tenant Isolation**: Introduce `tenant_id` on all 17 core tables with PostgreSQL Row-Level Security (RLS) policies to support SaaS multi-organization isolation.
-- [ ] **OIDC / SAML 2.0 Enterprise Single Sign-On (SSO)**: Add Okta, Microsoft Azure AD (Entra ID), and Google Workspace identity integrations alongside existing JWT bearer authentication.
-- [ ] **Token Refresh Rotation & Sliding Sessions**: Implement secure HTTP-only cookie-based refresh tokens with rotating secrets and IP-fingerprinted revocation.
-- [ ] **API Rate Limiting & DoS Protection**: Enforce Redis Token-Bucket rate limiting (e.g., 60 req/min for general routes, 5 req/min for auth) and payload size caps.
+### A. What is Already Production-Grade (The Core Strengths)
 
-### 4. Advanced MRO & Supply Chain Domain Logic
-- [ ] **Batch, Lot & Shelf-Life Expiry Tracking**: Add `lot_number`, `heat_number` (metallurgical certs for oilfield pipes), and expiration date tracking with First-Expired, First-Out (FEFO) picking logic for chemicals, sealants, and O-rings.
-- [ ] **Multi-Currency & Tax Engine**: Expand procurement with real-time foreign exchange conversions (USD / SAR / AED / EUR) and tax rate rules for cross-border logistics.
-- [ ] **ERP Integration Adapters (SAP & NetSuite)**: Build standardized bi-directional sync adapters for SAP S/4HANA (BAPI / OData) and Oracle NetSuite to reconcile Purchase Orders and Ledger movements with general ledgers.
-- [ ] **Cryptographic Hash-Chained Audit Ledger**: Implement SHA-256 hash chaining across `stock_movements` (block-level cryptographic parent hashing) to provide mathematically immutable audit trails for SOC 2 and ISO 27001 regulatory compliance.
+| Capability | Current Implementation | Enterprise Value |
+|---|---|---|
+| **Audit Ledger** | Append-only `stock_movements` with `CHECK (quantity_on_hand >= 0)` | Eliminates silent balance overwrites and prevents phantom inventory. |
+| **Intermittent Demand AI** | Teunter-Syntetos-Babai (TSB) & Syntetos-Boylan Approximation (SBA) | Specifically handles lumpy/slow-moving spare parts where standard moving averages fail. |
+| **Human-in-the-Loop** | Probabilistic proposals convert to atomic `DRAFT` Purchase Orders | Prevents algorithmic runaway spending while keeping procurement officers in control. |
+| **Warehouse Hardware** | Rapid USB HID optical barcode gun detection (<50ms keystrokes) | Plug-and-play warehouse scanning with synthesized Web Audio feedback. |
+| **Print Engines** | Sandboxed `<iframe>` vector Code 128 / QR thermal labels & A4 dockets | Crisp printing with zero CSS bleeding or extra blank page overflows. |
+| **Test Coverage** | 60/60 automated pytest integration tests passing | Invariant protection across stock movements, over-issues, POs, and AI forecasting. |
 
-### 5. Frontend Performance & Mobile Native Readiness
-- [ ] **Route-Level Code Splitting**: Implement `React.lazy` and `Suspense` chunking across workstation tabs to reduce the initial JavaScript bundle from ~660 kB to <200 kB.
-- [ ] **Offline-First PWA & Edge Sync**: Add service worker caching and IndexedDB queueing so warehouse staff can continue barcode scanning and dock receiving in remote yard dead zones with automatic sync upon reconnection.
-- [ ] **Dedicated Mobile Warehouse HUD**: Package barcode scanning and quick stock lookups as a dedicated mobile application (Capacitor / React Native) with native camera barcode scanning (ZXing / ML Kit) for rugged Zebra and Honeywell Android handheld terminals.
+---
+
+### B. What is Missing for Real-World Daily Production (The Gap Analysis)
+
+#### 1. Data Migration & Day-1 Onboarding (Immediate Blocker)
+* **CSV / Excel Bulk Master Data Importer**:
+  - *The Real-World Problem*: An inventory owner migrating to StockSense has 500 to 10,000 existing SKUs, supplier price books, and opening stock counts in spreadsheets or legacy software. They cannot manually input items one by one.
+  - *What is Needed*: A wizard-based bulk importer with column mapping, SKU validation, duplicate detection, and atomic opening balance ledger entry generation.
+
+#### 2. Database Tier & Concurrency (Multi-User Warehouse Traffic)
+* **Migrate from SQLite to PostgreSQL 16 + Connection Pooling**:
+  - *The Real-World Problem*: SQLite uses database-level write locking. In an active warehouse with multiple dock workers scanning receipts, storekeepers issuing parts, and AI forecasting runs executing simultaneously, SQLite will throw `database is locked` / timeout errors.
+  - *What is Needed*: Managed PostgreSQL 16 with `asyncpg` and PgBouncer for true concurrent multi-dock writes, advisory locks, and Row-Level Security (RLS).
+* **Asynchronous Background Task Queue**:
+  - *The Real-World Problem*: Running 52-week Monte Carlo replenishment simulations and holdout evaluations inside synchronous FastAPI request cycles causes HTTP request timeouts on large catalogs.
+  - *What is Needed*: Offload AI jobs and nightly recalculations to asynchronous workers (**Celery** or **ARQ** with Redis).
+* **Automated Cloud Backups & Point-in-Time Recovery (PITR)**:
+  - *What is Needed*: Automated daily snapshots with multi-region replication to protect against physical server failure.
+
+#### 3. Physical Warehouse Floor Operations
+* **Batch, Lot & Serial Tracking with Expiry Dates (FEFO)**:
+  - *The Real-World Problem*: Regulated items (chemicals, sealants, drilling muds, rubber O-rings) expire. High-value equipment (valves, pumps, motors) requires serial tracking for warranties, vendor returns, and maintenance history.
+  - *What is Needed*: Add `lot_number`, `serial_number`, and `expiry_date` to `stock_movements`, with First-Expired, First-Out (FEFO) picking alerts.
+* **Unit of Measure (UoM) Conversions**:
+  - *The Real-World Problem*: Businesses typically purchase goods in bulk (e.g., Box of 50, Drum of 200L, Pallet of 1,000) but issue or consume them in single units (Piece, Each, Liter).
+  - *What is Needed*: A dual-unit conversion matrix (`purchase_uom`, `stock_uom`, `conversion_factor`) so receiving auto-calculates base stock units.
+* **Granular Bin Locations (Aisle - Rack - Shelf - Bin)**:
+  - *The Real-World Problem*: Knowing an item is in "Warehouse 1" is insufficient in a 20,000 sq. ft. storage yard. Pickers waste hours searching for parts.
+  - *What is Needed*: Sub-location hierarchy (`Aisle-03 > Rack-B > Shelf-2 > Bin-14`) with pick-path routing.
+* **Blind Cycle Count Audit Workflow**:
+  - *The Real-World Problem*: Cycle counting without blind controls allows storekeepers to confirm expected numbers without physically checking shelves.
+  - *What is Needed*: Blind count sheets (expected counts hidden from counter) with supervisor discrepancy approvals before ledger adjustments commit.
+
+#### 4. Financials, Costing & Accounting Integrations
+* **Inventory Costing & Valuation (AVCO / FIFO)**:
+  - *The Real-World Problem*: Items are purchased at varying prices over time. Tax authorities and accountants require audited inventory valuation (Weighted Average Cost / AVCO or FIFO cost queues).
+  - *What is Needed*: Dynamic moving average cost recalculation on each PO receipt.
+* **Landed Cost Allocation**:
+  - *The Real-World Problem*: The true cost of imported inventory includes shipping freight, customs clearance, import tariffs, and port handling.
+  - *What is Needed*: Landed cost distribution tool that apportions freight and duties across PO lines to establish true cost-of-goods.
+* **Sales / Outbound Commercial Dispatch (If Used for Distribution/Retail)**:
+  - *The Real-World Problem*: StockSense is tailored for MRO / internal consumption. If the business sells to external customers, they need commercial dispatch workflows.
+  - *What is Needed*: Customer Master, Sales Orders, Picking & Packing Slips, and Invoicing with VAT / Sales Tax calculations.
+* **Accounting System Sync**:
+  - *What is Needed*: Pre-built sync connectors (QuickBooks Online, Xero, Zoho Books, SAP, or NetSuite) to automatically post Accounts Payable bills and inventory asset adjustments.
+
+#### 5. Mobile & Field Mobility
+* **Rugged Terminal & Mobile PWA**:
+  - *The Real-World Problem*: Storekeepers do not carry laptops into storage yards or across warehouse aisles.
+  - *What is Needed*: Dedicated responsive mobile view or PWA optimized for handheld terminals (Zebra TC52, Honeywell ScanPal) and smartphone camera scanning via WebRTC / ZXing.
+* **Offline-First Synchronization**:
+  - *The Real-World Problem*: Remote yards, steel-clad warehouses, and basement parts rooms frequently lose Wi-Fi signal.
+  - *What is Needed*: IndexedDB local queueing allowing barcode scanning to continue offline, syncing automatically once connectivity resumes.
+
+#### 6. Enterprise Security & User Administration
+* **Production Identity & Access**:
+  - User self-service password reset via email.
+  - Multi-Factor Authentication (MFA/2FA) for high-value PO approval.
+  - Enterprise SSO (Google Workspace, Microsoft Entra ID / Azure AD, Okta).
+  - Dynamic environment secrets management (replacing default development keys).
+
+---
+
+### C. Recommended Phased Implementation Roadmap
+
+For engineering teams or business owners planning to take StockSense into live production:
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                          PRODUCTION ROLLOUT TIMELINE                            │
+├──────────────────────────────┬───────────────────────────┬──────────────────────┤
+│ PHASE 1: HARDENING (Weeks 1-3)│ PHASE 2: FLOOR (Weeks 4-7)│ PHASE 3: ERP (Wks 8+)│
+│ • PostgreSQL 16 + PgBouncer  │ • Batch/Lot/Expiry (FEFO) │ • Landed Cost Engine │
+│ • CSV/Excel Bulk Importer    │ • Multi-tier UoM Table    │ • Accounting Sync    │
+│ • Celery Background Worker   │ • Granular Bin Hierarchy  │ • Mobile PWA Scanner │
+│ • Secrets & Daily Backups    │ • Blind Cycle Count Audits│ • Sales/Dispatch (B2B│
+└──────────────────────────────┴───────────────────────────┴──────────────────────┘
+```
+
+1. **Phase 1: Production Hardening & Catalog Onboarding (2–3 Weeks)**
+   - [ ] Migrate database to managed PostgreSQL 16 with connection pooling.
+   - [ ] Build CSV/Excel bulk catalog and opening balance importer.
+   - [ ] Move AI replenishment calculations to background worker (Celery/Redis).
+   - [ ] Rotate JWT secrets and implement email password reset.
+   - [ ] Configure automated daily database backups with point-in-time recovery.
+
+2. **Phase 2: Core Warehouse Floor Enhancements (3–4 Weeks)**
+   - [ ] Add `lot_number`, `serial_number`, and `expiry_date` tracking with FEFO alerts.
+   - [ ] Implement Unit of Measure (UoM) purchase-to-stock conversion ratios.
+   - [ ] Build sub-location hierarchy (`Aisle-Rack-Shelf-Bin`).
+   - [ ] Implement blind cycle count audit workflows with supervisor approvals.
+
+3. **Phase 3: Financials, Accounting & Mobile Terminal (3–4 Weeks)**
+   - [ ] Implement Moving Weighted Average Cost (AVCO) valuation and Landed Cost allocation.
+   - [ ] Add Sales Order & Customer Dispatch workflow (for commercial wholesale/retail).
+   - [ ] Optimize mobile PWA interface with camera scanning for Android warehouse handhelds.
+   - [ ] Deploy accounting sync webhook / API adapter for QuickBooks or Xero.
 
 ---
 

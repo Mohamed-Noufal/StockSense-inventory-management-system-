@@ -19,7 +19,7 @@ from backend.app.models.purchase_orders import PurchaseOrder, PurchaseOrderLine
 from backend.app.models.alerts import Alert
 from backend.app.models.attachments import DocumentAttachment
 from backend.app.models.users import User
-from backend.app.core.auth import get_current_user
+from backend.app.core.auth import get_current_user, require_roles
 from backend.ai.models import Recommendation, Forecast, BacktestResult, ItemPolicy, AIRun
 from backend.scripts.seed import seed_master_data, seed_demo_items_and_ledger
 
@@ -200,7 +200,11 @@ def purge_user_data(
         raise HTTPException(status_code=500, detail=f"Failed to purge user data: {str(e)}")
 
 @router.post("/init-clean", response_model=WorkspaceInfoResponse)
-def init_clean_workspace(payload: InitCleanWorkspaceRequest, db: Session = Depends(get_db)):
+def init_clean_workspace(
+    payload: InitCleanWorkspaceRequest,
+    current_user: User = Depends(require_roles(["ADMIN", "MANAGER"])),
+    db: Session = Depends(get_db)
+):
     company_clean = payload.company_name.strip()
     wh_name_clean = payload.warehouse_name.strip()
     wh_code_clean = payload.warehouse_code.strip().upper()
@@ -302,7 +306,10 @@ def init_clean_workspace(payload: InitCleanWorkspaceRequest, db: Session = Depen
         raise HTTPException(status_code=500, detail=f"Failed to initialize clean workspace: {str(e)}")
 
 @router.post("/restore-demo", response_model=WorkspaceInfoResponse)
-def restore_demo_workspace(db: Session = Depends(get_db)):
+def restore_demo_workspace(
+    current_user: User = Depends(require_roles(["ADMIN", "MANAGER"])),
+    db: Session = Depends(get_db)
+):
     try:
         # 1. Clean operational records
         db.query(DocumentAttachment).delete()

@@ -24,13 +24,34 @@ def test_create_location(client: TestClient):
         assert resp.json()["code"] == "TEST-LOC-01"
 
 def test_clean_workspace_and_restore_demo(client: TestClient):
-    # 1. Initialize clean company workspace
     clean_payload = {
         "company_name": "Al-Maha Energy Supplies",
         "warehouse_name": "Dammam Central Depot",
         "warehouse_code": "DAM-01",
     }
-    clean_resp = client.post("/api/v1/workspace/init-clean", json=clean_payload)
+
+    # 1. Unauthenticated calls must be rejected with 401
+    unauth_clean = client.post("/api/v1/workspace/init-clean", json=clean_payload)
+    assert unauth_clean.status_code == 401
+
+    unauth_restore = client.post("/api/v1/workspace/restore-demo")
+    assert unauth_restore.status_code == 401
+
+    # 2. Non-manager role (STOREKEEPER) must be rejected with 403 Forbidden
+    login_sk = client.post("/api/v1/auth/demo-login", json={"role": "STOREKEEPER"})
+    assert login_sk.status_code == 200
+    sk_headers = {"Authorization": f"Bearer {login_sk.json()['access_token']}"}
+
+    forbidden_clean = client.post("/api/v1/workspace/init-clean", json=clean_payload, headers=sk_headers)
+    assert forbidden_clean.status_code == 403
+
+    # 3. Authenticate as MANAGER (authorized role)
+    login_mgr = client.post("/api/v1/auth/demo-login", json={"role": "MANAGER"})
+    assert login_mgr.status_code == 200
+    mgr_headers = {"Authorization": f"Bearer {login_mgr.json()['access_token']}"}
+
+    # 4. Initialize clean company workspace
+    clean_resp = client.post("/api/v1/workspace/init-clean", json=clean_payload, headers=mgr_headers)
     assert clean_resp.status_code == 200
     clean_data = clean_resp.json()
     assert clean_data["company_name"] == "Al-Maha Energy Supplies"
@@ -43,8 +64,8 @@ def test_clean_workspace_and_restore_demo(client: TestClient):
     assert items_resp.status_code == 200
     assert len(items_resp.json()) == 0
 
-    # 2. Restore oilfield demo dataset
-    restore_resp = client.post("/api/v1/workspace/restore-demo")
+    # 5. Restore oilfield demo dataset with authorized manager credentials
+    restore_resp = client.post("/api/v1/workspace/restore-demo", headers=mgr_headers)
     assert restore_resp.status_code == 200
     restore_data = restore_resp.json()
     assert restore_data["is_demo_dataset"] is True
